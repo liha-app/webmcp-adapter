@@ -1,5 +1,8 @@
 # Liha WebMCP Adapter
 
+[![CI](https://github.com/liha-app/webmcp-adapter/actions/workflows/ci.yml/badge.svg)](https://github.com/liha-app/webmcp-adapter/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+
 **Make any website agent-ready.**
 
 WebMCP lets a website hand an agent real tools instead of making it guess at the
@@ -205,6 +208,10 @@ implementation — duplicate names throw, aborting the signal unregisters,
 kinder than the browser would hide the bugs the tests exist to catch. What no
 mock can prove is that an agent really sees the tool, which is what the
 acceptance runners and [the manual test](docs/manual-acceptance.md) are for.
+
+All four layers run in CI on every push, including the real-browser acceptance
+runs — the WebMCP pipeline is reproduced from a clean machine, not just on the
+author's laptop.
 
 `pnpm acceptance:*` needs a Chromium build that permits `--load-extension`.
 Branded Google Chrome refuses that switch, so the runners use Chrome for Testing:

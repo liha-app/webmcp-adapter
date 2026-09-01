@@ -41,16 +41,16 @@ jobs:
           path: playwright-report/
           retention-days: 7
 
-  # The acceptance runners load the unpacked extension and observe tools through
-  # the DevTools WebMCP domain. They need a Chromium that permits
-  # --load-extension and that ships WebMCP (Chrome 151+); Playwright's Chrome for
-  # Testing build satisfies both. This job is opt-in rather than on every push:
-  # it depends on the browser build shipping a flagged, still-changing API, and a
-  # red result there should prompt reading docs/webmcp-api.md rather than
-  # assuming the project broke.
+  # The load-bearing job. Loads the unpacked extension and observes tools through
+  # the DevTools WebMCP domain — the same out-of-page surface an agent uses — so
+  # a tool that only exists "internally" fails here.
+  #
+  # Needs a Chromium that permits --load-extension and ships WebMCP (Chrome
+  # 151+); Playwright's Chrome for Testing build satisfies both. If this job
+  # goes red while the others stay green, suspect a change in the flagged WebMCP
+  # API before suspecting this project, and re-read docs/webmcp-api.md.
   acceptance:
-    name: Real-browser acceptance (manual)
-    if: github.event_name == 'workflow_dispatch'
+    name: Real-browser acceptance
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7

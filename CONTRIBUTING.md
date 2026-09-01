@@ -29,6 +29,9 @@ pnpm e2e
 pnpm acceptance:all
 ```
 
+CI runs all four layers on every push and pull request, acceptance included, so
+a pull request that breaks the WebMCP pipeline goes red before review.
+
 `acceptance:all` drives a real browser and observes tools through the DevTools
 WebMCP domain. If you changed anything on the path from the service worker to
 `document.modelContext`, that run is the evidence that it still works — a green
