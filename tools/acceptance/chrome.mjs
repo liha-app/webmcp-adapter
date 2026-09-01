@@ -79,6 +79,13 @@ export class Browser {
       ...(process.platform === 'darwin' ? ['--use-mock-keychain'] : []),
       '--disable-background-networking',
       '--disable-sync',
+      // Containerised CI runners restrict the user namespaces Chrome's sandbox
+      // needs and mount a /dev/shm too small for it to start. Relaxed only
+      // there — never on a developer's machine, where the sandbox is the
+      // browser's main defence and these runs load an unpacked extension.
+      ...(process.platform === 'linux' && process.env.CI
+        ? ['--no-sandbox', '--disable-dev-shm-usage']
+        : []),
       // The WebMCP API itself, plus the DevTools domain an inspector speaks.
       '--enable-blink-features=WebMCPTesting,DevToolsWebMCPSupport',
       ...(this.extensionPath
