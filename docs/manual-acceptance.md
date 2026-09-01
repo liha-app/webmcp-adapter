@@ -190,3 +190,4 @@ NO and the page says so plainly instead of pretending — see
 | A step fails with "matched 0 elements" | The demo build is stale, or the app changed. Adapters fail closed rather than guess. |
 | A step fails with "matched 2 elements" | The lookup was ambiguous. That is the safety property working. |
 | Install button does nothing | The extension is not installed, or the registry is served from an origin the extension does not know. See [deployment.md](deployment.md). |
+| Tools are still listed after disabling the whole extension | Expected. Once injected, the runtime is ordinary page JavaScript, and a disabled extension cannot run the code that unregisters it. Reload the page, or use the adapter toggle in the popup, which unregisters immediately. |

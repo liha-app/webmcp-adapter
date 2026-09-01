@@ -1,7 +1,17 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi, type Mock } from 'vitest';
 import { CRM_FIXTURE, PROJECT_FIXTURE } from './fixtures';
 import { createMockModelContext } from './mock-model-context';
-import { createRuntime, needsConfirmation, type LihaRuntime, type RuntimeDeps } from './runtime';
+import {
+  createRuntime,
+  needsConfirmation,
+  type ConfirmationRequest,
+  type LihaRuntime,
+  type RuntimeDeps,
+} from './runtime';
+
+type ConfirmMock = Mock<(request: ConfirmationRequest) => Promise<boolean>>;
+
+const confirmMock = (answer: boolean): ConfirmMock => vi.fn(async () => answer);
 import type { ModelContext } from './webmcp';
 
 const ORIGIN = 'http://localhost:5273';
@@ -57,8 +67,8 @@ function crmDom(): void {
 function makeRuntime(
   modelContext: ModelContext | null,
   overrides: Partial<RuntimeDeps> = {},
-): { runtime: LihaRuntime; confirm: ReturnType<typeof vi.fn> } {
-  const confirm = vi.fn().mockResolvedValue(true);
+): { runtime: LihaRuntime; confirm: ConfirmMock } {
+  const confirm = confirmMock(true);
   const runtime = createRuntime({
     doc: document,
     location: { origin: ORIGIN, href: `${ORIGIN}/` },
@@ -227,7 +237,7 @@ describe('capability confirmation', () => {
 
   it('does not touch the page when the user declines', async () => {
     const mc = createMockModelContext();
-    const confirm = vi.fn().mockResolvedValue(false);
+    const confirm = confirmMock(false);
     const { runtime } = makeRuntime(mc, { requestConfirmation: confirm });
     await runtime.install(crmAdapter, { confirmWrite: true });
     const before = document.body.innerHTML;
@@ -260,7 +270,7 @@ describe('capability confirmation', () => {
       document.querySelector('[data-testid="task-list"] li')!.remove();
     });
     const mc = createMockModelContext('http://localhost:5275');
-    const confirm = vi.fn().mockResolvedValue(true);
+    const confirm = confirmMock(true);
     const { runtime } = createRuntimeFor(mc, confirm);
     await runtime.install(projectAdapter, { confirmWrite: false });
     const result = await invoke(mc, 'delete_task', { title: 'Audit' });
@@ -271,7 +281,7 @@ describe('capability confirmation', () => {
   });
 });
 
-function createRuntimeFor(mc: ModelContext, confirm: ReturnType<typeof vi.fn>) {
+function createRuntimeFor(mc: ModelContext, confirm: ConfirmMock) {
   return {
     runtime: createRuntime({
       doc: document,

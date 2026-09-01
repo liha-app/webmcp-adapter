@@ -1,0 +1,19 @@
+# Five advisories reached this repository through a single outdated test
+# runner before anyone looked. Weekly checks catch that class of drift while
+# it is still a version bump rather than a security notice.
+version: 2
+updates:
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5
+    groups:
+      dev-tooling:
+        patterns: ['vite', 'vitest', 'esbuild', 'eslint', 'typescript*', '@playwright/*', '@types/*']
+      react:
+        patterns: ['react', 'react-dom', '@vitejs/*']
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: monthly

@@ -1,9 +1,26 @@
 {
   "name": "liha-webmcp-adapter",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "private": true,
   "description": "Make any website agent-ready. Add WebMCP tools to websites that never implemented WebMCP.",
   "license": "MIT",
+  "author": "Liha WebMCP Adapter contributors",
+  "homepage": "https://github.com/liha-app/webmcp-adapter#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/liha-app/webmcp-adapter.git"
+  },
+  "bugs": {
+    "url": "https://github.com/liha-app/webmcp-adapter/issues"
+  },
+  "keywords": [
+    "webmcp",
+    "mcp",
+    "model-context-protocol",
+    "ai-agents",
+    "chrome-extension",
+    "adapter"
+  ],
   "type": "module",
   "engines": {
     "node": ">=20"
@@ -34,7 +51,7 @@
     "jsdom": "^25.0.1",
     "typescript": "^5.7.2",
     "typescript-eslint": "^8.18.1",
-    "vitest": "^2.1.8"
+    "vitest": "^4.1.11"
   },
   "pnpm": {
     "onlyBuiltDependencies": [
