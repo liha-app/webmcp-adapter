@@ -25,11 +25,11 @@ export function AdapterList() {
 
   return (
     <>
-      <section className="hero">
-        <h1>Make any website agent-ready.</h1>
+      <section className="pagehead">
+        <h1>Adapters</h1>
         <p>
-          Adapters add WebMCP tools to sites that never implemented WebMCP. Each one is declarative JSON, scoped to a
-          single origin, with every step and permission open to inspection before you install it.
+          Each one is declarative JSON, scoped to exact origins, with every step and permission open to inspection
+          before you install it.
         </p>
       </section>
 
@@ -81,7 +81,7 @@ export function AdapterList() {
             <li key={entry.adapter.id} className="card" data-adapter-id={entry.adapter.id}>
               <div className="card__head">
                 <h2 data-field="name">
-                  <Link to="/adapter/$adapterId" params={{ adapterId: entry.adapter.id }}>
+                  <Link to="/adapters/$adapterId" params={{ adapterId: entry.adapter.id }}>
                     {entry.adapter.name}
                   </Link>
                 </h2>

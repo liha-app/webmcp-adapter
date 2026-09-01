@@ -1,4 +1,5 @@
 import { originOf, validateAdapter } from '@liha/adapter-schema';
+import { ALL_ORIGINS } from '@liha/config';
 import type { AdapterHealth } from '@liha/adapter-schema';
 import { DEFAULT_POLICY } from '@liha/adapter-runtime';
 import type {
@@ -23,21 +24,13 @@ import { injectAdapter, readHealth, readRuntimeStatus, uninstallFromTab } from '
 import { addAction, getLastTake, getRecording, keepTake, startRecording, stopRecording } from './recording';
 
 /**
- * Origins covered by the static content script in manifest.json. Everything
- * else needs an explicitly granted optional host permission plus a dynamically
- * registered content script, so installing an adapter never silently widens the
+ * Origins covered by the static content scripts in the manifest, derived from
+ * the same config the manifest is generated from. Everything else needs an
+ * explicitly granted optional host permission plus a dynamically registered
+ * content script, so installing an adapter never silently widens the
  * extension's reach.
  */
-const STATIC_ORIGINS = [
-  'http://localhost:5273',
-  'http://127.0.0.1:5273',
-  'http://localhost:5274',
-  'http://127.0.0.1:5274',
-  'http://localhost:5275',
-  'http://127.0.0.1:5275',
-  'http://localhost:5280',
-  'http://127.0.0.1:5280',
-];
+const STATIC_ORIGINS = ALL_ORIGINS;
 
 const DYNAMIC_SCRIPT_ID = 'liha-dynamic-bridge';
 

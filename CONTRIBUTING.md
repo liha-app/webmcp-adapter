@@ -79,6 +79,12 @@ A step that can execute a string as code will not be merged, in any form. That
 is not a style preference — it is the property that makes a public registry of
 community adapters something a person can reasonably trust.
 
+## Keeping the portal honest
+
+The landing page states what has been verified. Those figures live in one file,
+`apps/registry/src/lib/proof.ts` — update it when the suites change, so the
+claims on the public page cannot drift from the tests that back them.
+
 ## Code conventions
 
 - TypeScript strict, no `any` unless genuinely unavoidable

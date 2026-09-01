@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" role="img" aria-label="Liha">
+  <rect width="32" height="32" rx="5" fill="#101317"/>
+  <path d="M9 8v16M9 24h8" stroke="#fff" stroke-width="3" stroke-linecap="square" fill="none"/>
+  <circle cx="23" cy="11" r="3.5" fill="#0b57d0"/>
+</svg>

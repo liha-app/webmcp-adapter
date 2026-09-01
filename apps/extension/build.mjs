@@ -1,5 +1,5 @@
 import { build, context } from 'esbuild';
-import { cp, mkdir, rm } from 'node:fs/promises';
+import { cp, mkdir, readFile, rm, writeFile } from 'node:fs/promises';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -40,16 +40,70 @@ const common = {
   minify: !watch,
 };
 
+/**
+ * Builds the manifest from the base file plus the shared origin config.
+ *
+ * The set of sites this extension may touch is security-relevant, so it is
+ * declared once — in packages/config/origins.json — and derived here rather
+ * than restated in a manifest, a service worker constant and an adapter file
+ * that can quietly fall out of step.
+ */
+async function writeManifest() {
+  const [base, origins] = await Promise.all([
+    readFile(join(root, 'manifest.base.json'), 'utf8').then(JSON.parse),
+    readFile(join(root, '../../packages/config/origins.json'), 'utf8').then(JSON.parse),
+  ]);
+  delete base.$comment;
+
+  const patternsFor = (site) => [
+    ...origins.sites[site].development.map((origin) => `${origin}/*`),
+    `${origins.sites[site].production}/*`,
+  ];
+  const demoSites = Object.keys(origins.sites).filter((site) => site !== 'registry');
+  const demoPatterns = demoSites.flatMap(patternsFor);
+  const registryPatterns = patternsFor('registry');
+
+  const manifest = {
+    ...base,
+    content_scripts: [
+      {
+        matches: demoPatterns,
+        js: ['content/bridge.js'],
+        run_at: 'document_start',
+        world: 'ISOLATED',
+        all_frames: false,
+      },
+      {
+        matches: registryPatterns,
+        js: ['content/store-bridge.js'],
+        run_at: 'document_idle',
+        world: 'ISOLATED',
+        all_frames: false,
+      },
+    ],
+    host_permissions: [...demoPatterns, ...registryPatterns],
+  };
+
+  if (target === 'firefox') {
+    manifest.name = 'Liha WebMCP Adapter (Firefox)';
+    // Firefox MV3 uses an event page rather than a service worker.
+    manifest.background = { scripts: ['service-worker.js'], type: 'module' };
+    delete manifest.minimum_chrome_version;
+    manifest.browser_specific_settings = {
+      gecko: { id: 'liha-webmcp-adapter@liha.dev', strict_min_version: '128.0' },
+    };
+  }
+
+  await writeFile(join(outdir, 'manifest.json'), `${JSON.stringify(manifest, null, 2)}\n`);
+}
+
 async function copyStatic() {
   for (const dir of ['popup', 'confirm', 'studio', 'diagnostics']) {
     await mkdir(join(outdir, dir), { recursive: true });
     await cp(join(root, `src/${dir}/${dir}.html`), join(outdir, `${dir}/${dir}.html`));
     await cp(join(root, `src/${dir}/${dir}.css`), join(outdir, `${dir}/${dir}.css`));
   }
-  await cp(
-    join(root, target === 'firefox' ? 'manifest.firefox.json' : 'manifest.json'),
-    join(outdir, 'manifest.json'),
-  );
+  await writeManifest();
 }
 
 await rm(outdir, { recursive: true, force: true });

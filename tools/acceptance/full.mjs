@@ -284,10 +284,17 @@ async function main() {
     check(Boolean(gone), 'approving the confirmation lets the deletion through');
 
     /* -------------------------------------------------------- Registry --- */
-    group('The registry implements WebMCP itself, with no adapter involved');
+    group('The portal implements WebMCP itself, with no adapter involved');
     watch.tools.clear();
     await page.goto('http://localhost:5280/');
-    const registryTools = ['search_adapters', 'get_adapter', 'list_adapter_tools', 'get_adapter_permissions', 'validate_adapter'];
+    const registryTools = [
+      'search_adapters',
+      'get_adapter',
+      'list_adapter_tools',
+      'get_adapter_permissions',
+      'validate_adapter',
+      'get_demo_info',
+    ];
     must(
       await waitFor(async () => registryTools.every((name) => watch.tools.has(name))),
       'the registry registers its own five tools',
@@ -310,10 +317,20 @@ async function main() {
     check(outputText(bad).includes('Not valid'), 'validate_adapter rejects a wildcard origin', outputText(bad));
     const listed = await invoke(page, watch, 'list_adapter_tools', { id: 'demo-shop' });
     check(outputText(listed).includes('apply_coupon'), 'list_adapter_tools returns the tool list with schemas');
+    const demoInfo = await invoke(page, watch, 'get_demo_info', {});
+    check(
+      outputText(demoInfo).includes('enable-webmcp-testing') && outputText(demoInfo).includes('demo-project'),
+      'get_demo_info tells an agent what to try and what must be switched on first',
+      outputText(demoInfo).slice(0, 160),
+    );
+    check(
+      outputText(demoInfo).includes('localhost:5273'),
+      'get_demo_info resolves demo URLs for wherever the portal is served from',
+    );
 
     /* ----------------------------------------------------- Store install -- */
     group('Installing from the Store shows the permission summary first');
-    await page.goto('http://localhost:5280/adapter/demo-project');
+    await page.goto('http://localhost:5280/adapters/demo-project');
     must(
       await waitFor(async () => page.eval(`Boolean(document.querySelector('[data-action="install-adapter"]'))`)),
       'the adapter detail page rendered',

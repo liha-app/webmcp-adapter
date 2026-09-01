@@ -24,7 +24,7 @@ export function AdapterDetail() {
     return (
       <section className="panel">
         <p className="empty">
-          No adapter with that id. <Link to="/">Back to the registry</Link>.
+          No adapter with that id. <Link to="/adapters">Back to the registry</Link>.
         </p>
       </section>
     );
@@ -38,7 +38,7 @@ export function AdapterDetail() {
       <header className="detail__head">
         <div>
           <p className="crumbs">
-            <Link to="/">Adapters</Link> / {adapter.category ?? 'other'}
+            <Link to="/adapters">Adapters</Link> / {adapter.category ?? 'other'}
           </p>
           <h1 data-field="name">{adapter.name}</h1>
           <p className="lede" data-field="description">

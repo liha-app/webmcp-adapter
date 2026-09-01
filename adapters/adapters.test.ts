@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { summarizeEffects, validateAdapter } from '@liha/adapter-schema';
+import { originsFor, type SiteId } from '@liha/config';
 import { OFFICIAL_ADAPTERS } from './index';
 
 /**
@@ -19,9 +20,17 @@ describe('official adapters', () => {
     expect(validateAdapter(adapter).errors).toEqual([]);
   });
 
-  it.each(OFFICIAL_ADAPTERS)('$id is scoped to first-party demo origins only', (adapter) => {
+  // Origins live in one config file so the adapter, the extension manifest and
+  // the portal cannot drift apart. Listing them out per adapter keeps the
+  // published definition readable and exactly scoped; this test keeps it true.
+  it.each(OFFICIAL_ADAPTERS)('$id declares exactly the origins its site is deployed on', (adapter) => {
+    expect(adapter.origins).toEqual(originsFor(adapter.id as SiteId));
+  });
+
+  it.each(OFFICIAL_ADAPTERS)('$id uses no wildcard or third-party origin', (adapter) => {
     for (const origin of adapter.origins) {
-      expect(origin).toMatch(/^http:\/\/(localhost|127\.0\.0\.1):52\d\d$/);
+      expect(origin).toMatch(/^(http:\/\/(localhost|127\.0\.0\.1):52\d\d|https:\/\/[a-z-]+\.webmcp-adopter\.liha\.dev)$/);
+      expect(origin).not.toContain('*');
     }
   });
 

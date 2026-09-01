@@ -1,6 +1,7 @@
 import { detectModelContext, errorResult, textResult, type ToolResult } from '@liha/adapter-runtime';
 import { validateAdapter, type Capability } from '@liha/adapter-schema';
 import { CATALOG, findEntry, searchCatalog } from './catalog';
+import { SETUP_STEPS, demoApps } from './demos';
 
 /**
  * The registry practises what it sells: it implements WebMCP itself, natively,
@@ -127,6 +128,42 @@ export async function registerRegistryTools(signal: AbortSignal): Promise<WebMcp
           ],
         };
         return textResult(JSON.stringify(permissions, null, 2), permissions as unknown as Record<string, unknown>);
+      },
+    },
+    {
+      // Added for the portal: an agent arriving here should be able to find out
+      // what it can try and what has to be switched on first, without a person
+      // reading the page to it.
+      name: 'get_demo_info',
+      description:
+        'Describe the demo websites this project provides, the tools each adapter adds to them, and what a browser needs before the tools will work.',
+      inputSchema: {
+        type: 'object',
+        properties: {
+          demo: { type: 'string', description: 'Optional demo id: demo-crm, demo-shop or demo-project' },
+        },
+      },
+      execute: (input) => {
+        const wanted = typeof input.demo === 'string' ? input.demo : '';
+        const origin = typeof location !== 'undefined' ? location.origin : undefined;
+        const all = demoApps(origin);
+        const demos = wanted ? all.filter((demo) => demo.id === wanted) : all;
+        if (demos.length === 0) {
+          return errorResult(`No demo with id "${wanted}". Known demos: ${all.map((demo) => demo.id).join(', ')}.`);
+        }
+        const payload = {
+          demos: demos.map((demo) => ({
+            id: demo.id,
+            name: demo.name,
+            url: demo.url,
+            adapter: demo.adapterId,
+            note: demo.note ?? null,
+            tools: demo.tools,
+          })),
+          requirements: SETUP_STEPS.map((step) => (step.code ? `${step.text} (${step.code})` : step.text)),
+          note: 'These sites implement no WebMCP themselves. Their tools come from adapters installed in the browser.',
+        };
+        return textResult(JSON.stringify(payload, null, 2), payload as unknown as Record<string, unknown>);
       },
     },
     {

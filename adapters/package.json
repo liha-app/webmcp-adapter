@@ -12,5 +12,8 @@
   },
   "dependencies": {
     "@liha/adapter-schema": "workspace:*"
+  },
+  "devDependencies": {
+    "@liha/config": "workspace:*"
   }
 }

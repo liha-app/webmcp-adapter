@@ -3,7 +3,7 @@
 [![CI](https://github.com/liha-app/webmcp-adapter/actions/workflows/ci.yml/badge.svg)](https://github.com/liha-app/webmcp-adapter/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
-**Make any website agent-ready.**
+**Make any website agent-ready.** → **[webmcp-adopter.liha.dev](https://webmcp-adopter.liha.dev)**
 
 WebMCP lets a website hand an agent real tools instead of making it guess at the
 DOM. The catch is who has to build it: today a site becomes agent-ready only
@@ -42,11 +42,11 @@ same surface a Tool Inspector or agent uses.
 
 ```
 pnpm acceptance            10/10 Phase 0 criteria
-pnpm acceptance:full       41/41 checks — three demo adapters, the registry's
+pnpm acceptance:full       43/43 checks — three demo adapters, the portal's
                            native WebMCP tools, the destructive confirmation gate
 pnpm acceptance:recorder   25/25 checks — record a workflow, get a valid adapter
-pnpm verify                192 unit + integration tests, typecheck, lint, build
-pnpm e2e                   23 Playwright tests
+pnpm verify                200 unit + integration tests, typecheck, lint, build
+pnpm e2e                   32 Playwright tests
 ```
 
 The demo apps contain no WebMCP code at all — asserted against their sources,
@@ -188,8 +188,8 @@ Full model, including the MAIN-world limitation this cannot engineer away:
 ## Verifying it yourself
 
 ```bash
-pnpm verify           # typecheck, lint, 192 unit + integration tests, build
-pnpm e2e              # 23 Playwright tests against the demo apps and registry
+pnpm verify           # typecheck, lint, 200 unit + integration tests, build
+pnpm e2e              # 32 Playwright tests against the portal and the demo apps
 pnpm acceptance:all   # three real-browser runs through the WebMCP protocol
 ```
 
@@ -227,8 +227,8 @@ by hand in normal Chrome is unaffected.
 apps/
   extension/       MV3 extension: service worker, bridges, MAIN-world runtime,
                    popup, confirmation window, Recorder, Studio, diagnostics
-  registry/        the Adapter Store — React, TanStack Router/Query, Zod,
-                   and WebMCP-native
+  registry/        the public portal and Adapter Store — React, TanStack
+                   Router/Query, Zod, and WebMCP-native
   demo-crm/        ordinary React apps with no WebMCP code whatsoever
   demo-shop/
   demo-project/

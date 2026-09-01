@@ -1,0 +1,29 @@
+{
+  "$comment": "The single source of truth for every origin this project runs on. Adapter definitions, the extension manifest, the service worker's static-origin list and the portal's demo links all derive from this file. Kept as JSON so the extension build (plain Node) and the TypeScript sources can read the same bytes.",
+  "sites": {
+    "registry": {
+      "label": "Liha WebMCP Adapter",
+      "port": 5280,
+      "production": "https://webmcp-adopter.liha.dev",
+      "development": ["http://localhost:5280", "http://127.0.0.1:5280"]
+    },
+    "demo-crm": {
+      "label": "Acme CRM",
+      "port": 5273,
+      "production": "https://crm.webmcp-adopter.liha.dev",
+      "development": ["http://localhost:5273", "http://127.0.0.1:5273"]
+    },
+    "demo-shop": {
+      "label": "Nimbus Supply",
+      "port": 5274,
+      "production": "https://shop.webmcp-adopter.liha.dev",
+      "development": ["http://localhost:5274", "http://127.0.0.1:5274"]
+    },
+    "demo-project": {
+      "label": "Kite Project Manager",
+      "port": 5275,
+      "production": "https://project.webmcp-adopter.liha.dev",
+      "development": ["http://localhost:5275", "http://127.0.0.1:5275"]
+    }
+  }
+}

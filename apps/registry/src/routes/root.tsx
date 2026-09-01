@@ -1,9 +1,11 @@
 import { useEffect, useState } from 'react';
-import { Link, Outlet } from '@tanstack/react-router';
+import { Link, Outlet, useRouterState } from '@tanstack/react-router';
+import { GITHUB_URL } from '../lib/links';
 import { registerRegistryTools, type WebMcpStatus } from '../lib/webmcp';
 
 export function Root() {
   const [status, setStatus] = useState<WebMcpStatus | null>(null);
+  const onLanding = useRouterState({ select: (state) => state.location.pathname === '/' });
 
   useEffect(() => {
     // Aborting the signal unregisters every tool — the same mechanism the
@@ -21,16 +23,16 @@ export function Root() {
         <Link to="/" className="brand">
           <span className="brand__mark" aria-hidden="true" />
           <span>
-            <strong>Liha</strong> Adapter Registry
+            <strong>Liha</strong> WebMCP Adapter
           </span>
         </Link>
         <nav className="masthead__nav">
-          <Link to="/" activeProps={{ className: 'active' }} activeOptions={{ exact: true }}>
+          <Link to="/adapters" activeProps={{ className: 'active' }}>
             Adapters
           </Link>
-          <Link to="/about" activeProps={{ className: 'active' }}>
-            How it works
-          </Link>
+          <a href={onLanding ? '#how' : '/#how'}>How it works</a>
+          <a href={onLanding ? '#security' : '/#security'}>Trust model</a>
+          <a href={GITHUB_URL}>GitHub</a>
         </nav>
       </header>
 
@@ -41,8 +43,8 @@ export function Root() {
         {status === null
           ? 'Checking for WebMCP…'
           : status.supported
-            ? `This registry implements WebMCP itself — ${status.registered.length} tools registered: ${status.registered.join(', ')}`
-            : 'WebMCP is not available in this browser. Enable chrome://flags/#enable-webmcp-testing to let an agent search this registry directly.'}
+            ? `This site implements WebMCP itself — ${status.registered.length} tools registered: ${status.registered.join(', ')}`
+            : 'WebMCP is not available in this browser. Enable chrome://flags/#enable-webmcp-testing to let an agent use this page directly.'}
       </div>
 
       <main className="main">
@@ -54,7 +56,10 @@ export function Root() {
           Every adapter here is a JSON file in the repository. Adapters contain no JavaScript — read one before you
           install it.
         </p>
-        <p className="muted">MIT licensed · adapter definitions published alongside the code</p>
+        <p className="muted">
+          MIT licensed · <a href={GITHUB_URL}>source</a> · <a href={`${GITHUB_URL}/blob/main/SECURITY.md`}>security</a>{' '}
+          · <a href={`${GITHUB_URL}/blob/main/docs/adapter-format.md`}>adapter format</a>
+        </p>
       </footer>
     </div>
   );

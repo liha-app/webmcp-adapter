@@ -1,14 +1,15 @@
 {
   "id": "demo-project",
   "name": "Kite Project Manager",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "description": "Create, assign, re-status, flag and delete tasks in the Kite Project Manager demo. Deleting is classified DESTRUCTIVE and always asks for confirmation.",
   "category": "productivity",
   "author": "Liha WebMCP Adapter",
   "verifiedAt": "2026-09-01",
   "origins": [
     "http://localhost:5275",
-    "http://127.0.0.1:5275"
+    "http://127.0.0.1:5275",
+    "https://project.webmcp-adopter.liha.dev"
   ],
   "tools": [
     {
