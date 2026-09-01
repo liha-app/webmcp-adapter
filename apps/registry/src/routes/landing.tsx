@@ -5,6 +5,7 @@ import { SETUP_STEPS, demoApps } from '../lib/demos';
 import { PROOF } from '../lib/proof';
 import { GITHUB_URL, RELEASES_URL } from '../lib/links';
 import { CapabilityBadge } from './components';
+import { AgentConsole } from './console';
 import { Flow } from './diagram';
 
 function Section({
@@ -42,8 +43,13 @@ export function Landing() {
     <>
       {/* ------------------------------------------------------------ hero */}
       <header className="hero">
+        <div className="hero__glow" aria-hidden="true" />
         <div className="hero__copy">
-          <h1>Make any website agent-ready.</h1>
+          <p className="hero__kicker">WebMCP capability portability</p>
+          <h1>
+            Make any website <br />
+            agent-ready.
+          </h1>
           <p className="hero__lede">
             Add WebMCP tools to websites that never implemented WebMCP.
           </p>
@@ -67,16 +73,7 @@ export function Landing() {
           </p>
         </div>
         <div className="hero__figure">
-          <Flow
-            animate
-            steps={[
-              { label: 'Website', detail: 'implements no WebMCP' },
-              { label: 'Liha Adapter', detail: 'declarative JSON', strong: true },
-              { label: 'Chrome Extension', detail: 'MAIN-world injection' },
-              { label: 'WebMCP', detail: 'document.modelContext' },
-              { label: 'AI Agent', detail: 'discovers named tools' },
-            ]}
-          />
+          <AgentConsole />
         </div>
       </header>
 
@@ -166,12 +163,13 @@ export function Landing() {
           ))}
         </div>
         <Flow
+          animate
           steps={[
-            { label: 'Adapter JSON' },
-            { label: 'Chrome extension' },
-            { label: 'MAIN world' },
-            { label: 'registerTool()', strong: true },
-            { label: 'Agent' },
+            { label: 'Adapter JSON', detail: 'declarative, origin-scoped' },
+            { label: 'Chrome extension', detail: 'validates, then injects' },
+            { label: 'MAIN world', detail: "the page's own JavaScript world" },
+            { label: 'registerTool()', detail: 'document.modelContext', strong: true },
+            { label: 'Agent', detail: 'discovers named capabilities' },
           ]}
         />
       </Section>
@@ -397,6 +395,7 @@ export function Landing() {
 
       {/* -------------------------------------------------------- final cta */}
       <section className="final">
+        <p className="hero__kicker">Open source · MIT</p>
         <h2>Don’t wait for every website to adopt WebMCP.</h2>
         <p className="muted">The website never implemented WebMCP. Liha Adapter did.</p>
         <div className="cta">
