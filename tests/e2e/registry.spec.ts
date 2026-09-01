@@ -19,6 +19,53 @@ test.describe('Landing page', () => {
     );
   });
 
+  // The centrepiece. It has to actually call the page's own tools, and it has
+  // to be truthful about which path executed the call.
+  test('really runs this page’s own WebMCP tools', async ({ page }) => {
+    const live = page.getByTestId('live-tools');
+    await expect(live).toBeVisible();
+    await expect(live.getByRole('tab')).toHaveCount(6);
+
+    await live.getByRole('button', { name: 'Run search_adapters' }).click();
+    const result = page.getByTestId('live-result');
+    await expect(result).toBeVisible();
+    // A real answer from the real catalogue, not a canned string.
+    await expect(result).toContainText('demo-crm');
+    await expect(result).toContainText('adapter(s)');
+  });
+
+  test('says which path executed the call, and does not pretend', async ({ page }) => {
+    // Playwright's Chromium has no WebMCP, so the honest label here is the
+    // direct one. The WebMCP path is covered by the acceptance runner, which
+    // drives a browser that does expose the API.
+    const hasWebMcp = await page.evaluate(() => 'modelContext' in document);
+    await page.getByRole('button', { name: /^Run / }).click();
+    await expect(page.getByTestId('live-result')).toBeVisible();
+    await expect(page.locator('.live__badge')).toHaveText(
+      hasWebMcp ? 'executed through WebMCP' : 'executed directly',
+    );
+    if (!hasWebMcp) {
+      await expect(page.getByText(/your browser has no WebMCP/)).toBeVisible();
+    }
+  });
+
+  test('switching tools swaps the arguments and clears the last result', async ({ page }) => {
+    await page.getByRole('button', { name: /^Run / }).click();
+    await expect(page.getByTestId('live-result')).toBeVisible();
+    await page.getByRole('tab', { name: 'get_adapter', exact: true }).click();
+    await expect(page.getByTestId('live-result')).toHaveCount(0);
+    await expect(page.locator('.live__form input').first()).toHaveValue('demo-crm');
+    await page.getByRole('button', { name: 'Run get_adapter' }).click();
+    await expect(page.getByTestId('live-result')).toContainText('create_customer');
+  });
+
+  test('validate_adapter really rejects a wildcard origin', async ({ page }) => {
+    await page.getByRole('tab', { name: 'validate_adapter' }).click();
+    await page.getByRole('button', { name: 'Run validate_adapter' }).click();
+    await expect(page.getByTestId('live-result')).toContainText('Not valid');
+    await expect(page.getByTestId('live-result')).toContainText('wildcards');
+  });
+
   test('explains the problem it exists to solve', async ({ page }) => {
     await expect(page.getByText('WebMCP adoption shouldn’t have to wait for every website owner.')).toBeVisible();
     await expect(page.getByText('registerTool()').first()).toBeVisible();
@@ -33,6 +80,14 @@ test.describe('Landing page', () => {
     await expect(page.getByText(new RegExp(`${PROOF.unitAndIntegrationTests} unit and integration tests`))).toBeVisible();
     await expect(page.getByText(new RegExp(`${PROOF.e2eTests} end-to-end tests`))).toBeVisible();
     await expect(page.getByText(/All three demo apps contain zero WebMCP code/)).toBeVisible();
+  });
+
+  test('shows a real adapter definition rather than describing one', async ({ page }) => {
+    const excerpt = page.locator('.excerpt pre');
+    await expect(excerpt).toContainText('"capability": "WRITE"');
+    await expect(excerpt).toContainText('"type": "click"');
+    const text = (await excerpt.textContent()) ?? '';
+    expect(text).not.toMatch(/function\s*\(|=>|eval\(/);
   });
 
   test('links to all three demos with their tools and capabilities', async ({ page }) => {

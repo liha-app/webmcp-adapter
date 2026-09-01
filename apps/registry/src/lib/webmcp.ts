@@ -32,18 +32,26 @@ export interface WebMcpStatus {
   registered: string[];
 }
 
-export async function registerRegistryTools(signal: AbortSignal): Promise<WebMcpStatus> {
-  const modelContext = detectModelContext(document);
-  if (!modelContext) return { supported: false, registered: [] };
+export interface RegistryTool {
+  name: string;
+  description: string;
+  inputSchema: Record<string, unknown>;
+  execute: (input: Record<string, unknown>) => ToolResult;
+  /** Prefilled so a visitor can run it once without typing anything. */
+  example: Record<string, string>;
+}
 
-  const tools: Array<{
-    name: string;
-    description: string;
-    inputSchema: Record<string, unknown>;
-    execute: (input: Record<string, unknown>) => ToolResult;
-  }> = [
+/**
+ * The tools this page provides.
+ *
+ * Exported rather than built inside the registration call so the page can run
+ * exactly the same functions a visitor's agent would — the "call it yourself"
+ * panel is not a re-implementation that could drift from what agents get.
+ */
+export const REGISTRY_TOOLS: RegistryTool[] = [
     {
       name: 'search_adapters',
+      example: { capability: 'WRITE' },
       description:
         'Search the Liha adapter registry. Filter by free text, by category, or by the capability its tools declare (READ, INTERACT, WRITE, DESTRUCTIVE).',
       inputSchema: {
@@ -68,6 +76,7 @@ export async function registerRegistryTools(signal: AbortSignal): Promise<WebMcp
     },
     {
       name: 'get_adapter',
+      example: { id: 'demo-crm' },
       description: 'Get the full published definition of one adapter, including every step it would run.',
       inputSchema: {
         type: 'object',
@@ -82,6 +91,7 @@ export async function registerRegistryTools(signal: AbortSignal): Promise<WebMcp
     },
     {
       name: 'list_adapter_tools',
+      example: { id: 'demo-shop' },
       description: 'List the tools an adapter provides, with their capability classification and input schema.',
       inputSchema: {
         type: 'object',
@@ -103,6 +113,7 @@ export async function registerRegistryTools(signal: AbortSignal): Promise<WebMcp
     },
     {
       name: 'get_adapter_permissions',
+      example: { id: 'demo-project' },
       description:
         'Explain exactly what an adapter is allowed to do: the origins it is scoped to and the capability of each tool.',
       inputSchema: {
@@ -135,6 +146,7 @@ export async function registerRegistryTools(signal: AbortSignal): Promise<WebMcp
       // what it can try and what has to be switched on first, without a person
       // reading the page to it.
       name: 'get_demo_info',
+      example: {},
       description:
         'Describe the demo websites this project provides, the tools each adapter adds to them, and what a browser needs before the tools will work.',
       inputSchema: {
@@ -168,6 +180,10 @@ export async function registerRegistryTools(signal: AbortSignal): Promise<WebMcp
     },
     {
       name: 'validate_adapter',
+      example: {
+        adapter:
+          '{"id":"my-site","name":"My site","version":"1.0.0","origins":["https://*.example.com"],"tools":[]}',
+      },
       description:
         'Validate an adapter definition against the published schema and report every problem. Accepts the adapter as a JSON string.',
       inputSchema: {
@@ -191,10 +207,14 @@ export async function registerRegistryTools(signal: AbortSignal): Promise<WebMcp
         );
       },
     },
-  ];
+];
+
+export async function registerRegistryTools(signal: AbortSignal): Promise<WebMcpStatus> {
+  const modelContext = detectModelContext(document);
+  if (!modelContext) return { supported: false, registered: [] };
 
   const registered: string[] = [];
-  for (const tool of tools) {
+  for (const tool of REGISTRY_TOOLS) {
     await modelContext.registerTool(
       {
         name: tool.name,

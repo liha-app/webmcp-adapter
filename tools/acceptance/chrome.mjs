@@ -54,8 +54,11 @@ export function findChromeBinary() {
 }
 
 export class Browser {
-  constructor({ binary, flags = [], extensionPath = null, headless = true }) {
+  constructor({ binary, flags = [], extensionPath = null, headless = true, webmcp = true }) {
     this.binary = binary;
+    // Opt out to observe how a page behaves in a browser without WebMCP —
+    // the degradation path is worth testing, not just assuming.
+    this.webmcp = webmcp;
     // Port 0 lets Chrome choose, and the real port is read back from the
     // profile's DevToolsActivePort file. Hard-coding 9222 silently connects to
     // whatever other browser already owns that port.
@@ -87,7 +90,7 @@ export class Browser {
         ? ['--no-sandbox', '--disable-dev-shm-usage']
         : []),
       // The WebMCP API itself, plus the DevTools domain an inspector speaks.
-      '--enable-blink-features=WebMCPTesting,DevToolsWebMCPSupport',
+      ...(this.webmcp ? ['--enable-blink-features=WebMCPTesting,DevToolsWebMCPSupport'] : []),
       ...(this.extensionPath
         ? [`--load-extension=${this.extensionPath}`, `--disable-extensions-except=${this.extensionPath}`]
         : []),

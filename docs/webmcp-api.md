@@ -16,7 +16,12 @@ two of them have direct security consequences for this project.
 | Command line | `--enable-blink-features=WebMCPTesting` (or `--enable-features=WebMCPTesting`) |
 | DevTools domain | `--enable-blink-features=DevToolsWebMCPSupport` |
 
-Without the flag, `document.modelContext` is `undefined`.
+Without the flag, `document.modelContext` is `undefined` — **in branded Google
+Chrome**. Chrome for Testing 151 exposes it with no flag at all, which is worth
+knowing before concluding that a flag was applied: an automated run can pass
+while the switch it thinks it set did nothing. The acceptance runners pass the
+flag anyway, and `tools/acceptance/chrome.mjs` takes `webmcp: false` for
+observing how a page behaves in a browser genuinely without the API.
 
 `document.modelContext` is also `undefined` on `about:blank`; it is only exposed
 on a real document. Probing for the API on a blank tab reports a false negative.
