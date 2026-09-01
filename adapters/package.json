@@ -1,0 +1,10 @@
+{
+  "name": "@liha/adapters",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": { ".": "./index.ts" },
+  "types": "./index.ts",
+  "scripts": { "typecheck": "tsc -p tsconfig.json --noEmit" },
+  "dependencies": { "@liha/adapter-schema": "workspace:*" }
+}

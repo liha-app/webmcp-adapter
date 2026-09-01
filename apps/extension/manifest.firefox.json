@@ -1,0 +1,73 @@
+{
+  "manifest_version": 3,
+  "name": "Liha WebMCP Adapter (Firefox)",
+  "version": "1.0.0",
+  "description": "Make any website agent-ready: register WebMCP tools on sites that never implemented WebMCP.",
+  "background": {
+    "scripts": [
+      "service-worker.js"
+    ],
+    "type": "module"
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "http://localhost:5273/*",
+        "http://127.0.0.1:5273/*",
+        "http://localhost:5274/*",
+        "http://127.0.0.1:5274/*",
+        "http://localhost:5275/*",
+        "http://127.0.0.1:5275/*"
+      ],
+      "js": [
+        "content/bridge.js"
+      ],
+      "run_at": "document_start",
+      "world": "ISOLATED",
+      "all_frames": false
+    },
+    {
+      "matches": [
+        "http://localhost:5280/*",
+        "http://127.0.0.1:5280/*"
+      ],
+      "js": [
+        "content/store-bridge.js"
+      ],
+      "run_at": "document_idle",
+      "world": "ISOLATED",
+      "all_frames": false
+    }
+  ],
+  "action": {
+    "default_popup": "popup/popup.html",
+    "default_title": "Liha WebMCP Adapter"
+  },
+  "permissions": [
+    "scripting",
+    "storage"
+  ],
+  "host_permissions": [
+    "http://localhost:5273/*",
+    "http://127.0.0.1:5273/*",
+    "http://localhost:5274/*",
+    "http://127.0.0.1:5274/*",
+    "http://localhost:5275/*",
+    "http://127.0.0.1:5275/*",
+    "http://localhost:5280/*",
+    "http://127.0.0.1:5280/*"
+  ],
+  "optional_host_permissions": [
+    "http://*/*",
+    "https://*/*"
+  ],
+  "content_security_policy": {
+    "extension_pages": "script-src 'self'; object-src 'self'"
+  },
+  "browser_specific_settings": {
+    "gecko": {
+      "id": "liha-webmcp-adapter@liha.dev",
+      "strict_min_version": "128.0"
+    }
+  }
+}

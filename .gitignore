@@ -1,0 +1,10 @@
+node_modules/
+dist/
+.cache/
+*.log
+.DS_Store
+.vitest/
+coverage/
+dist-firefox/
+playwright-report/
+test-results/

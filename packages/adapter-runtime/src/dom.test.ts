@@ -1,0 +1,183 @@
+import { beforeEach, describe, expect, it } from 'vitest';
+import type { StepError } from './dom';
+import {
+  clickElement,
+  fillElement,
+  isSensitiveField,
+  readElementAttribute,
+  readElementText,
+  resolveExactlyOne,
+  selectOption,
+  setChecked,
+  submitForm,
+} from './dom';
+
+const setBody = (html: string) => {
+  document.body.innerHTML = html;
+};
+const one = <T extends Element>(selector: string) => document.querySelector(selector) as T;
+
+beforeEach(() => setBody(''));
+
+describe('resolveExactlyOne', () => {
+  it('returns the single match', () => {
+    setBody('<button data-action="go">Go</button>');
+    expect(resolveExactlyOne('[data-action="go"]', document).textContent).toBe('Go');
+  });
+
+  it('fails closed when nothing matches', () => {
+    try {
+      resolveExactlyOne('[data-action="go"]', document);
+      throw new Error('should have thrown');
+    } catch (error) {
+      expect((error as StepError).code).toBe('selector-not-found');
+    }
+  });
+
+  // The dangerous case: never pick one of several candidates for a WRITE step.
+  it('fails closed when the selector is ambiguous', () => {
+    setBody('<button class="b">A</button><button class="b">B</button><button class="b">C</button>');
+    try {
+      resolveExactlyOne('.b', document);
+      throw new Error('should have thrown');
+    } catch (error) {
+      expect((error as StepError).code).toBe('selector-ambiguous');
+      expect((error as StepError).message).toContain('matched 3 elements');
+    }
+  });
+
+  it('fails closed on a malformed selector', () => {
+    expect(() => resolveExactlyOne(':::', document)).toThrow(/invalid selector/);
+  });
+});
+
+describe('sensitive field protection', () => {
+  it.each([
+    '<input type="password" name="p">',
+    '<input name="password">',
+    '<input name="card_number">',
+    '<input name="cvv">',
+    '<input name="user_api_key">',
+    '<input autocomplete="cc-number" name="x">',
+    '<input autocomplete="current-password" name="x">',
+    '<input name="x" aria-label="One time code (otp)">',
+  ])('flags %s as sensitive', (html) => {
+    setBody(html);
+    expect(isSensitiveField(one('input'))).toBe(true);
+  });
+
+  it('does not flag ordinary fields', () => {
+    setBody('<input name="email"><input name="full_name"><textarea name="notes"></textarea>');
+    for (const field of document.querySelectorAll('input, textarea')) {
+      expect(isSensitiveField(field)).toBe(false);
+    }
+  });
+
+  it('refuses to type into a credential field', () => {
+    setBody('<input type="password" name="p">');
+    expect(() => fillElement(one('input'), 'hunter2')).toThrow(/credential or payment/);
+    expect(one<HTMLInputElement>('input').value).toBe('');
+  });
+
+  it('refuses to read a credential field, by text or by attribute', () => {
+    setBody('<input name="password" value="hunter2">');
+    expect(() => readElementText(one('input'))).toThrow(/credential or payment/);
+    expect(() => readElementAttribute(one('input'), 'value')).toThrow(/credential or payment/);
+  });
+});
+
+describe('fillElement', () => {
+  it('sets the value and dispatches input and change events', () => {
+    setBody('<input name="name">');
+    const input = one<HTMLInputElement>('input');
+    const seen: string[] = [];
+    input.addEventListener('input', () => seen.push('input'));
+    input.addEventListener('change', () => seen.push('change'));
+    fillElement(input, 'Alice');
+    expect(input.value).toBe('Alice');
+    expect(seen).toEqual(['input', 'change']);
+  });
+
+  it('refuses elements that are not inputs', () => {
+    setBody('<div id="d"></div>');
+    expect(() => fillElement(one('#d'), 'x')).toThrow(/not an input/);
+  });
+});
+
+describe('selectOption', () => {
+  beforeEach(() => setBody('<select name="s"><option value="a">Alpha</option><option value="b">Beta</option></select>'));
+
+  it('selects by value', () => {
+    selectOption(one('select'), 'b');
+    expect(one<HTMLSelectElement>('select').value).toBe('b');
+  });
+
+  it('selects by visible label when no value matches', () => {
+    selectOption(one('select'), 'Alpha');
+    expect(one<HTMLSelectElement>('select').value).toBe('a');
+  });
+
+  it('fails when no option matches rather than picking one', () => {
+    expect(() => selectOption(one('select'), 'Gamma')).toThrow(/no option matching/);
+    expect(one<HTMLSelectElement>('select').value).toBe('a');
+  });
+
+  it('refuses elements that are not a select', () => {
+    setBody('<input name="s">');
+    expect(() => selectOption(one('input'), 'a')).toThrow(/not a <select>/);
+  });
+});
+
+describe('setChecked', () => {
+  it('checks and unchecks a checkbox', () => {
+    setBody('<input type="checkbox">');
+    const box = one<HTMLInputElement>('input');
+    setChecked(box, true);
+    expect(box.checked).toBe(true);
+    setChecked(box, false);
+    expect(box.checked).toBe(false);
+  });
+
+  it('is a no-op when already in the requested state', () => {
+    setBody('<input type="checkbox" checked>');
+    const box = one<HTMLInputElement>('input');
+    let clicks = 0;
+    box.addEventListener('click', () => clicks++);
+    setChecked(box, true);
+    expect(clicks).toBe(0);
+  });
+
+  it('refuses elements that are not checkboxes', () => {
+    setBody('<input type="text">');
+    expect(() => setChecked(one('input'), true)).toThrow(/not a checkbox/);
+  });
+});
+
+describe('submitForm', () => {
+  it('submits the form a control belongs to', () => {
+    setBody('<form id="f"><button type="submit">Go</button></form>');
+    let submitted = false;
+    one('#f').addEventListener('submit', (event) => {
+      event.preventDefault();
+      submitted = true;
+    });
+    submitForm(one('button'));
+    expect(submitted).toBe(true);
+  });
+
+  it('fails when there is no form', () => {
+    setBody('<button>Go</button>');
+    expect(() => submitForm(one('button'))).toThrow(/no <form>/);
+  });
+});
+
+describe('clickElement and readElementText', () => {
+  it('clicks and reads collapsed text', () => {
+    setBody('<div id="d">  Alice   Smith\n</div>');
+    let clicked = false;
+    one('#d').addEventListener('click', () => (clicked = true));
+    clickElement(one('#d'));
+    expect(clicked).toBe(true);
+    expect(readElementText(one('#d'))).toBe('Alice Smith');
+  });
+});

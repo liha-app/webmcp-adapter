@@ -1,0 +1,113 @@
+{
+  "id": "demo-shop",
+  "name": "Nimbus Supply",
+  "version": "1.0.0",
+  "description": "Search products, add them to the cart and apply coupons on the Nimbus Supply demo storefront. No checkout or payment steps exist in this adapter.",
+  "category": "commerce",
+  "author": "Liha WebMCP Adapter",
+  "verifiedAt": "2026-09-01",
+  "origins": ["http://localhost:5274", "http://127.0.0.1:5274"],
+  "tools": [
+    {
+      "name": "search_products",
+      "title": "Search products",
+      "description": "Search the catalogue by product name or category and return the matching products with their prices.",
+      "capability": "READ",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "query": { "type": "string", "description": "Product name or category to search for" }
+        },
+        "required": ["query"]
+      },
+      "probeSelectors": ["[data-testid='product-search']"],
+      "steps": [
+        { "type": "fill", "selector": "[data-testid='product-search']", "value": "{{query}}" },
+        { "type": "waitFor", "selector": "[data-testid='product-list']" },
+        {
+          "type": "readList",
+          "selector": "[data-testid='product-list'] li",
+          "as": "products",
+          "limit": 25,
+          "fields": {
+            "id": { "attribute": "data-product-id" },
+            "name": { "selector": "[data-field='name']" },
+            "category": { "selector": "[data-field='category']" },
+            "price": { "selector": "[data-field='price']" }
+          }
+        }
+      ]
+    },
+    {
+      "name": "view_cart",
+      "title": "View cart",
+      "description": "Open the cart page and return its current contents and total.",
+      "capability": "INTERACT",
+      "inputSchema": { "type": "object", "properties": {} },
+      "probeSelectors": ["[data-action='view-cart']"],
+      "steps": [
+        { "type": "navigate", "path": "/cart" },
+        { "type": "waitFor", "selector": "[data-testid='cart-panel']" },
+        {
+          "type": "readList",
+          "selector": "[data-testid='cart-items'] li",
+          "as": "items",
+          "limit": 50,
+          "fields": {
+            "name": { "selector": "[data-field='name']" },
+            "quantity": { "selector": "[data-field='quantity']" },
+            "price": { "selector": "[data-field='price']" }
+          }
+        },
+        { "type": "readText", "selector": "[data-testid='cart-total']", "as": "total" }
+      ]
+    },
+    {
+      "name": "add_to_cart",
+      "title": "Add a product to the cart",
+      "description": "Add a product to the cart. The product is located by searching for it, and the tool fails if the search does not narrow to exactly one product.",
+      "capability": "WRITE",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "product": { "type": "string", "description": "Product name, specific enough to match exactly one item" }
+        },
+        "required": ["product"]
+      },
+      "probeSelectors": ["[data-testid='product-search']"],
+      "steps": [
+        { "type": "navigate", "path": "/" },
+        { "type": "waitFor", "selector": "[data-testid='product-search']" },
+        { "type": "fill", "selector": "[data-testid='product-search']", "value": "{{product}}" },
+        { "type": "waitFor", "selector": "[data-testid='product-list'] li" },
+        { "type": "readText", "selector": "[data-testid='product-list'] li [data-field='name']", "as": "added_product" },
+        { "type": "click", "selector": "[data-testid='product-list'] li [data-action='add-to-cart']" },
+        { "type": "assertVisible", "selector": "[data-testid='cart-count']" },
+        { "type": "readText", "selector": "[data-testid='cart-count']", "as": "cart_item_count" }
+      ]
+    },
+    {
+      "name": "apply_coupon",
+      "title": "Apply a coupon",
+      "description": "Apply a coupon code to the cart and report whether it was accepted.",
+      "capability": "WRITE",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "code": { "type": "string", "description": "Coupon code, for example SAVE10" }
+        },
+        "required": ["code"]
+      },
+      "probeSelectors": ["[data-action='view-cart']"],
+      "steps": [
+        { "type": "navigate", "path": "/cart" },
+        { "type": "waitFor", "selector": "[data-testid='coupon-form'] [name='coupon']" },
+        { "type": "fill", "selector": "[data-testid='coupon-form'] [name='coupon']", "value": "{{code}}" },
+        { "type": "click", "selector": "[data-action='apply-coupon']" },
+        { "type": "waitFor", "selector": "[data-testid='coupon-status']" },
+        { "type": "readText", "selector": "[data-testid='coupon-status']", "as": "coupon_status" },
+        { "type": "readText", "selector": "[data-testid='cart-total']", "as": "cart_total" }
+      ]
+    }
+  ]
+}

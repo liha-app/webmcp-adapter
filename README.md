@@ -1,0 +1,272 @@
+# Liha WebMCP Adapter
+
+**Make any website agent-ready.**
+
+WebMCP lets a website hand an agent real tools instead of making it guess at the
+DOM. The catch is who has to build it: today a site becomes agent-ready only
+when its own developers ship `document.modelContext.registerTool()`.
+
+Liha removes that dependency. Adapters written by users and by the community add
+WebMCP tools to sites that never implemented WebMCP — declaratively, scoped to
+one origin, with their source open to inspection before install.
+
+> **WebMCP adoption no longer has to wait for every website owner.**
+
+This is not browser automation with extra steps:
+
+| Ordinary automation | A Liha adapter |
+|---|---|
+| the agent guesses from a screenshot or the DOM | a named capability with a JSON input schema |
+| every run re-derives what to click | a deterministic workflow, written once |
+| nobody can audit what it will do | public JSON with no executable code in it |
+| no notion of permission | READ / INTERACT / WRITE / DESTRUCTIVE, confirmed |
+| ambiguity resolved by guessing | ambiguity fails closed |
+| private to one script | shared, versioned, health-checked in a registry |
+
+The output is not a click. It is a **WebMCP capability any agent can discover.**
+
+---
+
+## It works, and here is the evidence
+
+The project rested on one unproven assumption: *can a Chrome extension register
+a WebMCP tool in a page's MAIN world such that a real WebMCP agent discovers and
+executes it as an ordinary WebMCP tool?*
+
+**Yes** — verified end to end in a real browser, with tools discovered and
+invoked from outside the page over the DevTools `WebMCP` domain, which is the
+same surface a Tool Inspector or agent uses.
+
+```
+pnpm acceptance            10/10 Phase 0 criteria
+pnpm acceptance:full       41/41 checks — three demo adapters, the registry's
+                           native WebMCP tools, the destructive confirmation gate
+pnpm acceptance:recorder   25/25 checks — record a workflow, get a valid adapter
+pnpm verify                192 unit + integration tests, typecheck, lint, build
+pnpm e2e                   23 Playwright tests
+```
+
+The demo apps contain no WebMCP code at all — asserted against their sources,
+their built bundles, and `'modelContext' in window` at runtime. Everything an
+agent can do on them comes from an adapter.
+
+---
+
+## How it works
+
+```
+  ┌──────────────────────┐
+  │  Adapter (JSON)      │  declarative, origin-scoped, no executable code
+  └──────────┬───────────┘
+             │  validated (Zod) — storage is not a trust boundary
+  ┌──────────▼───────────┐
+  │  Service worker      │  decides whether this origin gets this adapter
+  └──────────┬───────────┘
+             │  scripting.executeScript({ world: 'MAIN' })
+             │  the definition crosses as a JSON *argument*, never as source
+  ┌──────────▼───────────┐
+  │  MAIN-world runtime  │  no chrome.* APIs; validates input; drives the DOM
+  └──────────┬───────────┘
+             │  document.modelContext.registerTool(...)
+  ┌──────────▼───────────┐
+  │  WebMCP agent        │  sees an ordinary WebMCP tool on the page
+  └──────────────────────┘
+```
+
+An ISOLATED-world content script does nothing but tell the service worker that a
+page in scope has loaded, and relay confirmation requests to the extension. The
+adapter itself never travels through the page, so a hostile page has no channel
+to spoof one into being installed.
+
+For what running in the MAIN world costs in isolation — and it does cost
+something — see
+[SECURITY.md](SECURITY.md#9-the-main-world-trade-off--read-this-one).
+
+---
+
+## Quick start
+
+**Requirements:** Node 20+, pnpm 10+, Chrome 151+.
+
+```bash
+pnpm install
+pnpm build
+pnpm demo        # CRM 5273 · Shop 5274 · Projects 5275 · Registry 5280
+```
+
+Enable `chrome://flags/#enable-webmcp-testing` ("WebMCP for testing") and
+relaunch Chrome. Then load the extension: `chrome://extensions` → **Developer
+mode** → **Load unpacked** → `apps/extension/dist`.
+
+Open <http://localhost:5273> and check the console:
+
+```js
+(await document.modelContext.getTools()).map((t) => t.name)
+// ["search_customers", "create_customer", "update_customer"]
+```
+
+Then ask an agent to *"create a customer named Alice Smith with email
+alice@example.com"* and watch the form fill itself in.
+
+`pnpm dev` runs the same thing with hot reload and rebuilds the extension on
+change (reload it in `chrome://extensions` to pick changes up).
+
+---
+
+## What is in here
+
+### The extension
+
+Manifest V3. A service worker owns the adapter catalogue and decides what gets
+injected where. The MAIN-world runtime registers tools and executes their steps.
+A popup shows WebMCP availability, every adapter with health and capability
+badges, a per-adapter "ask before every WRITE" switch, and a redacted execution
+log.
+
+It also contains the **Recorder** — press *Record a tool*, use the site by hand,
+press *Stop* — and the **Studio**, where the recording becomes an adapter you
+name, parameterize, test and install. Selectors come from the site's own stable
+attributes; class names are never used, because they churn on every redeploy.
+
+### The adapter runtime
+
+A closed vocabulary of thirteen declarative steps. Fail-closed selector
+resolution, input validation the browser does not do for you, capability
+confirmation, credential-field refusal, redacted tracing, and adapter health
+checks. See [docs/adapter-format.md](docs/adapter-format.md).
+
+### Three demo apps, zero WebMCP
+
+**Acme CRM**, **Nimbus Supply** and **Kite Project Manager** are ordinary React
+apps. They exist to prove the runtime is general rather than a hack aimed at one
+page — fourteen tools across three apps, all from adapters.
+
+### The Adapter Registry
+
+A public catalogue with search, categories, per-adapter origins, tools, input
+schemas, capability classification, health, last-verified date, and the complete
+source of every definition.
+
+The registry **implements WebMCP natively** — `search_adapters`, `get_adapter`,
+`list_adapter_tools`, `get_adapter_permissions`, `validate_adapter`. Ask an agent
+to *"find a CRM adapter with write access"* and it calls the page's own tool.
+That contrast is the point: this is what a site looks like when its developers do
+the work, and the demo apps show what happens when they never do.
+
+---
+
+## Security in one screen
+
+The realistic worst case is a community adapter becoming browser malware. The
+format is built so that is either impossible to express or obvious before
+install:
+
+- **Adapters are data.** No `eval`, no script step, no expression language, no
+  remote code — and no way to express one. Enforced by the schema, the injection
+  boundary, the Studio, and lint.
+- **Exact origins only.** No wildcards. `navigate` cannot leave the origin.
+- **Fails closed.** A selector that does not match exactly one element fails the
+  call rather than guessing which button to press.
+- **Capabilities are classified and confirmed.** DESTRUCTIVE always asks; WRITE
+  can be set to. Anything but an explicit approval denies.
+- **Credentials are refused.** Password, one-time-code and card fields cannot be
+  read or written, at all — including by the Recorder.
+- **Values are never logged.** Traces record shapes, not contents.
+- **Installing is a user decision**, with the origins and capabilities shown,
+  whoever asked.
+- **Minimal permissions.** No `<all_urls>`, no `tabs`. Other origins go through
+  optional host permissions requested at install time.
+
+Full model, including the MAIN-world limitation this cannot engineer away:
+[SECURITY.md](SECURITY.md).
+
+---
+
+## Verifying it yourself
+
+```bash
+pnpm verify           # typecheck, lint, 192 unit + integration tests, build
+pnpm e2e              # 23 Playwright tests against the demo apps and registry
+pnpm acceptance:all   # three real-browser runs through the WebMCP protocol
+```
+
+Four layers, each answering a different question:
+
+| Layer | Question |
+|---|---|
+| Unit | Does each rule hold in isolation — fail-closed selectors, origin matching, redaction, confirmation, input validation? |
+| Integration | Does the **published adapter** still work against the **real app component**? These mount the actual React apps and run the actual adapters, so an adapter that drifts from its site fails here. |
+| E2E (Playwright) | Do the demo apps and the registry work as ordinary websites? |
+| Acceptance (CDP) | Does a real out-of-page agent discover and execute these tools in a real browser? |
+
+The unit tests mock `document.modelContext` with behaviour copied from the real
+implementation — duplicate names throw, aborting the signal unregisters,
+`execute` receives a parsed object, and input is *not* validated for you. A mock
+kinder than the browser would hide the bugs the tests exist to catch. What no
+mock can prove is that an agent really sees the tool, which is what the
+acceptance runners and [the manual test](docs/manual-acceptance.md) are for.
+
+`pnpm acceptance:*` needs a Chromium build that permits `--load-extension`.
+Branded Google Chrome refuses that switch, so the runners use Chrome for Testing:
+they find a Playwright-cached one automatically, or run `pnpm chrome:install`, or
+set `LIHA_CHROME`. This affects automation only — loading the unpacked extension
+by hand in normal Chrome is unaffected.
+
+---
+
+## Repository layout
+
+```
+apps/
+  extension/       MV3 extension: service worker, bridges, MAIN-world runtime,
+                   popup, confirmation window, Recorder, Studio, diagnostics
+  registry/        the Adapter Store — React, TanStack Router/Query, Zod,
+                   and WebMCP-native
+  demo-crm/        ordinary React apps with no WebMCP code whatsoever
+  demo-shop/
+  demo-project/
+packages/
+  adapter-schema/  the format: Zod schema, capabilities, origins, health types
+  adapter-runtime/ MAIN-world runtime: DOM, executor, validation, WebMCP binding
+  shared/          types crossing the extension/registry boundary
+adapters/          the published adapter definitions, as plain JSON
+tests/
+  integration/     real adapters against real app components
+  e2e/             Playwright
+tools/acceptance/  real-browser runs, driven over the DevTools protocol
+docs/
+```
+
+---
+
+## Documentation
+
+| | |
+|---|---|
+| [docs/adapter-format.md](docs/adapter-format.md) | The DSL: every step, every rule, and what you deliberately cannot write |
+| [docs/webmcp-api.md](docs/webmcp-api.md) | The WebMCP API as actually implemented in Chrome, measured rather than assumed — including the part where the browser does not validate tool input for you |
+| [docs/manual-acceptance.md](docs/manual-acceptance.md) | The by-hand test in your own Chrome |
+| [docs/demo-script.md](docs/demo-script.md) | The three-minute demo, scene by scene |
+| [docs/deployment.md](docs/deployment.md) | Hosting the registry and the demos |
+| [docs/firefox.md](docs/firefox.md) | What works there, what does not, and why nothing is faked |
+| [docs/phase-0-report.md](docs/phase-0-report.md) | The original feasibility spike |
+| [SECURITY.md](SECURITY.md) | Threat model and the honest limits |
+| [CONTRIBUTING.md](CONTRIBUTING.md) | Setup, and the rules for contributing an adapter |
+
+---
+
+## Status and limits
+
+Chrome is the primary target, against a flagged API that may still change; the
+API surface is isolated in one small module. The Firefox build ships adapter
+management and honest diagnostics but cannot register tools, because Firefox has
+no MAIN-world injection — and Liha will not fake a `modelContext` to hide that.
+Adapters are single-frame and single-origin; iframes and cross-origin flows are
+out of scope. The registry is a static catalogue: publishing a community adapter
+means opening a pull request, and a hosted submission flow is future work.
+
+## License
+
+MIT — see [LICENSE](LICENSE). Adapter definitions are published alongside the
+code so anyone can audit what they are installing. An adapter you cannot read is
+an adapter you should not install.

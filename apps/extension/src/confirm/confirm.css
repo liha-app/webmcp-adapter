@@ -1,0 +1,30 @@
+:root { color-scheme: light dark; --bg:#fff; --ink:#16181d; --muted:#6b7280; --line:#e5e7eb; --accent:#2f6df6; --warn:#b45309; --err:#c02626; --ok:#177245; }
+@media (prefers-color-scheme: dark) { :root { --bg:#14161b; --ink:#e8eaed; --muted:#9aa3b2; --line:#282d36; --accent:#6f9dff; --warn:#e0a458; --err:#ff8080; --ok:#6ddc9a; } }
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--ink); font: 13.5px/1.5 ui-sans-serif, system-ui, sans-serif; }
+.wrap { padding: 18px 18px 22px; }
+h1 { font-size: 16px; margin: 0 0 4px; }
+.lede { color: var(--muted); margin: 0 0 16px; font-size: 13px; }
+.banner { border-radius: 9px; padding: 10px 12px; margin-bottom: 14px; font-weight: 600; border: 1px solid currentColor; }
+.banner--DESTRUCTIVE { color: var(--err); }
+.banner--WRITE { color: var(--warn); }
+.banner--install { color: var(--accent); }
+dl { display: grid; grid-template-columns: 92px 1fr; gap: 5px 10px; margin: 0 0 14px; font-size: 12.5px; }
+dt { color: var(--muted); }
+dd { margin: 0; overflow-wrap: anywhere; }
+code { font-size: 12.5px; }
+.panel { border: 1px solid var(--line); border-radius: 9px; padding: 10px 12px; margin-bottom: 14px; }
+.panel h2 { font-size: 11px; text-transform: uppercase; letter-spacing: .05em; color: var(--muted); margin: 0 0 8px; }
+.item { padding: 6px 0; border-top: 1px solid var(--line); }
+.item:first-of-type { border-top: 0; }
+.cap { font-size: 10px; font-weight: 700; border-radius: 4px; padding: 1px 5px; border: 1px solid currentColor; margin-left: 6px; }
+.cap--READ { color: var(--muted); } .cap--INTERACT { color: var(--accent); }
+.cap--WRITE { color: var(--warn); } .cap--DESTRUCTIVE { color: var(--err); }
+.muted { color: var(--muted); }
+.values { font: 12px ui-monospace, SFMono-Regular, Menlo, monospace; background: rgba(127,127,127,.08); border-radius: 7px; padding: 8px 10px; }
+.values div { overflow-wrap: anywhere; }
+.actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 18px; }
+button { font: inherit; font-weight: 600; border-radius: 8px; padding: 9px 16px; cursor: pointer; border: 1px solid var(--line); background: transparent; color: var(--ink); }
+button.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+button.danger { background: var(--err); border-color: var(--err); color: #fff; }
+.foot { font-size: 11.5px; color: var(--muted); margin-top: 14px; }

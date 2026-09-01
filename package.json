@@ -1,0 +1,44 @@
+{
+  "name": "liha-webmcp-adapter",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Make any website agent-ready. Add WebMCP tools to websites that never implemented WebMCP.",
+  "license": "MIT",
+  "type": "module",
+  "engines": {
+    "node": ">=20"
+  },
+  "packageManager": "pnpm@10.24.0",
+  "scripts": {
+    "dev": "pnpm --parallel -r dev",
+    "build": "pnpm -r build && pnpm --filter @liha/extension build:firefox",
+    "typecheck": "pnpm -r typecheck",
+    "lint": "eslint .",
+    "test": "vitest run",
+    "verify": "pnpm typecheck && pnpm lint && pnpm test && pnpm build",
+    "acceptance": "node tools/acceptance/run.mjs",
+    "chrome:install": "npx --yes @puppeteer/browsers install chrome@stable --path .cache/chrome",
+    "acceptance:full": "node tools/acceptance/full.mjs",
+    "acceptance:all": "pnpm acceptance && pnpm acceptance:full && pnpm acceptance:recorder",
+    "acceptance:recorder": "node tools/acceptance/recorder.mjs",
+    "e2e": "playwright test",
+    "demo": "pnpm --parallel -r preview"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.17.0",
+    "@playwright/test": "^1.62.1",
+    "@types/chrome": "^0.0.287",
+    "@types/node": "^22.10.2",
+    "eslint": "^9.17.0",
+    "globals": "^17.11.0",
+    "jsdom": "^25.0.1",
+    "typescript": "^5.7.2",
+    "typescript-eslint": "^8.18.1",
+    "vitest": "^2.1.8"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "esbuild"
+    ]
+  }
+}
