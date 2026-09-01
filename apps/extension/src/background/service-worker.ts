@@ -10,7 +10,7 @@ import type {
 } from '@liha/shared';
 import { ext } from '../platform';
 import {
-  findForUrl,
+  findEnabledForUrl,
   installAdapter,
   readCatalogue,
   removeAdapter,
@@ -104,13 +104,16 @@ async function syncDynamicContentScripts(): Promise<void> {
 
 async function handlePageReady(href: string, tabId: number, frameId: number): Promise<void> {
   const catalogue = await readCatalogue();
-  const record = findForUrl(catalogue, href);
-  if (!record || !record.enabled) return;
-  try {
-    const result = await injectAdapter(tabId, frameId, record.adapter, record.policy);
-    if (!result.ok) console.warn('[liha] install rejected:', result.reason);
-  } catch (error) {
-    console.error('[liha] injection failed', error);
+  // Every enabled adapter for this origin, not just the first: a site can have
+  // an official adapter and a community one, and disabling either must not
+  // silently withhold the other.
+  for (const record of findEnabledForUrl(catalogue, href)) {
+    try {
+      const result = await injectAdapter(tabId, frameId, record.adapter, record.policy);
+      if (!result.ok) console.warn(`[liha] ${record.adapter.id} not installed:`, result.reason);
+    } catch (error) {
+      console.error(`[liha] injecting ${record.adapter.id} failed`, error);
+    }
   }
 }
 

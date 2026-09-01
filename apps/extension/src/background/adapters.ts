@@ -1,5 +1,5 @@
 import { OFFICIAL_ADAPTERS } from '@liha/adapters';
-import { validateAdapter, originOf, type AdapterDefinition } from '@liha/adapter-schema';
+import { validateAdapter } from '@liha/adapter-schema';
 import { DEFAULT_POLICY, type RuntimePolicy } from '@liha/adapter-runtime';
 import type { AdapterRecord, AdapterSource } from '@liha/shared';
 import { ext } from '../platform';
@@ -120,12 +120,4 @@ export async function removeAdapter(adapterId: string): Promise<void> {
   });
 }
 
-export function findForUrl(catalogue: readonly AdapterRecord[], url: string): AdapterRecord | null {
-  const origin = originOf(url);
-  if (!origin) return null;
-  return catalogue.find((entry) => entry.adapter.origins.includes(origin)) ?? null;
-}
-
-export function originPatterns(adapter: AdapterDefinition): string[] {
-  return adapter.origins.map((origin) => `${origin}/*`);
-}
+export { findAllForUrl, findEnabledForUrl } from './match';
