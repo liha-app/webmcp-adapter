@@ -2,6 +2,7 @@ import type { Capability, HealthStatus } from '@liha/adapter-schema';
 import type { InstalledAdapterStatus } from '@liha/adapter-runtime';
 import type { CatalogEntry } from '@liha/shared';
 import { ext } from '../platform';
+import { t } from '../i18n';
 
 /**
  * The adapter card, shared by the two places that show one.
@@ -32,18 +33,11 @@ export function capabilityBadge(capability: Capability): HTMLElement {
   return el('span', { class: `cap cap--${capability}` }, capability);
 }
 
-const HEALTH_LABEL: Record<HealthStatus, string> = {
-  healthy: 'healthy',
-  degraded: 'degraded',
-  broken: 'broken',
-  unknown: 'not checked',
-};
-
 export function healthBadge(status: HealthStatus): HTMLElement {
   return el(
     'span',
-    { class: `health health--${status}`, title: 'Selector probe against the current page' },
-    HEALTH_LABEL[status],
+    { class: `health health--${status}`, title: t('card.healthTitle') },
+    t(`health.${status}`),
   );
 }
 
@@ -64,12 +58,14 @@ export function renderAdapterCard(entry: CatalogEntry, options: CardOptions): HT
   header.append(el('h3', {}, entry.adapter.name));
 
   const toggle = el('label', { class: 'switch' });
-  const checkbox = el('input', { type: 'checkbox' }) as HTMLInputElement;
+  // role="switch" rather than a bare checkbox: it is on/off state, not a choice
+  // being ticked in a form, and that is what a screen reader should say too.
+  const checkbox = el('input', { type: 'checkbox', role: 'switch' }) as HTMLInputElement;
   checkbox.checked = entry.enabled;
   checkbox.addEventListener('change', () => {
     void send({ type: 'liha/set-enabled', adapterId: entry.adapter.id, enabled: checkbox.checked }).then(onChanged);
   });
-  toggle.append(checkbox, el('span', {}, entry.enabled ? 'Enabled' : 'Disabled'));
+  toggle.append(checkbox, el('span', {}, t(entry.enabled ? 'card.enabled' : 'card.disabled')));
   header.append(toggle);
   card.append(header);
 
@@ -83,7 +79,7 @@ export function renderAdapterCard(entry: CatalogEntry, options: CardOptions): HT
   const hasWrite = entry.adapter.tools.some((tool) => tool.capability === 'WRITE');
   if (hasWrite) {
     const policy = el('label', { class: 'switch switch--small' });
-    const policyBox = el('input', { type: 'checkbox' }) as HTMLInputElement;
+    const policyBox = el('input', { type: 'checkbox', role: 'switch' }) as HTMLInputElement;
     policyBox.checked = entry.policy.confirmWrite;
     policyBox.addEventListener('change', () => {
       void send({
@@ -92,7 +88,7 @@ export function renderAdapterCard(entry: CatalogEntry, options: CardOptions): HT
         policy: { confirmWrite: policyBox.checked },
       }).then(onChanged);
     });
-    policy.append(policyBox, el('span', {}, 'Ask before every WRITE'));
+    policy.append(policyBox, el('span', {}, t('card.confirmWrite')));
     card.append(policy);
   }
 
@@ -114,18 +110,18 @@ export function renderAdapterCard(entry: CatalogEntry, options: CardOptions): HT
         el(
           'span',
           { class: `status ${liveTool?.registered ? 'status--ok' : 'status--warn'}` },
-          liveTool?.registered ? 'registered with WebMCP' : 'not registered on this page',
+          t(liveTool?.registered ? 'card.registered' : 'card.notRegistered'),
         ),
       );
     }
     if (health) status.append(healthBadge(health.status));
-    if (tool.capability === 'DESTRUCTIVE') status.append(el('span', { class: 'muted' }, 'always confirmed'));
+    if (tool.capability === 'DESTRUCTIVE') status.append(el('span', { class: 'muted' }, t('card.alwaysConfirmed')));
     if (status.childElementCount > 0) row.append(status);
     card.append(row);
   }
 
   if (entry.source !== 'builtin') {
-    const remove = el('button', { class: 'btn btn--link', type: 'button' }, 'Remove adapter');
+    const remove = el('button', { class: 'btn btn--link', type: 'button' }, t('card.remove'));
     remove.addEventListener('click', () => {
       void send({ type: 'liha/remove-adapter', adapterId: entry.adapter.id }).then(onChanged);
     });

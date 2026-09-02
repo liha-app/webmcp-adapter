@@ -57,7 +57,7 @@ pnpm acceptance:recorder   36/36 checks — record a workflow, get a valid adapt
                            registers WebMCP tools with no adapter involved
 pnpm acceptance:icons      6/6 checks — Chrome parses the extension's icons and
                            can resolve every path it was given
-pnpm verify                263 unit + integration tests, typecheck, lint, build
+pnpm verify                428 unit + integration tests, typecheck, lint, build
 pnpm e2e                   45 Playwright tests
 ```
 
@@ -134,6 +134,13 @@ change (reload it in `chrome://extensions` to pick changes up).
 
 Manifest V3. A service worker owns the adapter catalogue and decides what gets
 injected where. The MAIN-world runtime registers tools and executes their steps.
+Both are available in **English and Japanese**, chosen on the Adapters page and
+remembered; the default follows the browser's own language. What is *not*
+translated is anything an agent also reads — tool names, tool descriptions and
+adapter definitions render exactly as their author wrote them, because a person
+auditing a tool has to be reading the sentence the model is acting on. Switches
+rather than checkboxes, too: these take effect the moment they change.
+
 The popup answers one question — **what applies to the page in front of you**:
 WebMCP availability here, the adapters scoped to this origin with health and
 capability badges, their "ask before every WRITE" switch, and a redacted
@@ -289,7 +296,7 @@ Full model, including the MAIN-world limitation this cannot engineer away:
 ## Verifying it yourself
 
 ```bash
-pnpm verify           # typecheck, lint, 263 unit + integration tests, build
+pnpm verify           # typecheck, lint, 428 unit + integration tests, build
 pnpm e2e              # 45 Playwright tests against the portal and the demo apps
 pnpm acceptance:all   # four real-browser runs through the WebMCP protocol
 pnpm acceptance:prod  # 36 checks against the deployed sites, not a local build

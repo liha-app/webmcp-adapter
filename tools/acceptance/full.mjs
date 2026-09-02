@@ -103,16 +103,29 @@ async function answerConfirmation(browser, decision) {
   const session = await new Session(target.webSocketDebuggerUrl).open();
   await waitFor(async () => session.eval('Boolean(document.querySelector("button"))').catch(() => false));
   const summary = await session.eval('document.body.innerText');
+  // Selected by what the button decides, not by what it says. Matching the
+  // English label worked until the window could render in another language,
+  // and then the allow click silently missed and the next group inherited a
+  // dialog that was still open.
   await session.eval(
     `(() => {
-       const buttons = [...document.querySelectorAll('button')];
-       const target = buttons.find((b) => /${decision === 'allow' ? 'Allow|Install' : 'Deny|Cancel'}/.test(b.textContent));
+       const target = document.querySelector('button[data-decision="${decision}"]');
        if (target) target.click();
        return Boolean(target);
      })()`,
   );
   session.close();
   return { shown: true, summary };
+}
+
+/** Writes the extension's language preference before anything renders. */
+async function setExtensionLocale(browser, locale) {
+  const id = await findExtensionId(browser);
+  if (!id) return;
+  const page = await browser.newPage();
+  await page.goto(`chrome-extension://${id}/manage/manage.html`);
+  await page.eval(`chrome.storage.local.set({ 'liha/locale': ${JSON.stringify(locale)} })`);
+  page.close();
 }
 
 async function main() {
@@ -138,6 +151,9 @@ async function main() {
   const browser = new Browser({ binary, extensionPath: EXT_DIST }).launch();
   try {
     await browser.ready();
+    // These checks read English copy, so the extension's language is pinned
+    // rather than inherited from whatever locale this machine's browser is in.
+    await setExtensionLocale(browser, 'en');
     const page = await browser.firstPage();
     const watch = trackWebMcpTools(page);
     await page.send('WebMCP.enable');
@@ -492,6 +508,8 @@ async function main() {
   const degraded = new Browser({ binary, extensionPath: EXT_DIST, webmcp: false }).launch();
   try {
     await degraded.ready();
+    // A separate browser with a separate profile, so it needs the same pin.
+    await setExtensionLocale(degraded, 'en');
     group('Without the browser flag, the extension says so instead of faking it');
     const degradedId = await findExtensionId(degraded);
     must(Boolean(degradedId), 'the extension still loads without WebMCP');

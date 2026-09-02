@@ -16,6 +16,7 @@ import {
   type StepKind,
 } from './draft';
 import { nativeWebMcpSource } from './native';
+import { applyDocumentLanguage, loadLocale, t } from '../i18n';
 
 const CAPABILITIES: Capability[] = ['READ', 'INTERACT', 'WRITE', 'DESTRUCTIVE'];
 
@@ -56,7 +57,7 @@ function StepEditor(props: {
           className="type"
           value={step.kind}
           onChange={(event) => set({ kind: event.target.value as StepKind })}
-          aria-label={`Step ${index + 1} type`}
+          aria-label={t('studio.ariaType', [index + 1])}
         >
           {STEP_KINDS.map((kind) => (
             <option key={kind} value={kind}>
@@ -66,13 +67,13 @@ function StepEditor(props: {
         </select>
         <MatchBadge count={probe[step.selector]} />
         <span className="spacer" />
-        <button type="button" className="iconbtn" onClick={() => props.onMove(-1)} aria-label="Move up">
+        <button type="button" className="iconbtn" onClick={() => props.onMove(-1)} aria-label={t('studio.moveUp')}>
           ↑
         </button>
-        <button type="button" className="iconbtn" onClick={() => props.onMove(1)} aria-label="Move down">
+        <button type="button" className="iconbtn" onClick={() => props.onMove(1)} aria-label={t('studio.moveDown')}>
           ↓
         </button>
-        <button type="button" className="iconbtn" onClick={props.onRemove} aria-label="Remove step">
+        <button type="button" className="iconbtn" onClick={props.onRemove} aria-label={t('studio.removeStep')}>
           ✕
         </button>
       </div>
@@ -82,18 +83,18 @@ function StepEditor(props: {
           <input
             className="sel"
             value={step.selector}
-            placeholder="CSS selector"
-            aria-label={`Step ${index + 1} selector`}
+            placeholder={t('studio.cssSelector')}
+            aria-label={t('studio.ariaSelector', [index + 1])}
             onChange={(event) => set({ selector: event.target.value })}
           />
           {step.candidates.length > 1 && (
             <select
               style={{ marginTop: 6 }}
               value=""
-              aria-label={`Alternative selectors for step ${index + 1}`}
+              aria-label={t('studio.ariaAlternatives', [index + 1])}
               onChange={(event) => event.target.value && set({ selector: event.target.value })}
             >
-              <option value="">Other recorded selectors…</option>
+              <option value="">{t('studio.otherSelectors')}</option>
               {step.candidates.map((candidate) => (
                 <option key={candidate.selector} value={candidate.selector}>
                   {candidate.strategy} · {candidate.matches} match{candidate.matches === 1 ? '' : 'es'} ·{' '}
@@ -111,7 +112,7 @@ function StepEditor(props: {
             style={{ width: 'auto' }}
             value={step.parameterized ? 'parameter' : 'literal'}
             onChange={(event) => set({ parameterized: event.target.value === 'parameter' })}
-            aria-label={`Step ${index + 1} value source`}
+            aria-label={t('studio.ariaValueSource', [index + 1])}
           >
             <option value="literal">fixed value</option>
             <option value="parameter">tool input</option>
@@ -120,16 +121,16 @@ function StepEditor(props: {
             <input
               style={{ flex: 1 }}
               value={step.parameter}
-              placeholder="parameter name"
-              aria-label={`Step ${index + 1} parameter name`}
+              placeholder={t('studio.parameterName')}
+              aria-label={t('studio.ariaParameterName', [index + 1])}
               onChange={(event) => set({ parameter: event.target.value.replace(/[^a-zA-Z0-9_]/g, '_') })}
             />
           ) : (
             <input
               style={{ flex: 1 }}
               value={step.value}
-              placeholder={step.kind === 'navigate' ? '/path' : 'value'}
-              aria-label={`Step ${index + 1} value`}
+              placeholder={step.kind === 'navigate' ? '/path' : t('studio.value')}
+              aria-label={t('studio.ariaValue', [index + 1])}
               onChange={(event) => set({ value: event.target.value })}
             />
           )}
@@ -146,7 +147,7 @@ function StepEditor(props: {
           style={{ marginTop: 8, width: 'auto' }}
           value={step.waitState}
           onChange={(event) => set({ waitState: event.target.value as 'present' | 'absent' })}
-          aria-label={`Step ${index + 1} wait state`}
+          aria-label={t('studio.ariaWaitState', [index + 1])}
         >
           <option value="present">until present</option>
           <option value="absent">until gone</option>
@@ -157,15 +158,15 @@ function StepEditor(props: {
         <div className="two" style={{ marginTop: 8 }}>
           <input
             value={step.binding}
-            placeholder="output name"
-            aria-label={`Step ${index + 1} output name`}
+            placeholder={t('studio.outputName')}
+            aria-label={t('studio.ariaOutputName', [index + 1])}
             onChange={(event) => set({ binding: event.target.value.replace(/[^a-zA-Z0-9_]/g, '_') })}
           />
           {step.kind === 'readAttribute' && (
             <input
               value={step.attribute}
-              placeholder="attribute"
-              aria-label={`Step ${index + 1} attribute`}
+              placeholder={t('studio.attribute')}
+              aria-label={t('studio.ariaAttribute', [index + 1])}
               onChange={(event) => set({ attribute: event.target.value })}
             />
           )}
@@ -201,7 +202,7 @@ function Studio() {
   const runProbe = useCallback(() => {
     if (!draft) return;
     const selectors = [...new Set(draft.steps.map((step) => step.selector).filter(Boolean))];
-    setStatus('Checking selectors against the page…');
+    setStatus(t('studio.checking'));
     void ext.runtime
       .sendMessage({ type: 'liha/probe-selectors', origin: draft.origin, selectors })
       .then((response: { probe?: Probe; error?: string } | undefined) => {
@@ -211,9 +212,9 @@ function Studio() {
         }
         setProbe(response?.probe ?? {});
         const unique = Object.values(response?.probe ?? {}).filter((count) => count === 1).length;
-        setStatus(`Checked ${selectors.length} selector(s): ${unique} resolve to exactly one element.`);
+        setStatus(t('studio.checked', [selectors.length, unique]));
       })
-      .catch((error: unknown) => setStatus(`Could not reach the page: ${String(error)}`));
+      .catch((error: unknown) => setStatus(t('studio.unreachable', [String(error)])));
   }, [draft]);
 
   function updateStep(id: string, next: DraftStep) {
@@ -260,19 +261,19 @@ function Studio() {
   function downloadNative() {
     if (!validation?.adapter || !draft) return;
     save(`${draft.adapterId || 'adapter'}-webmcp.js`, nativeWebMcpSource(validation.adapter), 'text/javascript');
-    setStatus('Exported a native WebMCP implementation for the site to ship itself.');
+    setStatus(t('studio.exportedNative'));
   }
 
   function install() {
     if (!adapterJson) return;
-    setStatus('Waiting for the install confirmation…');
+    setStatus(t('studio.waitingInstall'));
     void ext.runtime
       .sendMessage({ type: 'liha/install-adapter', adapter: adapterJson, source: 'studio' })
       .then((outcome: { ok: boolean; errors: string[] } | undefined) => {
         setStatus(
           outcome?.ok
-            ? 'Installed. Reload the target page and the tool will be registered with WebMCP.'
-            : `Not installed: ${outcome?.errors.join('; ') ?? 'unknown error'}`,
+            ? t('studio.installed')
+            : t('studio.notInstalled', [outcome?.errors.join('; ') ?? 'unknown error']),
         );
       })
       .catch((error: unknown) => setStatus(String(error)));
@@ -284,14 +285,11 @@ function Studio() {
         <header className="top">
           <div>
             <h1>Adapter Studio</h1>
-            <p className="lede">Turn a recorded workflow into a WebMCP tool.</p>
+            <p className="lede">{t('studio.lede')}</p>
           </div>
         </header>
         <div className="panel">
-          <p className="empty">
-            No recording yet. Open the Liha popup on the site you want to teach, press <strong>Record a tool</strong>,
-            perform the workflow by hand, then press <strong>Stop recording</strong>.
-          </p>
+          <p className="empty">{t('studio.empty')}</p>
         </div>
       </div>
     );
@@ -303,33 +301,33 @@ function Studio() {
         <div>
           <h1>Adapter Studio</h1>
           <p className="lede">
-            {recording?.actions.length ?? 0} recorded action(s) from <code>{draft.origin}</code>
+            {t('studio.recordedFrom', [recording?.actions.length ?? 0])} <code>{draft.origin}</code>
           </p>
         </div>
         <div className="actions">
           <button type="button" className="btn" onClick={runProbe}>
-            Test selectors
+            {t('studio.testSelectors')}
           </button>
           <button type="button" className="btn" onClick={download} disabled={!validation?.ok}>
-            Export JSON
+            {t('studio.exportJson')}
           </button>
           <button
             type="button"
             className="btn"
             onClick={downloadNative}
             disabled={!validation?.ok}
-            title="The same tools, as code the site can register itself — no adapter, no extension"
+            title={t('studio.exportNativeTitle')}
           >
-            Export native WebMCP
+            {t('studio.exportNative')}
           </button>
           <button type="button" className="btn btn--primary" onClick={install} disabled={!validation?.ok}>
-            Install locally
+            {t('studio.installLocally')}
           </button>
         </div>
       </header>
 
       <div className="steps-flow">
-        {['Record', 'Review', 'Parameterize', 'Test', 'Install'].map((label, index) => (
+        {([t('studio.stepRecord'), t('studio.stepReview'), t('studio.stepParameterize'), t('studio.stepTest'), t('studio.stepInstall')] as string[]).map((label, index) => (
           <span key={label} className={`flowstep ${index === 0 ? 'flowstep--on' : ''}`}>
             {index + 1}. {label}
           </span>
@@ -342,7 +340,7 @@ function Studio() {
         <div>
           <section className="panel">
             <div className="panel__head">
-              <h2>Tool</h2>
+              <h2>{t('studio.tool')}</h2>
               {effects && (
                 <span className="muted">
                   {effects.clicks} click · {effects.inputs} input · {effects.submits} submit · {effects.reads} read
@@ -350,7 +348,7 @@ function Studio() {
               )}
             </div>
             <div className="panel__body">
-              <Field label="Tool name (snake_case)">
+              <Field label={t('studio.toolName')}>
                 <input
                   value={draft.toolName}
                   placeholder="create_customer"
@@ -359,7 +357,7 @@ function Studio() {
                   }
                 />
               </Field>
-              <Field label="Description — this is what the agent reads to decide when to use the tool">
+              <Field label={t('studio.toolDescription')}>
                 <textarea
                   value={draft.toolDescription}
                   placeholder="Create a customer by filling in the Add Customer form."
@@ -367,7 +365,7 @@ function Studio() {
                 />
               </Field>
               <div className="two">
-                <Field label="Capability">
+                <Field label={t('studio.capability')}>
                   <select
                     value={draft.capability}
                     onChange={(event) => setDraft({ ...draft, capability: event.target.value as Capability })}
@@ -379,23 +377,23 @@ function Studio() {
                     ))}
                   </select>
                 </Field>
-                <Field label="Target origin">
+                <Field label={t('studio.targetOrigin')}>
                   <input value={draft.origin} onChange={(event) => setDraft({ ...draft, origin: event.target.value })} />
                 </Field>
               </div>
               {draft.capability === 'DESTRUCTIVE' && (
-                <p className="muted">Destructive tools always ask the user before they run.</p>
+                <p className="muted">{t('studio.destructiveNote')}</p>
               )}
             </div>
           </section>
 
           <section className="panel">
             <div className="panel__head">
-              <h2>Adapter</h2>
+              <h2>{t('studio.adapter')}</h2>
             </div>
             <div className="panel__body">
               <div className="two">
-                <Field label="Adapter id (kebab-case)">
+                <Field label={t('studio.adapterId')}>
                   <input
                     value={draft.adapterId}
                     onChange={(event) =>
@@ -403,11 +401,11 @@ function Studio() {
                     }
                   />
                 </Field>
-                <Field label="Version">
+                <Field label={t('studio.version')}>
                   <input value={draft.version} onChange={(event) => setDraft({ ...draft, version: event.target.value })} />
                 </Field>
               </div>
-              <Field label="Adapter name">
+              <Field label={t('studio.adapterName')}>
                 <input
                   value={draft.adapterName}
                   onChange={(event) => setDraft({ ...draft, adapterName: event.target.value })}
@@ -419,14 +417,14 @@ function Studio() {
           {parameters.length > 0 && (
             <section className="panel">
               <div className="panel__head">
-                <h2>Tool input</h2>
+                <h2>{t('studio.toolInput')}</h2>
               </div>
               <div className="panel__body">
                 {parameters.map((parameter) => (
-                  <Field key={parameter.name} label={`${parameter.name} (string, required)`}>
+                  <Field key={parameter.name} label={t('studio.parameterLabel', [parameter.name])}>
                     <input
                       value={descriptions[parameter.name] ?? ''}
-                      placeholder="What should the agent put here?"
+                      placeholder={t('studio.parameterPlaceholder')}
                       onChange={(event) =>
                         setDescriptions({ ...descriptions, [parameter.name]: event.target.value })
                       }
@@ -441,13 +439,13 @@ function Studio() {
         <div>
           <section className="panel">
             <div className="panel__head">
-              <h2>Steps</h2>
+              <h2>{t('studio.steps')}</h2>
               <button
                 type="button"
                 className="iconbtn"
                 onClick={() => setDraft({ ...draft, steps: [...draft.steps, emptyStep()] })}
               >
-                + step
+                {t('studio.addStep')}
               </button>
             </div>
             <div className="panel__body">
@@ -464,14 +462,18 @@ function Studio() {
                   }
                 />
               ))}
-              {draft.steps.length === 0 && <p className="muted">No steps yet.</p>}
+              {draft.steps.length === 0 && <p className="muted">{t('studio.noSteps')}</p>}
             </div>
           </section>
 
           <section className="panel">
             <div className="panel__head">
-              <h2>Adapter JSON</h2>
-              {validation?.ok ? <span className="ok">valid</span> : <span className="problem">not valid yet</span>}
+              <h2>{t('studio.adapterJson')}</h2>
+              {validation?.ok ? (
+                <span className="ok">{t('studio.valid')}</span>
+              ) : (
+                <span className="problem">{t('studio.notValid')}</span>
+              )}
             </div>
             {validation && !validation.ok && (
               <div className="panel__body">
@@ -492,9 +494,14 @@ function Studio() {
 
 const root = document.getElementById('root');
 if (root) {
-  createRoot(root).render(
-    <StrictMode>
-      <Studio />
-    </StrictMode>,
-  );
+  // Mounted after the language is known, so no label renders in English and
+  // then changes under someone already reading it.
+  void loadLocale().then(() => {
+    applyDocumentLanguage();
+    createRoot(root).render(
+      <StrictMode>
+        <Studio />
+      </StrictMode>,
+    );
+  });
 }

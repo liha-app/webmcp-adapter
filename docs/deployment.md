@@ -207,7 +207,7 @@ what does and does not work there.
 ## Reproducing the verification
 
 ```bash
-pnpm verify              # typecheck, lint, 263 unit + integration tests, build
+pnpm verify              # typecheck, lint, 428 unit + integration tests, build
 pnpm e2e                 # 45 Playwright tests against the portal and demo apps
 pnpm acceptance:all      # four real-browser runs through the WebMCP protocol
 ```

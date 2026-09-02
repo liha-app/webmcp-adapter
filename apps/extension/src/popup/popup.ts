@@ -1,5 +1,6 @@
 import type { PopupState } from '@liha/shared';
 import { diagnostics, ext } from '../platform';
+import { applyDocumentLanguage, loadLocale, t } from '../i18n';
 import { el, renderAdapterCard, send } from '../ui/adapters';
 
 const app = document.getElementById('app');
@@ -30,12 +31,12 @@ function render(state: PopupState): void {
   const browserHasWebMcp = platform.webmcpApi;
   const onPage = state.runtime?.webmcp;
   const statusText = !browserHasWebMcp
-    ? 'not available in this browser'
+    ? t('popup.statusUnavailable')
     : onPage === 'available'
-      ? 'available'
+      ? t('popup.statusAvailable')
       : onPage === 'unsupported'
-        ? 'available in this browser, but not on this page'
-        : 'available in this browser (no adapter runs on this page)';
+        ? t('popup.statusNotOnPage')
+        : t('popup.statusNoAdapter');
   const statusClass = !browserHasWebMcp
     ? 'status--err'
     : onPage === 'available'
@@ -43,30 +44,28 @@ function render(state: PopupState): void {
       : 'status--warn';
 
   const kv = el('dl', { class: 'kv' });
-  kv.append(el('dt', {}, 'Page'), el('dd', {}, state.origin ?? '(no page)'));
+  kv.append(el('dt', {}, t('popup.page')), el('dd', {}, state.origin ?? t('popup.noPage')));
   // The runtime version rides along with the status rather than taking a row of
   // its own; it matters when reporting a problem and never otherwise.
   const status = el('dd', { class: `status ${statusClass}` }, statusText);
-  if (state.runtime) status.append(el('span', { class: 'muted' }, ` · runtime v${state.runtime.runtimeVersion}`));
-  kv.append(el('dt', {}, 'WebMCP'), status);
+  if (state.runtime) status.append(el('span', { class: 'muted' }, t('popup.runtimeVersion', [state.runtime.runtimeVersion])));
+  kv.append(el('dt', {}, t('popup.webmcp')), status);
   app.append(kv);
 
   if (!browserHasWebMcp || !platform.mainWorldInjection) {
     const note = el('p', { class: 'notice' });
     note.append(
-      !platform.mainWorldInjection
-        ? `This browser (${platform.engine}) cannot inject into a page's MAIN world, which is how WebMCP tools are registered. Adapter management works; tools cannot be registered.`
-        : 'This browser does not expose document.modelContext, so no adapter can register anything. Turn on WebMCP and relaunch Chrome:',
+      !platform.mainWorldInjection ? t('popup.noMainWorld', [platform.engine]) : t('popup.noWebmcp'),
     );
     if (browserHasWebMcp === false && platform.mainWorldInjection) {
       // chrome:// cannot be linked to from an extension page, and typing a flag
       // URL off a screenshot is exactly where people give up. Hand it over.
       const flag = el('code', { class: 'notice__flag' }, FLAG_URL);
-      const copy = el('button', { class: 'btn btn--small', type: 'button' }, 'Copy');
+      const copy = el('button', { class: 'btn btn--small', type: 'button' }, t('popup.copy'));
       copy.addEventListener('click', () => {
         void navigator.clipboard.writeText(FLAG_URL).then(
-          () => (copy.textContent = 'Copied'),
-          () => (copy.textContent = 'Copy failed'),
+          () => (copy.textContent = t('popup.copied')),
+          () => (copy.textContent = t('popup.copyFailed')),
         );
       });
       note.append(el('span', { class: 'notice__row' }, flag, copy));
@@ -85,7 +84,7 @@ function render(state: PopupState): void {
   const record = el(
     'button',
     { class: `btn btn--primary ${recording ? 'btn--danger' : ''}`, type: 'button', 'data-action': 'toggle-recording' },
-    recording ? `Stop recording (${state.recording?.actions.length ?? 0})` : 'Record a tool',
+    recording ? t('popup.stopRecording', [state.recording?.actions.length ?? 0]) : t('popup.record'),
   );
   record.addEventListener('click', () => {
     void send({ type: recording ? 'liha/stop-recording' : 'liha/start-recording' }).then(() => {
@@ -98,9 +97,9 @@ function render(state: PopupState): void {
 
   const elsewhere = el('div', { class: 'elsewhere' });
   for (const [label, page] of [
-    [`Adapters (${state.catalog.length})`, 'manage/manage.html'],
-    ['Studio', 'studio/studio.html'],
-    ['Compatibility', 'diagnostics/diagnostics.html'],
+    [t('popup.adapters', [state.catalog.length]), 'manage/manage.html'],
+    [t('popup.studio'), 'studio/studio.html'],
+    [t('popup.compatibility'), 'diagnostics/diagnostics.html'],
   ] as Array<[string, string]>) {
     const link = el('button', { class: 'btn btn--link', type: 'button' }, label);
     link.addEventListener('click', () => void ext.tabs.create({ url: ext.runtime.getURL(page) }));
@@ -134,25 +133,23 @@ function render(state: PopupState): void {
   if (here.length === 0) {
     const empty = el('div', { class: 'card' });
     empty.append(
-      el('h3', {}, 'No adapter for this site'),
+      el('h3', {}, t('popup.emptyTitle')),
       el(
         'p',
         { class: 'muted' },
-        onWebsite && state.origin
-          ? `Nothing installed is scoped to ${state.origin}. Record the workflow you want, or install one from the Store.`
-          : 'Open a website and the adapters scoped to it will appear here.',
+        onWebsite && state.origin ? t('popup.emptyScoped', [state.origin]) : t('popup.emptyNoSite'),
       ),
     );
     app.append(empty);
   }
 
-  if (state.runtimeError) app.append(el('p', { class: 'muted' }, `Runtime probe: ${state.runtimeError}`));
+  if (state.runtimeError) app.append(el('p', { class: 'muted' }, t('popup.runtimeProbe', [state.runtimeError])));
 
   const log = state.runtime?.log ?? [];
-  app.append(el('h4', {}, 'Execution log'));
+  app.append(el('h4', {}, t('popup.executionLog')));
   const logBox = el('div', { class: 'log' });
   if (log.length === 0) {
-    logBox.append(el('div', { class: 'muted' }, 'No tool activity yet.'));
+    logBox.append(el('div', { class: 'muted' }, t('popup.noActivity')));
   } else {
     for (const entry of log) {
       const time = new Date(entry.at).toLocaleTimeString();
@@ -162,11 +159,16 @@ function render(state: PopupState): void {
     }
   }
   app.append(logBox);
-  app.append(el('p', { class: 'muted' }, 'Values typed into the page are never written to this log.'));
+  app.append(el('p', { class: 'muted' }, t('popup.logNote')));
 }
 
 function load(): void {
   void send<PopupState>({ type: 'liha/get-state' }).then(render);
 }
 
-load();
+// The language is read before the first paint, so nothing renders in English
+// and then swaps under the reader.
+void loadLocale().then(() => {
+  applyDocumentLanguage();
+  load();
+});

@@ -159,6 +159,11 @@ async function main() {
     await popup.eval(`document.querySelector('[data-action="toggle-recording"]').click()`);
     const studio = await openExtensionPage(browser, 'studio/studio.html');
     must(Boolean(studio), 'stopping the recording opens the Studio');
+    // The extension's language follows the browser unless someone has chosen
+    // one. These checks read English labels, so pin it rather than depend on
+    // the locale of whichever machine the suite runs on.
+    await studio.eval(`chrome.storage.local.set({ 'liha/locale': 'en' }).then(() => location.reload())`);
+    await sleep(700);
     must(
       await waitFor(async () => studio.eval(`Boolean(document.querySelector('.step'))`), 20000),
       'the Studio shows the recorded steps',

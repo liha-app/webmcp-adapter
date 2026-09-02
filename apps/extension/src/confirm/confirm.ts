@@ -1,5 +1,6 @@
 import type { ConfirmationPayload } from '@liha/shared';
 import { ext } from '../platform';
+import { applyDocumentLanguage, loadLocale, t } from '../i18n';
 
 const app = document.getElementById('app');
 const requestId = new URLSearchParams(location.search).get('id') ?? '';
@@ -35,26 +36,24 @@ function renderTool(payload: Extract<ConfirmationPayload, { kind: 'tool' }>): vo
   const request = payload.request;
   app.replaceChildren();
   app.append(
-    el('h1', {}, `Allow ${request.toolName}?`),
+    el('h1', {}, t('confirm.allowTool', [request.toolName])),
     el('p', { class: 'lede' }, request.toolDescription),
     el(
       'div',
       { class: `banner banner--${request.capability}` },
-      request.capability === 'DESTRUCTIVE'
-        ? 'This tool deletes data. It always asks before running.'
-        : 'This tool changes data on the site.',
+      t(request.capability === 'DESTRUCTIVE' ? 'confirm.destructive' : 'confirm.changesData'),
     ),
   );
 
   const kv = el('dl');
-  kv.append(el('dt', {}, 'Adapter'), el('dd', {}, `${request.adapterName} (${request.adapterId})`));
-  kv.append(el('dt', {}, 'Site'), el('dd', {}, request.origin));
-  kv.append(el('dt', {}, 'Capability'), el('dd', {}, request.capability));
+  kv.append(el('dt', {}, t('confirm.adapter')), el('dd', {}, `${request.adapterName} (${request.adapterId})`));
+  kv.append(el('dt', {}, t('confirm.site')), el('dd', {}, request.origin));
+  kv.append(el('dt', {}, t('confirm.capability')), el('dd', {}, request.capability));
   app.append(kv);
 
   if (request.preview.length > 0) {
     const panel = el('div', { class: 'panel' });
-    panel.append(el('h2', {}, 'Values the agent supplied'));
+    panel.append(el('h2', {}, t('confirm.values')));
     const values = el('div', { class: 'values' });
     for (const item of request.preview) values.append(el('div', {}, `${item.key}: ${item.value}`));
     panel.append(values);
@@ -62,14 +61,14 @@ function renderTool(payload: Extract<ConfirmationPayload, { kind: 'tool' }>): vo
   }
 
   const actions = el('div', { class: 'actions' });
-  const deny = el('button', { type: 'button' }, 'Deny');
-  const allow = el('button', { type: 'button', class: request.capability === 'DESTRUCTIVE' ? 'danger' : 'primary' }, 'Allow once');
+  const deny = el('button', { type: 'button', 'data-decision': 'deny' }, t('confirm.deny'));
+  const allow = el('button', { type: 'button', class: request.capability === 'DESTRUCTIVE' ? 'danger' : 'primary', 'data-decision': 'allow' }, t('confirm.allowOnce'));
   deny.addEventListener('click', () => decide(false));
   allow.addEventListener('click', () => decide(true));
   actions.append(deny, allow);
   app.append(actions);
   app.append(
-    el('p', { class: 'foot' }, 'These values are shown here only. They are never written to the extension log or storage.'),
+    el('p', { class: 'foot' }, t('confirm.valuesNote')),
   );
 }
 
@@ -78,29 +77,29 @@ function renderInstall(payload: Extract<ConfirmationPayload, { kind: 'install' }
   const request = payload.request;
   app.replaceChildren();
   app.append(
-    el('h1', {}, `Install ${request.adapterName}?`),
+    el('h1', {}, t('confirm.installTitle', [request.adapterName])),
     el(
       'p',
       { class: 'lede' },
-      request.description ?? 'This adapter adds WebMCP tools to a site that does not implement WebMCP itself.',
+      request.description ?? t('confirm.installLede'),
     ),
     el(
       'div',
       { class: 'banner banner--install' },
-      request.fromOrigin
-        ? `Requested by ${request.fromOrigin}`
-        : 'Requested from the Liha extension',
+      request.fromOrigin ? t('confirm.requestedBy', [request.fromOrigin]) : t('confirm.requestedInternally'),
     ),
   );
 
   const kv = el('dl');
-  kv.append(el('dt', {}, 'Adapter'), el('dd', {}, `${request.adapterId} v${request.version}`));
-  kv.append(el('dt', {}, 'Runs on'), el('dd', {}, request.origins.join(', ')));
-  kv.append(el('dt', {}, 'Source'), el('dd', {}, request.source));
+  kv.append(el('dt', {}, t('confirm.adapter')), el('dd', {}, `${request.adapterId} v${request.version}`));
+  kv.append(el('dt', {}, t('confirm.runsOn')), el('dd', {}, request.origins.join(', ')));
+  kv.append(el('dt', {}, t('confirm.source')), el('dd', {}, request.source));
   app.append(kv);
 
   const panel = el('div', { class: 'panel' });
-  panel.append(el('h2', {}, `${request.tools.length} tool${request.tools.length === 1 ? '' : 's'}`));
+  panel.append(
+    el('h2', {}, t(request.tools.length === 1 ? 'confirm.toolCountOne' : 'confirm.toolCountMany', [request.tools.length])),
+  );
   for (const tool of request.tools) {
     const item = el('div', { class: 'item' });
     item.append(el('code', {}, tool.name), el('span', { class: `cap cap--${tool.capability}` }, tool.capability));
@@ -114,14 +113,14 @@ function renderInstall(payload: Extract<ConfirmationPayload, { kind: 'install' }
       el(
         'p',
         { class: 'foot' },
-        'Approving also grants this extension access to the origins listed above. Nothing outside them becomes reachable.',
+        t('confirm.hostPermission'),
       ),
     );
   }
 
   const actions = el('div', { class: 'actions' });
-  const deny = el('button', { type: 'button' }, 'Cancel');
-  const allow = el('button', { type: 'button', class: 'primary' }, 'Install');
+  const deny = el('button', { type: 'button', 'data-decision': 'deny' }, t('confirm.cancel'));
+  const allow = el('button', { type: 'button', class: 'primary', 'data-decision': 'allow' }, t('confirm.install'));
   deny.addEventListener('click', () => decide(false));
   allow.addEventListener('click', () => {
     if (!request.needsHostPermission) {
@@ -139,17 +138,20 @@ function renderInstall(payload: Extract<ConfirmationPayload, { kind: 'install' }
   app.append(actions);
 }
 
-void ext.runtime
-  .sendMessage({ type: 'liha/get-confirmation', requestId })
+// The language is settled before anything is drawn: this window is the one
+// screen where a misread sentence has consequences.
+void loadLocale()
+  .then(applyDocumentLanguage)
+  .then(() => ext.runtime.sendMessage({ type: 'liha/get-confirmation', requestId }))
   .then((response: { payload: ConfirmationPayload | null } | undefined) => {
     const payload = response?.payload;
     if (!payload) {
-      if (app) app.replaceChildren(el('p', { class: 'muted' }, 'This request has already been answered.'));
+      if (app) app.replaceChildren(el('p', { class: 'muted' }, t('confirm.answered')));
       return;
     }
     if (payload.kind === 'tool') renderTool(payload);
     else renderInstall(payload);
   })
   .catch(() => {
-    if (app) app.replaceChildren(el('p', { class: 'muted' }, 'Could not load this request.'));
+    if (app) app.replaceChildren(el('p', { class: 'muted' }, t('confirm.loadFailed')));
   });
