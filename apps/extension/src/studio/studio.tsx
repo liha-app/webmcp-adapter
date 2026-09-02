@@ -1,4 +1,4 @@
-import { StrictMode, useCallback, useEffect, useMemo, useState } from 'react';
+import { Fragment, StrictMode, useCallback, useEffect, useMemo, useState } from 'react';
 import { createRoot } from 'react-dom/client';
 import { summarizeEffects, validateAdapter, type Capability } from '@liha/adapter-schema';
 import type { RecordingState } from '@liha/shared';
@@ -17,6 +17,7 @@ import {
 } from './draft';
 import { nativeWebMcpSource } from './native';
 import { applyDocumentLanguage, loadLocale, t } from '../i18n';
+import type { MessageKey } from '../i18n/en';
 
 const CAPABILITIES: Capability[] = ['READ', 'INTERACT', 'WRITE', 'DESTRUCTIVE'];
 
@@ -38,6 +39,34 @@ function MatchBadge({ count }: { count: number | undefined }) {
   return <span className={`matches matches--${kind}`}>{text}</span>;
 }
 
+const KIND_LABEL: Record<StepKind, MessageKey> = {
+  click: 'studio.kindClick',
+  fill: 'studio.kindFill',
+  select: 'studio.kindSelect',
+  check: 'studio.kindCheck',
+  uncheck: 'studio.kindUncheck',
+  submit: 'studio.kindSubmit',
+  waitFor: 'studio.kindWaitFor',
+  assertVisible: 'studio.kindAssertVisible',
+  assertText: 'studio.kindAssertText',
+  readText: 'studio.kindReadText',
+  readAttribute: 'studio.kindReadAttribute',
+  readList: 'studio.kindReadList',
+  navigate: 'studio.kindNavigate',
+};
+
+/**
+ * What a node says without being opened.
+ *
+ * A flow is only readable if each node answers "what does this do" from the
+ * outside; the selector is the answer for most steps, and for the ones that
+ * carry a value it is the value that matters.
+ */
+function summarize(step: DraftStep): { title: MessageKey; detail: string } {
+  if (step.kind === 'navigate') return { title: KIND_LABEL[step.kind], detail: step.value || '/' };
+  return { title: KIND_LABEL[step.kind], detail: step.selector };
+}
+
 function StepEditor(props: {
   step: DraftStep;
   index: number;
@@ -52,7 +81,6 @@ function StepEditor(props: {
   return (
     <div className="step">
       <div className="step__head">
-        <span className="step__index">{index + 1}</span>
         <select
           className="type"
           value={step.kind}
@@ -182,6 +210,13 @@ function Studio() {
   const [descriptions, setDescriptions] = useState<Record<string, string>>({});
   const [probe, setProbe] = useState<Probe>({});
   const [status, setStatus] = useState<string | null>(null);
+  /*
+   * What the right-hand panel is showing: one step, or the tool itself. A flow
+   * builder with nothing selected has nowhere to put the settings that belong
+   * to the whole flow, so the trigger node owns them — which is also the first
+   * thing anyone needs to fill in.
+   */
+  const [selected, setSelected] = useState<string>('tool');
 
   useEffect(() => {
     void ext.runtime
@@ -197,6 +232,7 @@ function Studio() {
   const adapterJson = useMemo(() => (draft ? draftToAdapter(draft, descriptions) : null), [draft, descriptions]);
   const validation = useMemo(() => (adapterJson ? validateAdapter(adapterJson) : null), [adapterJson]);
   const parameters = draft ? parametersOf(draft) : [];
+  const selectedStep = draft?.steps.find((step) => step.id === selected);
   const effects = validation?.adapter?.tools[0] ? summarizeEffects(validation.adapter.tools[0]) : null;
 
   const runProbe = useCallback(() => {
@@ -336,8 +372,99 @@ function Studio() {
 
       {status && <div className="banner">{status}</div>}
 
-      <div className="grid">
-        <div>
+      <div className="builder">
+        <div className="flow" role="list">
+          {/*
+            * The trigger, the way every flow builder starts: the thing that
+            * happens before any of the steps. Here it is the agent's call, and
+            * the tool's own settings are what it opens.
+            */}
+          <button
+            type="button"
+            className={`node node--trigger ${selected === 'tool' ? 'node--on' : ''}`}
+            onClick={() => setSelected('tool')}
+            role="listitem"
+          >
+            <span className="node__title">{t('studio.trigger')}</span>
+            <span className="node__detail">
+              {draft.toolName ? (
+                <code>{draft.toolName}</code>
+              ) : (
+                t('studio.triggerUnnamed')
+              )}
+            </span>
+            <span className="node__detail">
+              {parameters.length > 0
+                ? t('studio.triggerTakes', [parameters.map((parameter) => parameter.name).join(', ')])
+                : t('studio.triggerTakesNothing')}
+            </span>
+          </button>
+
+          {draft.steps.map((step, index) => {
+            const { title, detail } = summarize(step);
+            return (
+              <Fragment key={step.id}>
+                <span className="flow__link" aria-hidden="true" />
+                <button
+                  type="button"
+                  role="listitem"
+                  data-kind={step.kind}
+                  data-param={step.parameterized ? '1' : '0'}
+                  className={`node ${selected === step.id ? 'node--on' : ''}`}
+                  onClick={() => setSelected(step.id)}
+                >
+                  <span className="node__index">{index + 1}</span>
+                  <span className="node__title">{t(title)}</span>
+                  <span className="node__detail node__detail--code">
+                    {detail || t('studio.noSelector')}
+                  </span>
+                  {step.parameterized && step.parameter && (
+                    <span className="node__detail">{t('studio.usesInput', [step.parameter])}</span>
+                  )}
+                  <MatchBadge count={probe[step.selector]} />
+                </button>
+              </Fragment>
+            );
+          })}
+
+          <span className="flow__link" aria-hidden="true" />
+          <button
+            type="button"
+            className="node__add"
+            aria-label={t('studio.addStepAria')}
+            onClick={() => {
+              const step = emptyStep();
+              setDraft({ ...draft, steps: [...draft.steps, step] });
+              setSelected(step.id);
+            }}
+          >
+            +
+          </button>
+        </div>
+
+        <aside className="inspector">
+          {selectedStep ? (
+            <section className="panel">
+              <div className="panel__head">
+                <h2>{t('studio.stepN', [draft.steps.indexOf(selectedStep) + 1])}</h2>
+                <span className="muted">{t(summarize(selectedStep).title)}</span>
+              </div>
+              <div className="panel__body">
+                <StepEditor
+                  step={selectedStep}
+                  index={draft.steps.indexOf(selectedStep)}
+                  probe={probe}
+                  onChange={(next) => updateStep(selectedStep.id, next)}
+                  onMove={(delta) => moveStep(draft.steps.indexOf(selectedStep), delta)}
+                  onRemove={() => {
+                    setSelected('tool');
+                    setDraft({ ...draft, steps: draft.steps.filter((candidate) => candidate.id !== selectedStep.id) });
+                  }}
+                />
+              </div>
+            </section>
+          ) : (
+            <>
           <section className="panel">
             <div className="panel__head">
               <h2>{t('studio.tool')}</h2>
@@ -434,60 +561,31 @@ function Studio() {
               </div>
             </section>
           )}
-        </div>
-
-        <div>
-          <section className="panel">
-            <div className="panel__head">
-              <h2>{t('studio.steps')}</h2>
-              <button
-                type="button"
-                className="iconbtn"
-                onClick={() => setDraft({ ...draft, steps: [...draft.steps, emptyStep()] })}
-              >
-                {t('studio.addStep')}
-              </button>
-            </div>
-            <div className="panel__body">
-              {draft.steps.map((step, index) => (
-                <StepEditor
-                  key={step.id}
-                  step={step}
-                  index={index}
-                  probe={probe}
-                  onChange={(next) => updateStep(step.id, next)}
-                  onMove={(delta) => moveStep(index, delta)}
-                  onRemove={() =>
-                    setDraft({ ...draft, steps: draft.steps.filter((candidate) => candidate.id !== step.id) })
-                  }
-                />
-              ))}
-              {draft.steps.length === 0 && <p className="muted">{t('studio.noSteps')}</p>}
-            </div>
-          </section>
-
-          <section className="panel">
-            <div className="panel__head">
-              <h2>{t('studio.adapterJson')}</h2>
-              {validation?.ok ? (
-                <span className="ok">{t('studio.valid')}</span>
-              ) : (
-                <span className="problem">{t('studio.notValid')}</span>
-              )}
-            </div>
-            {validation && !validation.ok && (
-              <div className="panel__body">
-                {validation.errors.map((error) => (
-                  <p key={error} className="problem">
-                    {error}
-                  </p>
-                ))}
-              </div>
-            )}
-            <pre>{JSON.stringify(adapterJson, null, 2)}</pre>
-          </section>
-        </div>
+            </>
+          )}
+        </aside>
       </div>
+
+      <section className="panel">
+        <div className="panel__head">
+          <h2>{t('studio.adapterJson')}</h2>
+          {validation?.ok ? (
+            <span className="ok">{t('studio.valid')}</span>
+          ) : (
+            <span className="problem">{t('studio.notValid')}</span>
+          )}
+        </div>
+        {validation && !validation.ok && (
+          <div className="panel__body">
+            {validation.errors.map((error) => (
+              <p key={error} className="problem">
+                {error}
+              </p>
+            ))}
+          </div>
+        )}
+        <pre>{JSON.stringify(adapterJson, null, 2)}</pre>
+      </section>
     </div>
   );
 }

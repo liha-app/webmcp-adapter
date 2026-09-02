@@ -57,7 +57,7 @@ pnpm acceptance:recorder   36/36 checks — record a workflow, get a valid adapt
                            registers WebMCP tools with no adapter involved
 pnpm acceptance:icons      6/6 checks — Chrome parses the extension's icons and
                            can resolve every path it was given
-pnpm verify                428 unit + integration tests, typecheck, lint, build
+pnpm verify                456 unit + integration tests, typecheck, lint, build
 pnpm e2e                   45 Playwright tests
 ```
 
@@ -152,7 +152,9 @@ and its settings.
 
 It also contains the **Recorder** — press *Record a tool*, use the site by hand,
 press *Stop* — and the **Studio**, where the recording becomes an adapter you
-name, parameterize, test and install. Selectors come from the site's own stable
+name, parameterize, test and install. The Studio is laid out the way automation
+builders are: the workflow as a flow down the left, one node open on the right.
+The order is a thing you can see, and only the step you are working on is a form. Selectors come from the site's own stable
 attributes; class names are never used, because they churn on every redeploy.
 
 **[Do it yourself](https://webmcp-adopter.liha.dev/create)** — a guided build that
@@ -309,7 +311,7 @@ Full model, including the MAIN-world limitation this cannot engineer away:
 ## Verifying it yourself
 
 ```bash
-pnpm verify           # typecheck, lint, 428 unit + integration tests, build
+pnpm verify           # typecheck, lint, 456 unit + integration tests, build
 pnpm e2e              # 45 Playwright tests against the portal and the demo apps
 pnpm acceptance:all   # four real-browser runs through the WebMCP protocol
 pnpm acceptance:prod  # 36 checks against the deployed sites, not a local build

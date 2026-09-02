@@ -165,12 +165,14 @@ async function main() {
     await studio.eval(`chrome.storage.local.set({ 'liha/locale': 'en' }).then(() => location.reload())`);
     await sleep(700);
     must(
-      await waitFor(async () => studio.eval(`Boolean(document.querySelector('.step'))`), 20000),
+      await waitFor(async () => studio.eval(`Boolean(document.querySelector('.node[data-kind]'))`), 20000),
       'the Studio shows the recorded steps',
     );
 
     const stepKinds = await studio.eval(
-      `[...document.querySelectorAll('.step select.type')].map((select) => select.value)`,
+      // Read off the flow rather than the open editor: only the selected step
+      // has its fields on screen, and the order is the flow's to report.
+      `[...document.querySelectorAll('.node[data-kind]')].map((node) => node.dataset.kind)`,
     );
     check(
       stepKinds.slice(0, 3).join(',') === 'click,fill,fill',
@@ -178,7 +180,7 @@ async function main() {
       stepKinds.join(','),
     );
     const parameterised = await studio.eval(
-      `[...document.querySelectorAll('.step select')].filter((select) => select.value === 'parameter').length`,
+      `document.querySelectorAll('.node[data-param="1"]').length`,
     );
     check(parameterised >= 2, 'typed values are proposed as tool input, not baked in as literals', String(parameterised));
 

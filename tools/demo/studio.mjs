@@ -153,7 +153,7 @@ async function main() {
     if (!target) throw new Error('stopping the recording did not open the Studio');
     const studio = await new Session(target.webSocketDebuggerUrl).open();
     await studio.send('Emulation.setDeviceMetricsOverride', { width: 1280, height: 820, deviceScaleFactor: 1, mobile: false });
-    await waitFor(async () => studio.eval(`Boolean(document.querySelector('.step'))`));
+    await waitFor(async () => studio.eval(`Boolean(document.querySelector('.node[data-kind]'))`));
     await sleep(700);
     await beat(studio, 'The Studio has the workflow', 'Selectors come from the site’s own stable attributes. Class names are never used.');
 
@@ -163,30 +163,38 @@ async function main() {
     await sleep(900);
     await beat(studio, 'Name it, and say what it does', 'That description is what an agent reads to decide when to use the tool.');
 
-    // The value typed during the recording is not baked in — it becomes the
-    // tool's argument, and naming it is the point of this screen.
+    /*
+      * The value typed during the recording is not baked in — it becomes the
+      * tool's argument, and naming it is the point of this screen. The field
+      * lives on the step, so the step has to be open.
+      */
+    await studio.eval(`[...document.querySelectorAll('.node[data-param="1"]')][0].click()`);
+    await sleep(400);
     await studio.eval(typeInto('input[placeholder="parameter name"]', 'keyword'));
-    await sleep(300);
+    await sleep(400);
+    // Its description belongs to the tool, so back to the trigger node.
+    await studio.eval(`document.querySelector('.node--trigger').click()`);
+    await sleep(400);
     await studio.eval(typeInto('input[placeholder="What should the agent put here?"]', 'What to search the catalogue for'));
-    await sleep(800);
+    await sleep(700);
     await beat(studio, 'The value you typed becomes an argument', '“cable” was an example, not a constant. It is now an input the agent fills in.');
 
     /*
      * Reading the result is not an interaction, so the recorder never saw it.
      * The author adds it — which is the other half of what the Studio is for.
      */
-    await studio.eval(
-      `[...document.querySelectorAll('button')].find((b) => b.textContent.trim() === '+ step').click()`,
-    );
-    await sleep(400);
-    const last = await studio.eval(`document.querySelectorAll('.step').length`);
+    // The add button selects what it just created, so the editor on the right
+    // is already the new step.
+    await studio.eval(`document.querySelector('.node__add').click()`);
+    await sleep(500);
+    const last = await studio.eval(`document.querySelectorAll('.node[data-kind]').length`);
     await studio.eval(setNative(`select[aria-label="Step ${last} type"]`, 'readList'));
     await sleep(300);
     await studio.eval(
-      setNative(`.step:last-of-type input[placeholder="CSS selector"]`, "[data-testid='product-list'] [data-field='name']"),
+      setNative(`.step input[placeholder="CSS selector"]`, "[data-testid='product-list'] [data-field='name']"),
     );
     await sleep(200);
-    await studio.eval(setNative(`.step:last-of-type input[placeholder="output name"]`, 'products'));
+    await studio.eval(setNative('.step input[placeholder="output name"]', 'products'));
     await sleep(800);
     await beat(studio, 'Add the step the recorder could not see', 'Reading the answer back is not an interaction, so nobody clicked it. You add it here.');
 
