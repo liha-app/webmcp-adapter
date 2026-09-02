@@ -200,6 +200,14 @@ checks. See [docs/adapter-format.md](docs/adapter-format.md).
 
 ### Three demo apps, zero WebMCP
 
+They share [packages/demo-ui](packages/demo-ui/styles.css) — Apple's App Store
+system, the same one the portal uses, measured rather than approximated: the
+980px column, the 18px card, the `#0071e3` pill on its 980px radius, `#f5f5f7`
+ground, 17/25 body, and the "Get" button's 13/700 on a 6% blue for the repeated
+row actions. That is not decoration. The claim is that an adapter drives a real
+site's real interface, and a demo that looks like a test fixture makes the claim
+about test fixtures.
+
 **Acme CRM**, **Nimbus Supply** and **Kite Project Manager** are ordinary React
 apps. They exist to prove the runtime is general rather than a hack aimed at one
 page — fourteen tools across three apps, all from adapters.

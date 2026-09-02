@@ -84,136 +84,146 @@ export function App() {
   const onCart = path.startsWith('/cart');
 
   return (
-    <main className="app">
-      <header className="app__header">
-        <div>
-          <h1>Nimbus Supply</h1>
-          <p className="app__subtitle">An ordinary storefront. Nothing in here knows what an agent is.</p>
+    <>
+      {/*
+        * Apple's global bar: the store's name, and the two places you can be.
+        * The cart count rides in the button, which is where a shopper looks.
+        */}
+      <header className="topbar">
+        <div className="topbar__inner">
+          <span className="topbar__brand">Nimbus Supply</span>
+          <nav className="topbar__actions">
+            <button
+              type="button"
+              className={`btn ${onCart ? '' : 'btn--primary'}`}
+              data-action="view-products"
+              onClick={() => go('/')}
+            >
+              Products
+            </button>
+            <button
+              type="button"
+              className={`btn ${onCart ? 'btn--primary' : ''}`}
+              data-action="view-cart"
+              onClick={() => go('/cart')}
+            >
+              Cart <span className="badge" data-testid="cart-count">{itemCount}</span>
+            </button>
+          </nav>
         </div>
-        <nav className="nav">
-          <button
-            type="button"
-            className={`btn ${onCart ? '' : 'btn--primary'}`}
-            data-action="view-products"
-            onClick={() => go('/')}
-          >
-            Products
-          </button>
-          <button
-            type="button"
-            className={`btn ${onCart ? 'btn--primary' : ''}`}
-            data-action="view-cart"
-            onClick={() => go('/cart')}
-          >
-            Cart <span className="badge" data-testid="cart-count">{itemCount}</span>
-          </button>
-        </nav>
       </header>
 
-      {!onCart && (
-        <section className="panel" data-testid="products-panel">
-          <div className="panel__head">
-            <h2>Products</h2>
-            <span className="badge" data-testid="product-result-count">
-              {results.length}
-            </span>
-            <input
-              className="search"
-              name="q"
-              placeholder="Search products"
-              aria-label="Search products"
-              data-testid="product-search"
-              autoComplete="off"
-              value={query}
-              onChange={(event) => setQuery(event.target.value)}
-            />
-          </div>
-          <ul className="list" data-testid="product-list">
-            {results.map((product) => (
-              <li key={product.id} className="list__row" data-product-id={product.id}>
-                <span className="list__name" data-field="name">
-                  {product.name}
-                </span>
-                <span className="list__muted" data-field="category">
-                  {product.category}
-                </span>
-                <span className="list__muted" data-field="price">
-                  ${product.price}
-                </span>
-                <button
-                  type="button"
-                  className="btn btn--small"
-                  data-action="add-to-cart"
-                  onClick={() => addToCart(product)}
-                >
-                  Add to cart
-                </button>
-              </li>
-            ))}
-          </ul>
-          {results.length === 0 && (
-            <p className="empty" data-testid="product-empty">
-              Nothing matches that search.
-            </p>
-          )}
-        </section>
-      )}
+      <main className="app">
+        <div className="pagehead">
+          <h1>{onCart ? 'Cart' : 'Products'}</h1>
+          <p className="app__subtitle">An ordinary storefront. Nothing in here knows what an agent is.</p>
+        </div>
 
-      {onCart && (
-        <section className="panel" data-testid="cart-panel">
-          <div className="panel__head">
-            <h2>Cart</h2>
-            <span className="badge" data-testid="cart-line-count">
-              {lines.length}
-            </span>
-          </div>
-          <ul className="list" data-testid="cart-items">
-            {lines.map((line) => (
-              <li key={line.id} className="list__row" data-cart-item-id={line.id}>
-                <span className="list__name" data-field="name">
-                  {line.product.name}
-                </span>
-                <span className="list__muted" data-field="quantity">
-                  {line.quantity}
-                </span>
-                <span className="list__muted" data-field="price">
-                  ${line.product.price * line.quantity}
-                </span>
-              </li>
-            ))}
-          </ul>
-          {lines.length === 0 && (
-            <p className="empty" data-testid="cart-empty">
-              Your cart is empty.
-            </p>
-          )}
-
-          <div className="cart__footer">
-            <form className="coupon" data-testid="coupon-form" onSubmit={applyCoupon}>
+        {!onCart && (
+          <section className="panel" data-testid="products-panel">
+            <div className="panel__head">
+              <h2>Catalogue</h2>
+              <span className="badge" data-testid="product-result-count">
+                {results.length}
+              </span>
               <input
-                name="coupon"
-                placeholder="Coupon code"
-                aria-label="Coupon code"
+                className="search"
+                name="q"
+                placeholder="Search products"
+                aria-label="Search products"
+                data-testid="product-search"
                 autoComplete="off"
-                value={couponInput}
-                onChange={(event) => setCouponInput(event.target.value)}
+                value={query}
+                onChange={(event) => setQuery(event.target.value)}
               />
-              <button type="submit" className="btn" data-action="apply-coupon">
-                Apply
-              </button>
-            </form>
-            <div className="totals">
-              <span className="list__muted">Subtotal ${subtotal}</span>
-              <strong data-testid="cart-total">Total ${total}</strong>
             </div>
-          </div>
-          {couponStatus && (
-            <p className="status" data-testid="coupon-status">
-              {couponStatus}
-            </p>
-          )}
-        </section>
-      )}
-    </main>
+            <ul className="list" data-testid="product-list">
+              {results.map((product) => (
+                <li key={product.id} className="list__row" data-product-id={product.id}>
+                  <span className="list__name" data-field="name">
+                    {product.name}
+                  </span>
+                  <span className="list__muted" data-field="category">
+                    {product.category}
+                  </span>
+                  <span className="list__muted" data-field="price">
+                    ${product.price}
+                  </span>
+                  <button
+                    type="button"
+                    className="btn btn--small"
+                    data-action="add-to-cart"
+                    onClick={() => addToCart(product)}
+                  >
+                    Add to cart
+                  </button>
+                </li>
+              ))}
+            </ul>
+            {results.length === 0 && (
+              <p className="empty" data-testid="product-empty">
+                Nothing matches that search.
+              </p>
+            )}
+          </section>
+        )}
+
+        {onCart && (
+          <section className="panel" data-testid="cart-panel">
+            <div className="panel__head">
+              <h2>Items</h2>
+              <span className="badge" data-testid="cart-line-count">
+                {lines.length}
+              </span>
+            </div>
+            <ul className="list" data-testid="cart-items">
+              {lines.map((line) => (
+                <li key={line.id} className="list__row" data-cart-item-id={line.id}>
+                  <span className="list__name" data-field="name">
+                    {line.product.name}
+                  </span>
+                  <span className="list__muted" data-field="quantity">
+                    {line.quantity}
+                  </span>
+                  <span className="list__muted" data-field="price">
+                    ${line.product.price * line.quantity}
+                  </span>
+                </li>
+              ))}
+            </ul>
+            {lines.length === 0 && (
+              <p className="empty" data-testid="cart-empty">
+                Your cart is empty.
+              </p>
+            )}
+
+            <div className="cart__footer">
+              <form className="coupon" data-testid="coupon-form" onSubmit={applyCoupon}>
+                <input
+                  name="coupon"
+                  placeholder="Coupon code"
+                  aria-label="Coupon code"
+                  autoComplete="off"
+                  value={couponInput}
+                  onChange={(event) => setCouponInput(event.target.value)}
+                />
+                <button type="submit" className="btn" data-action="apply-coupon">
+                  Apply
+                </button>
+              </form>
+              <div className="totals">
+                <span className="list__muted">Subtotal ${subtotal}</span>
+                <strong data-testid="cart-total">Total ${total}</strong>
+              </div>
+            </div>
+            {couponStatus && (
+              <p className="status" data-testid="coupon-status">
+                {couponStatus}
+              </p>
+            )}
+          </section>
+        )}
+      </main>
+    </>
   );
 }

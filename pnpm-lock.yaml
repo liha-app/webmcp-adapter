@@ -51,6 +51,9 @@ importers:
 
   apps/demo-crm:
     dependencies:
+      '@liha/demo-ui':
+        specifier: workspace:*
+        version: link:../../packages/demo-ui
       react:
         specifier: ^19.0.0
         version: 19.2.8
@@ -73,6 +76,9 @@ importers:
 
   apps/demo-project:
     dependencies:
+      '@liha/demo-ui':
+        specifier: workspace:*
+        version: link:../../packages/demo-ui
       react:
         specifier: ^19.0.0
         version: 19.2.8
@@ -95,6 +101,9 @@ importers:
 
   apps/demo-shop:
     dependencies:
+      '@liha/demo-ui':
+        specifier: workspace:*
+        version: link:../../packages/demo-ui
       react:
         specifier: ^19.0.0
         version: 19.2.8
@@ -211,6 +220,8 @@ importers:
         version: 3.25.76
 
   packages/config: {}
+
+  packages/demo-ui: {}
 
   packages/shared:
     dependencies:
