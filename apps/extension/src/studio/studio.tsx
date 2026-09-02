@@ -334,12 +334,22 @@ function Studio() {
   return (
     <div className="shell">
       <header className="top">
-        <div>
+        <div className="top__title">
           <h1>Adapter Studio</h1>
           <p className="lede">
             {t('studio.recordedFrom', [recording?.actions.length ?? 0])} <code>{draft.origin}</code>
           </p>
         </div>
+        {/*
+          * The verdict rides in the bar rather than under the JSON. It is the
+          * thing that decides whether three of these buttons do anything, and
+          * the JSON moved off-screen into the rail.
+          */}
+        {validation?.ok ? (
+          <span className="ok">{t('studio.valid')}</span>
+        ) : (
+          <span className="problem">{t('studio.notValid')}</span>
+        )}
         <div className="actions">
           <button type="button" className="btn" onClick={runProbe}>
             {t('studio.testSelectors')}
@@ -362,7 +372,7 @@ function Studio() {
         </div>
       </header>
 
-      <div className="steps-flow">
+      <div className="steps-flow steps-flow--bar">
         {([t('studio.stepRecord'), t('studio.stepReview'), t('studio.stepParameterize'), t('studio.stepTest'), t('studio.stepInstall')] as string[]).map((label, index) => (
           <span key={label} className={`flowstep ${index === 0 ? 'flowstep--on' : ''}`}>
             {index + 1}. {label}
@@ -372,7 +382,7 @@ function Studio() {
 
       {status && <div className="banner">{status}</div>}
 
-      <div className="builder">
+      <div className="stage">
         <div className="flow" role="list">
           {/*
             * The trigger, the way every flow builder starts: the thing that
@@ -427,6 +437,8 @@ function Studio() {
             );
           })}
 
+          {draft.steps.length === 0 && <p className="flow__empty">{t('studio.flowEmpty')}</p>}
+
           <span className="flow__link" aria-hidden="true" />
           <button
             type="button"
@@ -443,12 +455,12 @@ function Studio() {
         </div>
 
         <aside className="inspector">
+          <div className="inspector__head">
+            <h2>{selectedStep ? t('studio.stepN', [draft.steps.indexOf(selectedStep) + 1]) : t('studio.toolDetails')}</h2>
+            {selectedStep && <span className="muted">{t(summarize(selectedStep).title)}</span>}
+          </div>
           {selectedStep ? (
-            <section className="panel">
-              <div className="panel__head">
-                <h2>{t('studio.stepN', [draft.steps.indexOf(selectedStep) + 1])}</h2>
-                <span className="muted">{t(summarize(selectedStep).title)}</span>
-              </div>
+            <section className="panel panel--flush">
               <div className="panel__body">
                 <StepEditor
                   step={selectedStep}
@@ -563,29 +575,26 @@ function Studio() {
           )}
             </>
           )}
+
+          {validation && !validation.ok && (
+            <div className="inspector__problems">
+              {validation.errors.map((error) => (
+                <p key={error} className="problem">
+                  {error}
+                </p>
+              ))}
+            </div>
+          )}
+
+          {/* Off to one side, because it is the output, not the workspace. */}
+          <details className="jsonbox">
+            <summary>{t('studio.adapterJson')}</summary>
+            <pre>{JSON.stringify(adapterJson, null, 2)}</pre>
+          </details>
         </aside>
       </div>
 
-      <section className="panel">
-        <div className="panel__head">
-          <h2>{t('studio.adapterJson')}</h2>
-          {validation?.ok ? (
-            <span className="ok">{t('studio.valid')}</span>
-          ) : (
-            <span className="problem">{t('studio.notValid')}</span>
-          )}
-        </div>
-        {validation && !validation.ok && (
-          <div className="panel__body">
-            {validation.errors.map((error) => (
-              <p key={error} className="problem">
-                {error}
-              </p>
-            ))}
-          </div>
-        )}
-        <pre>{JSON.stringify(adapterJson, null, 2)}</pre>
-      </section>
+
     </div>
   );
 }

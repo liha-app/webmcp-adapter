@@ -163,7 +163,13 @@ async function main() {
     // one. These checks read English labels, so pin it rather than depend on
     // the locale of whichever machine the suite runs on.
     await studio.eval(`chrome.storage.local.set({ 'liha/locale': 'en' }).then(() => location.reload())`);
-    await sleep(700);
+    // Waits for the reloaded app rather than sleeping at it: under load the
+    // fixed pause was sometimes shorter than the reload, and the run then
+    // failed looking for a Studio that was still mounting.
+    must(
+      await waitFor(async () => studio.eval(`document.querySelector('h1')?.textContent === 'Adapter Studio'`), 20000),
+      'the Studio comes back after the language is pinned',
+    );
     must(
       await waitFor(async () => studio.eval(`Boolean(document.querySelector('.node[data-kind]'))`), 20000),
       'the Studio shows the recorded steps',

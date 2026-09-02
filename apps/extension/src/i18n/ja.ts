@@ -137,6 +137,7 @@ export const ja: Record<MessageKey, string> = {
     '主対象は Chrome です。Firefox 版も同じ Adapter 管理・ストレージ・診断を備えており、Firefox が MAIN world への注入と WebMCP に対応し次第、ツールを登録します。',
 
   /* ----------------------------------------------------------- studio ---- */
+  'studio.flowEmpty': '記録がありません。ステップを追加するか、サイト上の Liha ポップアップから操作を記録してください。',
   'studio.kindClick': 'クリック',
   'studio.kindFill': '入力',
   'studio.kindSelect': '選択',

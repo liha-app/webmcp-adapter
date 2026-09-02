@@ -134,6 +134,7 @@ export const en = {
     'Chrome is the primary target. The Firefox build ships the same adapter management, storage and diagnostics; it registers tools as soon as Firefox supports MAIN-world injection and WebMCP.',
 
   /* ----------------------------------------------------------- studio ---- */
+  'studio.flowEmpty': 'Nothing recorded. Add a step, or record the workflow from the Liha popup on the site.',
   'studio.kindClick': 'Click',
   'studio.kindFill': 'Fill',
   'studio.kindSelect': 'Choose',

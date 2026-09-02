@@ -52,12 +52,12 @@ pnpm acceptance:full       65/65 checks — three demo adapters, the portal's
                            an agent writing and installing an adapter of its own,
                            and a browser with the WebMCP flag off, where the
                            extension has to say so rather than fake it
-pnpm acceptance:recorder   36/36 checks — record a workflow, get a valid adapter,
+pnpm acceptance:recorder   37/37 checks — record a workflow, get a valid adapter,
                            and an exported native implementation that really
                            registers WebMCP tools with no adapter involved
 pnpm acceptance:icons      6/6 checks — Chrome parses the extension's icons and
                            can resolve every path it was given
-pnpm verify                456 unit + integration tests, typecheck, lint, build
+pnpm verify                457 unit + integration tests, typecheck, lint, build
 pnpm e2e                   45 Playwright tests
 ```
 
@@ -311,7 +311,7 @@ Full model, including the MAIN-world limitation this cannot engineer away:
 ## Verifying it yourself
 
 ```bash
-pnpm verify           # typecheck, lint, 456 unit + integration tests, build
+pnpm verify           # typecheck, lint, 457 unit + integration tests, build
 pnpm e2e              # 45 Playwright tests against the portal and the demo apps
 pnpm acceptance:all   # four real-browser runs through the WebMCP protocol
 pnpm acceptance:prod  # 36 checks against the deployed sites, not a local build
