@@ -1,5 +1,9 @@
 import {
   STORE_INSTALL_EVENT,
+  STORE_PROBE_EVENT,
+  STORE_PROBE_RESPONSE_EVENT,
+  type ProbeOutcome,
+  type ProbeRequest,
   STORE_STATE_EVENT,
   STORE_STATE_RESPONSE_EVENT,
   type StoreStateResponse,
@@ -57,6 +61,38 @@ export function fetchInstalled(): Promise<StoreStateResponse> {
 export interface InstallOutcome {
   ok: boolean;
   errors: string[];
+}
+
+/**
+ * Asks the extension to count what each selector matches on a page at `origin`.
+ *
+ * The extension answers with numbers and nothing else. That is the whole design
+ * of this: an agent choosing selectors for an adapter needs to know whether the
+ * one it picked hits exactly one element — the runtime is fail-closed on
+ * ambiguity — and it does not need, and must not get, the page's contents to
+ * find that out.
+ */
+export function requestProbe(origin: string, selectors: string[]): Promise<ProbeOutcome> {
+  const requestId = crypto.randomUUID();
+  return new Promise((resolve) => {
+    const timer = setTimeout(() => {
+      document.removeEventListener(STORE_PROBE_RESPONSE_EVENT, onResult);
+      resolve({ requestId, error: 'The extension did not respond. Is it installed and enabled?' });
+    }, 20_000);
+    // Correlated by id rather than answered once: two probes can be in flight,
+    // and the first answer back is not necessarily the answer to this question.
+    const onResult = (event: Event) => {
+      const detail = (event as CustomEvent<ProbeOutcome>).detail;
+      if (detail?.requestId !== requestId) return;
+      clearTimeout(timer);
+      document.removeEventListener(STORE_PROBE_RESPONSE_EVENT, onResult);
+      resolve(detail);
+    };
+    document.addEventListener(STORE_PROBE_RESPONSE_EVENT, onResult);
+    document.dispatchEvent(
+      new CustomEvent(STORE_PROBE_EVENT, { detail: { requestId, origin, selectors } satisfies ProbeRequest }),
+    );
+  });
 }
 
 export function requestInstall(adapter: AdapterDefinition): Promise<InstallOutcome> {

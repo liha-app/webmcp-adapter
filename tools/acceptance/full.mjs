@@ -294,10 +294,12 @@ async function main() {
       'get_adapter_permissions',
       'validate_adapter',
       'get_demo_info',
+      'probe_selectors',
+      'install_adapter',
     ];
     must(
       await waitFor(async () => registryTools.every((name) => watch.tools.has(name))),
-      'the registry registers its own five tools',
+      `the registry registers its own ${registryTools.length} tools`,
       [...watch.tools.keys()].join(', '),
     );
     check(
@@ -326,6 +328,105 @@ async function main() {
     check(
       outputText(demoInfo).includes('localhost:5273'),
       'get_demo_info resolves demo URLs for wherever the portal is served from',
+    );
+
+    /* --------------------------------------------- agent-authored adapter -- */
+    /*
+     * The loop this project is actually arguing for: an agent writes an adapter
+     * for a site nobody has adapted, checks its own selectors rather than
+     * guessing at them, hands the definition over, and a person — not the agent
+     * — decides whether it is installed.
+     *
+     * The site used here has no adapter of its own in this run: the tool is
+     * being taught from scratch, and the only thing that makes it exist
+     * afterwards is the JSON the agent wrote.
+     */
+    group('An agent can write an adapter, check it, and ask for it to be installed');
+    const shopTab = await browser.newPage();
+    await shopTab.goto('http://localhost:5274/');
+    await sleep(600);
+
+    const probed = await invoke(page, watch, 'probe_selectors', {
+      origin: 'http://localhost:5274',
+      selectors: "[data-testid='product-search']\n[data-action='view-products']\n[data-testid='nope']\nli",
+    });
+    const probeText = outputText(probed);
+    check(probeText.includes("[data-testid='product-search'] → usable"), 'probe_selectors confirms a good selector', probeText.replace(/\n/g, ' | ').slice(0, 200));
+    check(probeText.includes("[data-testid='nope'] → no match"), 'and reports one that matches nothing');
+    check(/li → ambiguous \(\d+ matches\)/.test(probeText), 'and one that is ambiguous, which the runtime would refuse');
+    check(
+      !/Wireless|Keyboard|\$|USD/i.test(probeText),
+      'it returns counts and no page content — an agent cannot read the page with it',
+      probeText.replace(/\n/g, ' | ').slice(0, 200),
+    );
+
+    // Written the way an agent would: only selectors it just checked.
+    const authored = {
+      id: 'agent-authored-shop',
+      name: 'Nimbus Supply search',
+      version: '1.0.0',
+      description: 'Search the Nimbus Supply catalogue by keyword.',
+      origins: ['http://localhost:5274'],
+      tools: [
+        {
+          name: 'find_products',
+          description: 'Search the catalogue by keyword and return the matching product names.',
+          capability: 'READ',
+          inputSchema: {
+            type: 'object',
+            properties: { keyword: { type: 'string', description: 'Search text' } },
+            required: ['keyword'],
+          },
+          steps: [
+            { type: 'click', selector: "[data-action='view-products']" },
+            { type: 'fill', selector: "[data-testid='product-search']", value: '{{keyword}}' },
+            { type: 'waitFor', selector: "[data-testid='product-list']" },
+            { type: 'readList', selector: "[data-testid='product-list'] [data-field='name']", as: 'products' },
+          ],
+        },
+      ],
+    };
+
+    const rejected = await invoke(page, watch, 'install_adapter', {
+      adapter: JSON.stringify({ ...authored, origins: ['https://*.example.com'] }),
+    });
+    check(
+      outputText(rejected).includes('not valid') && outputText(rejected).includes('wildcard'),
+      'install_adapter refuses a wildcard origin without troubling anyone',
+      outputText(rejected).replace(/\n/g, ' | ').slice(0, 160),
+    );
+
+    const askedFor = page.send('WebMCP.invokeTool', {
+      frameId: watch.tools.get('install_adapter').frameId,
+      toolName: 'install_adapter',
+      input: { adapter: JSON.stringify(authored) },
+    });
+    const agentPrompt = await answerConfirmation(browser, 'allow');
+    must(agentPrompt.shown, 'an agent cannot install an adapter without user confirmation either');
+    check(
+      (agentPrompt.summary ?? '').includes('localhost:5274'),
+      'the confirmation names the origin the agent asked for',
+      (agentPrompt.summary ?? '').split('\n').slice(0, 3).join(' | '),
+    );
+    await askedFor.catch(() => undefined);
+    const installedText = await waitFor(async () => {
+      const last = [...watch.events].reverse().find((event) => event.method === 'WebMCP.toolResponded');
+      const text = outputText(last?.params?.output);
+      return text.includes('Installed') ? text : null;
+    }, 20000);
+    must(Boolean(installedText), 'approving it installs the adapter the agent wrote');
+
+    // The real question: does the tool the agent invented actually work?
+    watch.tools.clear();
+    await shopTab.close?.();
+    await page.goto('http://localhost:5274/');
+    const authoredTool = await waitFor(async () => watch.tools.get('find_products'), 20000);
+    must(Boolean(authoredTool), 'reloading the site registers the tool the agent wrote, with no recording involved');
+    const answer = await invoke(page, watch, 'find_products', { keyword: 'cable' });
+    check(
+      outputText(answer).toLowerCase().includes('cable'),
+      'and calling it drives the site and answers from the real catalogue',
+      outputText(answer).slice(0, 160),
     );
 
     /* ----------------------------------------------------- Store install -- */

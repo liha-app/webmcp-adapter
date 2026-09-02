@@ -125,8 +125,8 @@ async function main() {
       page.eval(`document.modelContext.getTools().then(t => t.map(x => x.name).sort().join(','))`),
     );
     check(
-      registered === 'get_adapter,get_adapter_permissions,get_demo_info,list_adapter_tools,search_adapters,validate_adapter',
-      'the portal registers its six native tools',
+      registered === 'get_adapter,get_adapter_permissions,get_demo_info,install_adapter,list_adapter_tools,probe_selectors,search_adapters,validate_adapter',
+      'the portal registers its eight native tools',
       registered,
     );
     const info = await page.eval(`(async () => {

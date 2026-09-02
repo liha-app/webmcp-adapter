@@ -107,6 +107,23 @@ asked.
 A web page requesting an install is only *requesting*. The page cannot approve
 its own request, and it cannot see the answer other than as an outcome.
 
+**An agent requesting one is the same request.** The portal registers
+`install_adapter` as a WebMCP tool so an agent can hand over a definition it
+wrote, and that tool reaches the extension through the identical path the Store's
+own install button uses — the same validation, the same confirmation window, the
+same naming of origins, capabilities and the page that asked. It adds no
+privilege: an agent that can call it can ask, and a person still decides. An
+invalid definition is refused before a window is ever opened, so an agent cannot
+use it to generate dialogs.
+
+`probe_selectors` is the other tool an agent needs, and it is deliberately
+narrow. It reports **how many elements each selector matches** on an open page at
+a given origin, and nothing else: no text, no attribute values, no markup. That
+is enough to tell a usable selector from a wrong or an ambiguous one — which is
+what writing an adapter requires — and it is not a way to read a page the agent
+cannot otherwise see. It still needs the extension to hold host permission for
+that origin, so it reaches nowhere the extension was not already allowed.
+
 ## 8. Extension permissions
 
 Shipped permissions are `scripting`, `storage`, and host permissions for the

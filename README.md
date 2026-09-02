@@ -47,8 +47,9 @@ same surface a Tool Inspector or agent uses.
 
 ```
 pnpm acceptance            10/10 Phase 0 criteria
-pnpm acceptance:full       55/55 checks — three demo adapters, the portal's
+pnpm acceptance:full       65/65 checks — three demo adapters, the portal's
                            native WebMCP tools, the destructive confirmation gate,
+                           an agent writing and installing an adapter of its own,
                            and a browser with the WebMCP flag off, where the
                            extension has to say so rather than fake it
 pnpm acceptance:recorder   36/36 checks — record a workflow, get a valid adapter,
@@ -183,10 +184,34 @@ schemas, capability classification, health, last-verified date, and the complete
 source of every definition.
 
 The registry **implements WebMCP natively** — `search_adapters`, `get_adapter`,
-`list_adapter_tools`, `get_adapter_permissions`, `validate_adapter`. Ask an agent
-to *"find a CRM adapter with write access"* and it calls the page's own tool.
-That contrast is the point: this is what a site looks like when its developers do
-the work, and the demo apps show what happens when they never do.
+`list_adapter_tools`, `get_adapter_permissions`, `get_demo_info`,
+`validate_adapter`, `probe_selectors`, `install_adapter`. Ask an agent to *"find
+a CRM adapter with write access"* and it calls the page's own tool. That contrast
+is the point: this is what a site looks like when its developers do the work, and
+the demo apps show what happens when they never do.
+
+### An agent can write the adapter
+
+The last three tools are a loop rather than a list. Given a site nobody has
+adapted, an agent can:
+
+1. **`probe_selectors`** — count what each CSS selector it is considering
+   matches on an open page at that origin. `1` is usable, `0` is wrong, more
+   than one is ambiguous and the runtime will refuse to act on it. Counts are
+   all that comes back: never text, never attributes, never the page. Enough to
+   stop guessing, not enough to read the page with.
+2. **`validate_adapter`** — check the definition against the published schema
+   and get every problem back, one per line, until it is right.
+3. **`install_adapter`** — hand the definition over. The extension re-validates
+   it and then **asks the person at the keyboard** to approve the exact origins
+   and capabilities. An agent asking is a request, not an install; an
+   unapproved one does not happen.
+
+Then reloading the site registers the tool the agent wrote, and calling it
+drives the real UI. No recording, no human authoring the JSON.
+`pnpm acceptance:full` walks exactly that, including the refusals: a wildcard
+origin is rejected before anyone is troubled, and the confirmation window is
+shown to be unavoidable.
 
 The landing page is not a description of that — it runs the tools. Pick one,
 press run, and the panel reports whether the call went through

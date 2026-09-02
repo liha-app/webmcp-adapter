@@ -26,7 +26,7 @@ test.describe('Landing page', () => {
   test('really runs this page’s own WebMCP tools', async ({ page }) => {
     const live = page.getByTestId('live-tools');
     await expect(live).toBeVisible();
-    await expect(live.getByRole('tab')).toHaveCount(6);
+    await expect(live.getByRole('tab')).toHaveCount(8);
 
     await live.getByRole('button', { name: 'Run search_adapters' }).click();
     const result = page.getByTestId('live-result');

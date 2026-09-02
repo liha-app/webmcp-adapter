@@ -1,10 +1,21 @@
 import { detectModelContext, errorResult, textResult, type ToolResult } from '@liha/adapter-runtime';
 import { validateAdapter, type Capability } from '@liha/adapter-schema';
+import { extensionPresent, requestInstall, requestProbe } from './extension';
 import { CATALOG, findEntry, searchCatalog } from './catalog';
 import { SETUP_STEPS, demoApps } from './demos';
 // Tool output is read by models and asserted by the acceptance suite, so it
 // stays in one language regardless of what the visitor picked for the UI.
 import { en } from '../i18n/en';
+
+/*
+ * Checked before either tool waits on the extension. requestInstall gives a
+ * person three minutes to answer a dialog, which is right when there is a
+ * dialog and useless when there is no extension to show one — an agent would
+ * sit there with nothing to read.
+ */
+const MISSING_EXTENSION =
+  'The Liha extension is not installed in this browser, so there is nothing to install into. ' +
+  'It is at https://github.com/liha-app/webmcp-adapter/releases/latest.';
 
 /**
  * The registry practises what it sells: it implements WebMCP itself, natively,
@@ -39,7 +50,8 @@ export interface RegistryTool {
   name: string;
   description: string;
   inputSchema: Record<string, unknown>;
-  execute: (input: Record<string, unknown>) => ToolResult;
+  /** Async because two of these wait on the extension, and one on a person. */
+  execute: (input: Record<string, unknown>) => ToolResult | Promise<ToolResult>;
   /** Prefilled so a visitor can run it once without typing anything. */
   example: Record<string, string>;
 }
@@ -209,6 +221,122 @@ export const REGISTRY_TOOLS: RegistryTool[] = [
             ? 'Valid. This adapter would be accepted by the runtime.'
             : `Not valid:\n${result.errors.map((error) => `- ${error}`).join('\n')}`,
           { valid: result.ok, errors: result.errors },
+        );
+      },
+    },
+    {
+      name: 'probe_selectors',
+      example: {
+        origin: 'https://demo-shop.liha.review',
+        selectors: "[data-testid='product-search']\n[data-action='add-to-cart']",
+      },
+      description:
+        'Count how many elements each CSS selector matches on an open page at the given origin. One selector per line. ' +
+        'Only counts come back — never text, never attributes, never the page itself. A count of 1 is usable; 0 means the ' +
+        'selector is wrong; more than 1 means it is ambiguous and the adapter runtime will refuse to act on it. Use this to ' +
+        'check the selectors you intend to put in an adapter instead of guessing at them. Requires a tab open on that origin ' +
+        'and the Liha extension installed.',
+      inputSchema: {
+        type: 'object',
+        properties: {
+          origin: { type: 'string', description: 'Exact origin, such as https://demo-shop.liha.review' },
+          selectors: { type: 'string', description: 'CSS selectors to count, one per line' },
+        },
+        required: ['origin', 'selectors'],
+      },
+      execute: async (input) => {
+        const origin = String(input.origin ?? '').trim();
+        const selectors = String(input.selectors ?? '')
+          .split('\n')
+          .map((selector) => selector.trim())
+          .filter(Boolean);
+        if (!origin) return errorResult('An origin is required, such as https://demo-shop.liha.review');
+        if (selectors.length === 0) return errorResult('Give at least one CSS selector, one per line.');
+        if (selectors.length > 25) return errorResult('At most 25 selectors at a time.');
+
+        if (!(await extensionPresent())) return errorResult(MISSING_EXTENSION);
+        const outcome = await requestProbe(origin, selectors);
+        if (outcome.error) return errorResult(outcome.error);
+        const counts = outcome.probe ?? {};
+        const verdict = (count: number) =>
+          count === 1 ? 'usable' : count === 0 ? 'no match' : `ambiguous (${count} matches)`;
+        const lines = selectors.map((selector) => `- ${selector} → ${verdict(counts[selector] ?? 0)}`);
+        const usable = selectors.filter((selector) => counts[selector] === 1).length;
+        return textResult(
+          `${usable} of ${selectors.length} selector(s) resolve to exactly one element on ${origin}:\n${lines.join('\n')}`,
+          { origin, counts, usable },
+        );
+      },
+    },
+    {
+      name: 'install_adapter',
+      example: {
+        adapter: JSON.stringify({
+          id: 'nimbus-search',
+          name: 'Nimbus Supply search',
+          version: '1.0.0',
+          description: 'Search the Nimbus Supply demo catalogue by keyword.',
+          origins: ['https://demo-shop.liha.review'],
+          tools: [
+            {
+              name: 'find_products',
+              description: 'Search the catalogue by keyword and return the matching product names.',
+              capability: 'READ',
+              inputSchema: {
+                type: 'object',
+                properties: { keyword: { type: 'string', description: 'Search text' } },
+                required: ['keyword'],
+              },
+              steps: [
+                { type: 'click', selector: "[data-action='view-products']" },
+                { type: 'fill', selector: "[data-testid='product-search']", value: '{{keyword}}' },
+                { type: 'waitFor', selector: "[data-testid='product-list']" },
+                { type: 'readList', selector: "[data-testid='product-list'] [data-field='name']", as: 'products' },
+              ],
+            },
+          ],
+        }),
+      },
+      description:
+        'Hand an adapter definition to the Liha extension for installation. Accepts the adapter as a JSON string. ' +
+        'This tool cannot install anything by itself: the extension re-validates the definition and then asks the person at ' +
+        'the keyboard to approve the exact origins and capabilities being granted, and an install that is not approved does ' +
+        'not happen. Validate with validate_adapter first — an invalid definition is rejected here without troubling anyone.',
+      inputSchema: {
+        type: 'object',
+        properties: { adapter: { type: 'string', description: 'The adapter definition as JSON text' } },
+        required: ['adapter'],
+      },
+      execute: async (input) => {
+        let parsed: unknown;
+        try {
+          parsed = JSON.parse(String(input.adapter ?? ''));
+        } catch (error) {
+          return errorResult(`That is not valid JSON: ${error instanceof Error ? error.message : String(error)}`);
+        }
+        // Checked here as well as in the extension, so a definition with an
+        // obvious problem is answered rather than turned into a dialog someone
+        // has to read and decline.
+        const validation = validateAdapter(parsed);
+        if (!validation.ok || !validation.adapter) {
+          return errorResult(
+            `Not installed — the definition is not valid:\n${validation.errors.map((error) => `- ${error}`).join('\n')}`,
+          );
+        }
+
+        if (!(await extensionPresent())) return errorResult(MISSING_EXTENSION);
+        const outcome = await requestInstall(validation.adapter);
+        if (outcome.ok) {
+          const tools = validation.adapter.tools.map((tool) => tool.name).join(', ');
+          return textResult(
+            `Installed ${validation.adapter.name} (${validation.adapter.id}). It is scoped to ` +
+              `${validation.adapter.origins.join(', ')} and registers: ${tools}. Reload a page on one of those origins and ` +
+              'the tools will be there.',
+            { installed: true, id: validation.adapter.id, origins: validation.adapter.origins },
+          );
+        }
+        return errorResult(
+          `Not installed: ${outcome.errors.join('; ') || 'the person at the keyboard did not approve it.'}`,
         );
       },
     },

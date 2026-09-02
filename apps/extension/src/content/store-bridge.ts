@@ -9,8 +9,12 @@
  */
 import {
   STORE_INSTALL_EVENT,
+  STORE_PROBE_EVENT,
+  STORE_PROBE_RESPONSE_EVENT,
   STORE_STATE_EVENT,
   STORE_STATE_RESPONSE_EVENT,
+  type ProbeOutcome,
+  type ProbeRequest,
   type StoreStateResponse,
 } from '@liha/shared';
 import { ext } from '../platform';
@@ -45,6 +49,25 @@ document.addEventListener(STORE_INSTALL_EVENT, (event) => {
         }),
       );
     });
+});
+
+/*
+ * Counting selectors on another origin's page. The service worker does the
+ * looking, in the ISOLATED world, and returns numbers — this relay never sees
+ * page content because none is ever produced.
+ */
+document.addEventListener(STORE_PROBE_EVENT, (event) => {
+  const detail = (event as CustomEvent<ProbeRequest>).detail;
+  if (!detail?.requestId || !detail.origin || !Array.isArray(detail.selectors)) return;
+  const answer = (outcome: Omit<ProbeOutcome, 'requestId'>) => {
+    document.dispatchEvent(
+      new CustomEvent(STORE_PROBE_RESPONSE_EVENT, { detail: { requestId: detail.requestId, ...outcome } }),
+    );
+  };
+  ext.runtime
+    .sendMessage({ type: 'liha/probe-selectors', origin: detail.origin, selectors: detail.selectors })
+    .then((outcome: Omit<ProbeOutcome, 'requestId'>) => answer(outcome ?? { error: 'No answer from the extension.' }))
+    .catch((error: unknown) => answer({ error: error instanceof Error ? error.message : String(error) }));
 });
 
 document.addEventListener(STORE_STATE_EVENT, () => {

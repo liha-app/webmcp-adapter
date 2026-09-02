@@ -77,7 +77,7 @@ export function LiveTools() {
           return;
         }
       }
-      const result = tool.execute(input);
+      const result = await tool.execute(input);
       setOutcome({
         route: 'direct',
         tool: tool.name,

@@ -13,6 +13,32 @@ export const STORE_INSTALL_EVENT = 'liha:install-adapter';
 export const STORE_STATE_EVENT = 'liha:store-state-request';
 export const STORE_STATE_RESPONSE_EVENT = 'liha:store-state-response';
 
+/**
+ * Asking the extension how many elements a selector matches on an open page.
+ *
+ * An agent writing an adapter has to choose selectors, and without this it is
+ * guessing: the page it is writing for is a different origin, so it cannot look.
+ * Counts are all that crosses back — never text, never attributes, never the
+ * page — which is enough to tell a usable selector from a wrong or an ambiguous
+ * one, and not enough to read the page with.
+ */
+export const STORE_PROBE_EVENT = 'liha:probe-selectors';
+export const STORE_PROBE_RESPONSE_EVENT = 'liha:probe-selectors-result';
+
+export interface ProbeRequest {
+  /** Correlates the answer with the question; two probes can be in flight. */
+  requestId: string;
+  origin: string;
+  selectors: string[];
+}
+
+export interface ProbeOutcome {
+  requestId: string;
+  /** Selector to the number of elements matching it. */
+  probe?: Record<string, number>;
+  error?: string;
+}
+
 export type AdapterSource = 'builtin' | 'installed' | 'studio';
 
 export interface AdapterRecord {
