@@ -139,7 +139,7 @@ export function LiveTools() {
         </div>
 
         <div className="live__run">
-          <button type="button" className="btn btn--primary" onClick={run} disabled={running} data-action="run-tool">
+          <button type="button" className="getbutton getbutton--filled getbutton--large" onClick={run} disabled={running} data-action="run-tool">
             {running ? 'Running…' : `Run ${tool.name}`}
           </button>
           <span className="live__route">

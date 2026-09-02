@@ -77,8 +77,11 @@ test.describe('Landing page', () => {
     for (const run of PROOF.acceptance) {
       await expect(page.getByText(run.result, { exact: true })).toBeVisible();
     }
-    await expect(page.getByText(new RegExp(`${PROOF.unitAndIntegrationTests} unit and integration tests`))).toBeVisible();
-    await expect(page.getByText(new RegExp(`${PROOF.e2eTests} end-to-end tests`))).toBeVisible();
+    // The two figures are fact tiles now; both still come from the constant.
+    await expect(page.getByText(String(PROOF.unitAndIntegrationTests), { exact: true })).toBeVisible();
+    await expect(page.getByText(/^unit and integration tests\./)).toBeVisible();
+    await expect(page.getByText(String(PROOF.e2eTests), { exact: true })).toBeVisible();
+    await expect(page.getByText(/^end-to-end tests in a real browser/)).toBeVisible();
     await expect(page.getByText(/All three demo apps contain zero WebMCP code/)).toBeVisible();
   });
 
@@ -91,24 +94,26 @@ test.describe('Landing page', () => {
   });
 
   test('links to all three demos with their tools and capabilities', async ({ page }) => {
-    const demos = page.locator('.demo');
+    const demos = page.locator('[data-testid="demo-list"] li');
     await expect(demos).toHaveCount(3);
     await expect(page.getByRole('link', { name: 'Open Acme CRM' })).toHaveAttribute('href', /5273|crm\./);
     await expect(page.getByRole('link', { name: 'Open Nimbus Supply' })).toHaveAttribute('href', /5274|shop\./);
     await expect(page.getByRole('link', { name: 'Open Kite Project Manager' })).toHaveAttribute('href', /5275|project\./);
     await expect(demos.filter({ hasText: 'Kite' }).getByText('DESTRUCTIVE confirmation')).toBeVisible();
+    // Every lockup carries its own icon, which is the store layout's unit.
+    await expect(demos.locator('.appicon svg')).toHaveCount(3);
   });
 
   test('tells a first-time visitor exactly what to switch on', async ({ page }) => {
     await expect(page.getByText('chrome://flags/#enable-webmcp-testing').first()).toBeVisible();
-    await expect(page.locator('.setup li')).toHaveCount(6);
+    await expect(page.locator('[data-testid="setup-steps"] li')).toHaveCount(6);
     await expect(page.getByRole('link', { name: 'Download extension' })).toHaveAttribute('href', /releases/);
   });
 
   test('describes the recorder as a human workflow, not AI guesswork', async ({ page }) => {
     await expect(page.getByText('Teach an agent by using the website yourself.')).toBeVisible();
     await expect(page.getByText(/does not let an AI guess/)).toBeVisible();
-    await expect(page.locator('.recorder__step')).toHaveCount(6);
+    await expect(page.locator('[data-testid="recorder-steps"] li')).toHaveCount(6);
   });
 
   // "Safe" would be a claim this project cannot make; the limitation has to be
@@ -136,6 +141,19 @@ test.describe('Landing page', () => {
 });
 
 test.describe('Adapter Registry', () => {
+  // The store layout: sidebar counts, a feature card, and shelves of lockups.
+  test('presents the catalogue as a store with a filter sidebar', async ({ page }) => {
+    await page.goto('http://localhost:5280/adapters');
+    const sidebar = page.getByTestId('category-filter');
+    await expect(sidebar.getByRole('button', { name: 'All adapters' })).toHaveAttribute('aria-current', 'true');
+    // The counts beside each filter have to be real, not decoration.
+    await expect(sidebar.getByRole('button', { name: 'All adapters' })).toContainText('3');
+    await expect(page.locator('.featurecard')).toContainText('3 adapters');
+    await expect(page.locator('[data-testid="adapter-list"] .appicon svg')).toHaveCount(3);
+    // The demo shelf links straight at the running demo apps.
+    await expect(page.getByRole('link', { name: 'Open' }).first()).toHaveAttribute('href', /5273|crm\./);
+  });
+
   test.beforeEach(async ({ page }) => {
     await page.goto('http://localhost:5280/adapters');
   });
@@ -151,12 +169,13 @@ test.describe('Adapter Registry', () => {
     await expect(page).toHaveURL(/q=coupon/);
 
     await page.getByTestId('adapter-search').fill('');
-    await page.getByTestId('capability-filter').selectOption('DESTRUCTIVE');
+    await page.getByTestId('capability-filter').getByRole('button', { name: 'DESTRUCTIVE' }).click();
     await expect(page.getByTestId('adapter-list').locator('li')).toHaveCount(1);
     await expect(page.getByTestId('adapter-list')).toContainText('Kite Project Manager');
+    await expect(page).toHaveURL(/capability=DESTRUCTIVE/);
 
-    await page.getByTestId('capability-filter').selectOption('all');
-    await page.getByTestId('category-filter').selectOption('crm');
+    await page.getByTestId('capability-filter').getByRole('button', { name: 'Any capability' }).click();
+    await page.getByTestId('category-filter').getByRole('button', { name: 'crm' }).click();
     await expect(page.getByTestId('adapter-list')).toContainText('Acme CRM');
   });
 
@@ -174,7 +193,7 @@ test.describe('Adapter Registry', () => {
   // Auditability is the product argument: the definition must be readable
   // before install, not after.
   test('discloses origins, capabilities and the full source on the detail page', async ({ page }) => {
-    await page.getByRole('link', { name: 'Kite Project Manager' }).click();
+    await page.getByTestId('adapter-list').getByRole('link', { name: /Kite Project Manager/ }).click();
     await expect(page).toHaveURL(/\/adapters\/demo-project$/);
     await expect(page.getByText('http://localhost:5275')).toBeVisible();
     await expect(page.getByText('https://project.webmcp-adopter.liha.dev')).toBeVisible();

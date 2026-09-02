@@ -6,7 +6,7 @@
  */
 export const PROOF = {
   unitAndIntegrationTests: 200,
-  e2eTests: 37,
+  e2eTests: 38,
   acceptance: [
     { name: 'Phase 0 criteria', result: '10/10', what: 'the core hypothesis, end to end' },
     { name: 'Full system', result: '43/43', what: 'three adapters, the portal, the confirmation gate' },

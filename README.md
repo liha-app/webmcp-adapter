@@ -156,6 +156,20 @@ to *"find a CRM adapter with write access"* and it calls the page's own tool.
 That contrast is the point: this is what a site looks like when its developers do
 the work, and the demo apps show what happens when they never do.
 
+The landing page is not a description of that — it runs the tools. Pick one,
+press run, and the panel reports whether the call went through
+`document.modelContext` or fell back to calling the same function directly,
+because a demo that fakes the mechanism it is demonstrating is worse than none.
+
+**On the visual design.** The marketing pages follow Apple's App Store product
+page conventions and the catalogue follows the App Store's own store layout —
+the 980px column and 18px tiles, the 260px sidebar, the 64px lockups and the
+pill buttons. Layout conventions, spacing scales and type ladders are not
+protected expression, and this project deliberately borrows them because the
+patterns are good at the job. Nothing of Apple's is reproduced: no marks, no
+artwork, no copy, no fonts. The icons are generated here, the words are ours,
+and the site says plainly in its footer that it has nothing to do with Apple.
+
 ---
 
 ## Security in one screen
@@ -189,7 +203,7 @@ Full model, including the MAIN-world limitation this cannot engineer away:
 
 ```bash
 pnpm verify           # typecheck, lint, 200 unit + integration tests, build
-pnpm e2e              # 32 Playwright tests against the portal and the demo apps
+pnpm e2e              # 38 Playwright tests against the portal and the demo apps
 pnpm acceptance:all   # three real-browser runs through the WebMCP protocol
 ```
 
