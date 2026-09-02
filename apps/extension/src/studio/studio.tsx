@@ -15,6 +15,7 @@ import {
   type DraftStep,
   type StepKind,
 } from './draft';
+import { nativeWebMcpSource } from './native';
 
 const CAPABILITIES: Capability[] = ['READ', 'INTERACT', 'WRITE', 'DESTRUCTIVE'];
 
@@ -233,15 +234,33 @@ function Studio() {
     });
   }
 
-  function download() {
-    if (!adapterJson || !draft) return;
-    const blob = new Blob([JSON.stringify(adapterJson, null, 2)], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
+  function save(name: string, contents: string, type: string) {
+    const url = URL.createObjectURL(new Blob([contents], { type }));
     const link = document.createElement('a');
     link.href = url;
-    link.download = `${draft.adapterId || 'adapter'}.json`;
+    link.download = name;
     link.click();
     URL.revokeObjectURL(url);
+  }
+
+  function download() {
+    if (!adapterJson || !draft) return;
+    save(`${draft.adapterId || 'adapter'}.json`, JSON.stringify(adapterJson, null, 2), 'application/json');
+  }
+
+  /*
+   * The other export, and the one that says what this tool is for.
+   *
+   * An adapter exists because the site has not implemented WebMCP; the honest
+   * end state is that it does, and then the adapter is not needed. This hands
+   * the site's developers that implementation — same name, same schema, the
+   * recorded workflow written out as what to replace — so a recording is both
+   * a stopgap and a migration path rather than only a stopgap.
+   */
+  function downloadNative() {
+    if (!validation?.adapter || !draft) return;
+    save(`${draft.adapterId || 'adapter'}-webmcp.js`, nativeWebMcpSource(validation.adapter), 'text/javascript');
+    setStatus('Exported a native WebMCP implementation for the site to ship itself.');
   }
 
   function install() {
@@ -293,6 +312,15 @@ function Studio() {
           </button>
           <button type="button" className="btn" onClick={download} disabled={!validation?.ok}>
             Export JSON
+          </button>
+          <button
+            type="button"
+            className="btn"
+            onClick={downloadNative}
+            disabled={!validation?.ok}
+            title="The same tools, as code the site can register itself — no adapter, no extension"
+          >
+            Export native WebMCP
           </button>
           <button type="button" className="btn btn--primary" onClick={install} disabled={!validation?.ok}>
             Install locally

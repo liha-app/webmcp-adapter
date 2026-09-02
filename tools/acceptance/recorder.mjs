@@ -9,7 +9,8 @@
  *
  * Run with:  pnpm build && pnpm acceptance:recorder
  */
-import { existsSync } from 'node:fs';
+import { existsSync, mkdtempSync, readFileSync, readdirSync, rmSync } from 'node:fs';
+import { tmpdir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { Browser, Session, findChromeBinary, findExtensionId, sleep } from './chrome.mjs';
@@ -18,6 +19,13 @@ import { serveStatic } from './serve.mjs';
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
 const EXT_DIST = join(root, 'apps/extension/dist');
 const PORT = 5273;
+/*
+ * A second copy of the same site on an origin no adapter is scoped to. The
+ * exported snippet has to stand on its own there: nothing the extension
+ * injects reaches this port, so any tool an agent finds was registered by the
+ * generated code itself.
+ */
+const BARE_PORT = 5299;
 
 const results = [];
 let current = null;
@@ -70,6 +78,8 @@ async function main() {
   if (!existsSync(distDir)) throw new Error('Demo CRM is not built. Run `pnpm build`.');
 
   const binary = findChromeBinary();
+  let stopBareServer = null;
+  let downloads = null;
   const { close: stopServer } = await serveStatic(distDir, PORT);
   const browser = new Browser({ binary, extensionPath: EXT_DIST }).launch();
 
@@ -218,9 +228,89 @@ async function main() {
     must(Boolean(banner), 'the Studio can check its selectors against the open page');
     const line = (banner ?? '').split('\n').find((entry) => entry.includes('resolve to exactly one element')) ?? '';
     check(/Checked \d+ selector\(s\): [1-9]\d* resolve/.test(line), 'the selectors it generated actually resolve', line);
+
+    /* ------------------------------------------------------------ native -- */
+    /*
+     * An adapter exists because the site did not implement WebMCP. The Studio's
+     * other export is the implementation that makes the adapter unnecessary, so
+     * what matters is not that a file downloads — it is that the code in it
+     * really registers WebMCP tools when the site runs it.
+     */
+    group('The Studio exports the implementation that makes the adapter unnecessary');
+    downloads = mkdtempSync(join(tmpdir(), 'liha-native-'));
+    await studio.send('Page.setDownloadBehavior', { behavior: 'allow', downloadPath: downloads });
+    await studio.eval(
+      `[...document.querySelectorAll('button')].find((b) => b.textContent.includes('Export native WebMCP')).click()`,
+    );
+    const file = await waitFor(async () => {
+      const found = readdirSync(downloads).filter((name) => name.endsWith('.js'));
+      return found.length ? join(downloads, found[0]) : null;
+    }, 15000);
+    must(Boolean(file), 'the Export native WebMCP button writes a JavaScript file');
+    const source = readFileSync(file, 'utf8');
+    check(source.includes("name: \"create_customer\""), 'it registers the tool that was just recorded');
+    check(
+      source.includes('registerTool') && source.includes('{ signal: registration.signal }'),
+      'it registers through document.modelContext with an AbortSignal',
+    );
+    check(!/\bthrow new /.test(source), 'it returns MCP errors rather than throwing them');
+    check(
+      source.includes('Chrome does not check input against inputSchema'),
+      'it validates its own input, and says why it has to',
+    );
+
+    const { close: stopBare } = await serveStatic(distDir, BARE_PORT);
+    stopBareServer = stopBare;
+    const bare = await browser.newPage();
+    const seen = new Map();
+    bare.on((message) => {
+      if (message.method === 'WebMCP.toolsAdded') {
+        for (const tool of message.params.tools ?? []) seen.set(tool.name, tool);
+      }
+    });
+    await bare.send('WebMCP.enable');
+    await bare.goto(`http://localhost:${BARE_PORT}/`);
+    await sleep(1200);
+    check(seen.size === 0, 'no adapter reaches this origin, so the page starts with no tools', [...seen.keys()].join(','));
+
+    // Evaluated as a classic script, so the `export` keyword — which only
+    // matters to whoever imports the file — is dropped. Nothing else changes.
+    await bare.eval(`(() => { ${source.replace(/^export /gm, '')} })()`);
+    const registered = await waitFor(async () => (seen.has('create_customer') ? seen.get('create_customer') : null), 10000);
+    must(Boolean(registered), 'running the exported file registers a real WebMCP tool, with no adapter involved');
+    check(
+      registered.stackTrace === undefined || !JSON.stringify(registered.stackTrace).includes('chrome-extension://'),
+      'and an inspector sees the page as the author, not an injected runtime',
+      JSON.stringify(registered.stackTrace ?? {}).slice(0, 120),
+    );
+    check(
+      JSON.stringify(registered.inputSchema?.required ?? []) === JSON.stringify(adapter.tools[0].inputSchema.required ?? []),
+      'the tool an agent discovers declares the same input as the adapter did',
+      JSON.stringify(registered.inputSchema),
+    );
+
+    const responses = [];
+    bare.on((message) => {
+      if (message.method === 'WebMCP.toolResponded') responses.push(message.params);
+    });
+    await bare.send('WebMCP.invokeTool', {
+      frameId: registered.frameId,
+      toolName: 'create_customer',
+      input: { name: 'Alice Smith', email: 'alice@example.com' },
+    });
+    const answered = await waitFor(async () => responses[0] ?? null, 15000);
+    must(Boolean(answered), 'an out-of-page agent can invoke it');
+    const text = (answered.output?.content ?? []).map((part) => part.text ?? '').join(' ');
+    check(
+      text.includes('not implemented yet') && answered.output?.isError === true,
+      'and gets the honest stub back, as an MCP error rather than a thrown one',
+      text.slice(0, 120),
+    );
   } finally {
     browser?.close?.();
     await stopServer();
+    if (stopBareServer) await stopBareServer();
+    if (downloads) rmSync(downloads, { recursive: true, force: true });
   }
 }
 

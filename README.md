@@ -51,10 +51,12 @@ pnpm acceptance:full       55/55 checks — three demo adapters, the portal's
                            native WebMCP tools, the destructive confirmation gate,
                            and a browser with the WebMCP flag off, where the
                            extension has to say so rather than fake it
-pnpm acceptance:recorder   25/25 checks — record a workflow, get a valid adapter
+pnpm acceptance:recorder   36/36 checks — record a workflow, get a valid adapter,
+                           and an exported native implementation that really
+                           registers WebMCP tools with no adapter involved
 pnpm acceptance:icons      6/6 checks — Chrome parses the extension's icons and
                            can resolve every path it was given
-pnpm verify                235 unit + integration tests, typecheck, lint, build
+pnpm verify                263 unit + integration tests, typecheck, lint, build
 pnpm e2e                   45 Playwright tests
 ```
 
@@ -139,6 +141,27 @@ It also contains the **Recorder** — press *Record a tool*, use the site by han
 press *Stop* — and the **Studio**, where the recording becomes an adapter you
 name, parameterize, test and install. Selectors come from the site's own stable
 attributes; class names are never used, because they churn on every redeploy.
+
+The Studio exports twice, and the second one is the point:
+
+| | |
+|---|---|
+| **Export JSON** | the adapter — drives the site from outside, today, unchanged |
+| **Export native WebMCP** | the same tools as code **the site registers itself**, so the adapter is no longer needed |
+
+An adapter is a stopgap by design. It exists because a site has not implemented
+WebMCP, and the honest end state is that the site does. So a recording produces
+both halves: the thing that works now, and the implementation to hand the site's
+developers — same tool name, same input schema, the recorded workflow written
+out as the steps to replace with a real call, and the three API facts this
+project had to measure the hard way built in (the browser does not validate
+input, a thrown error loses its reason, an AbortSignal is the only way to
+unregister).
+
+**Don't wait for adoption. Prototype the capability today, ship it natively
+tomorrow.** `pnpm acceptance:recorder` proves the export is not a nice-looking
+file: it runs the exported code on an origin no adapter is scoped to, then
+discovers and invokes the resulting tool from outside the page.
 
 ### The adapter runtime
 
@@ -236,7 +259,7 @@ Full model, including the MAIN-world limitation this cannot engineer away:
 ## Verifying it yourself
 
 ```bash
-pnpm verify           # typecheck, lint, 235 unit + integration tests, build
+pnpm verify           # typecheck, lint, 263 unit + integration tests, build
 pnpm e2e              # 45 Playwright tests against the portal and the demo apps
 pnpm acceptance:all   # four real-browser runs through the WebMCP protocol
 pnpm acceptance:prod  # 36 checks against the deployed sites, not a local build
