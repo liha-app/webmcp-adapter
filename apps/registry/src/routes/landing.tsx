@@ -1,14 +1,15 @@
 import { useEffect, useState } from 'react';
 import { Link } from '@tanstack/react-router';
+import { stepSchema } from '@liha/adapter-schema';
 import { CATALOG, findEntry } from '../lib/catalog';
 import { SETUP_STEPS, demoApps } from '../lib/demos';
 import { PROOF } from '../lib/proof';
 import { GITHUB_URL, RELEASES_URL } from '../lib/links';
+import { REGISTRY_TOOLS } from '../lib/webmcp';
+import { useI18n, type MessageKey } from '../i18n';
 import { AdapterIcon, CapabilityBadge } from './components';
 import { Flow } from './diagram';
 import { LiveTools } from './live';
-import { REGISTRY_TOOLS } from '../lib/webmcp';
-import { stepSchema } from '@liha/adapter-schema';
 
 /**
  * Read off the schema rather than typed out, so the claim about the size of
@@ -29,16 +30,25 @@ function adapterExcerpt(): string {
   );
 }
 
-const RECORDER_STEPS: Array<[string, string]> = [
-  ['Record', 'Press record in the extension popup.'],
-  ['Use the website', 'Click and type the way you normally would.'],
-  ['Review the steps', 'Each selector is shown with how many elements it matched.'],
-  ['Parameterize', 'What you typed becomes tool input, with your text kept as the example.'],
-  ['Test selectors', 'Checked against the live page for a single match.'],
-  ['Install', 'It becomes a WebMCP tool, after you approve what it can reach.'],
+const RECORDER_STEPS: Array<[MessageKey, MessageKey]> = [
+  ['recorder.step1Title', 'recorder.step1'],
+  ['recorder.step2Title', 'recorder.step2'],
+  ['recorder.step3Title', 'recorder.step3'],
+  ['recorder.step4Title', 'recorder.step4'],
+  ['recorder.step5Title', 'recorder.step5'],
+  ['recorder.step6Title', 'recorder.step6'],
+];
+
+const SECURITY_POINTS: MessageKey[] = [
+  'security.point1',
+  'security.point2',
+  'security.point3',
+  'security.point4',
+  'security.point5',
 ];
 
 export function Landing() {
+  const { t, tx } = useI18n();
   const [origin, setOrigin] = useState<string | undefined>(undefined);
   useEffect(() => setOrigin(window.location.origin), []);
   const demos = demoApps(origin);
@@ -49,24 +59,21 @@ export function Landing() {
       {/* ─────────────────────────────────────────────────────────── hero ── */}
       <section className="hero">
         <div className="section-content">
-          <p className="t-eyebrow-super">Liha WebMCP Adapter</p>
-          <h1 className="t-headline-super">Make any website agent-ready.</h1>
-          <p className="t-callout hero__copy">Add WebMCP tools to websites that never implemented WebMCP.</p>
+          <p className="t-eyebrow-super">{t('hero.eyebrow')}</p>
+          <h1 className="t-headline-super">{t('hero.headline')}</h1>
+          <p className="t-callout hero__copy">{t('hero.copy')}</p>
           <div className="hero__cta">
             <a className="button" href={demos[0]?.url ?? '#demos'}>
-              Try the demo
+              {t('hero.tryDemo')}
             </a>
             <a className="more" href="#setup">
-              Install the extension
+              {t('hero.install')}
             </a>
             <a className="more" href={GITHUB_URL}>
-              View on GitHub
+              {t('hero.github')}
             </a>
           </div>
-          <p className="hero__note">
-            Chrome 151+ with the WebMCP flag on. Open source, MIT licensed, and every adapter is readable before you
-            install it.
-          </p>
+          <p className="hero__note">{t('hero.note')}</p>
         </div>
       </section>
 
@@ -74,34 +81,28 @@ export function Landing() {
       {/* Before any explanation: the visitor runs this page's own tools. */}
       <section className="section section--tiles" id="live">
         <div className="section-content">
-          <h2 className="t-tiles-headline section-headline">This page has WebMCP tools. Call one.</h2>
+          <h2 className="t-tiles-headline section-headline">{t('live.headline')}</h2>
           <div className="grid">
             <div className="tile tile--full">
               <div className="tile__copy" style={{ marginBottom: 32 }}>
-                <p className="t-body">
-                  The registry implements WebMCP natively — this is what a site looks like when its own developers do
-                  the work. Pick a tool, press run, and the answer below comes from the real catalogue. When your
-                  browser has the API, the call really goes through <code>document.modelContext</code>; when it does
-                  not, the panel says so rather than pretending.
-                </p>
+                <p className="t-body">{tx('live.copy', [<code key="mc">document.modelContext</code>])}</p>
               </div>
               <LiveTools />
             </div>
 
             <div className="tile tile--blue fact">
-              <p className="t-tiles-headline fact__figure">{REGISTRY_TOOLS.length} tools</p>
-              <p className="fact__label">
-                registered by this page on load, discoverable by any WebMCP agent — with their input schemas.
+              <p className="t-tiles-headline fact__figure">
+                {t('live.factRegisteredFigure', [REGISTRY_TOOLS.length])}
               </p>
+              <p className="fact__label">{t('live.factRegisteredLabel')}</p>
             </div>
 
             <div className="tile fact">
-              <p className="t-tiles-headline fact__figure">0 tools</p>
+              <p className="t-tiles-headline fact__figure">{t('live.factZeroFigure')}</p>
               <p className="fact__label">
-                registered by the three demo apps. They contain no WebMCP code at all; their tools arrive from
-                adapters, from outside.{' '}
+                {t('live.factZeroLabel')}{' '}
                 <Link className="more more--small" to="/adapters">
-                  Browse the adapters
+                  {t('live.browseAdapters')}
                 </Link>
               </p>
             </div>
@@ -112,44 +113,39 @@ export function Landing() {
       {/* ───────────────────────────────────────────────────── the problem ── */}
       <section className="section section--tiles" id="problem">
         <div className="section-content">
-          <h2 className="t-tiles-headline section-headline">
-            WebMCP adoption shouldn’t have to wait for every website owner.
-          </h2>
+          <h2 className="t-tiles-headline section-headline">{t('problem.headline')}</h2>
           <div className="grid">
             <div className="tile tile--full">
               <div className="tile__copy">
-                <p className="t-body">
-                  A site becomes agent-ready when its developers ship <code>registerTool()</code>. That is a good
-                  standard and a slow one: until it happens, an agent is back to screenshots and guesswork on every
-                  site that has not got round to it — which is most of them.
-                </p>
-                <p className="t-body">
-                  An adapter moves the work. The capability is defined by whoever needs it, published as readable JSON,
-                  and installed by the person whose browser it runs in. The site is unchanged and unaware.
-                </p>
+                <p className="t-body">{tx('problem.p1', [<code key="rt">registerTool()</code>])}</p>
+                <p className="t-body">{t('problem.p2')}</p>
               </div>
               <div className="excerpt" style={{ marginTop: 40 }}>
                 <div>
                   <h3 className="t-caption" style={{ marginBottom: 12, fontWeight: 600 }}>
-                    Today
+                    {t('problem.today')}
                   </h3>
                   <Flow
                     tone="muted"
                     stack
-                    steps={[{ label: 'Website developer' }, { label: 'registerTool()' }, { label: 'Agent' }]}
+                    steps={[
+                      { label: t('flow.websiteDeveloper') },
+                      { label: t('flow.registerTool') },
+                      { label: t('flow.agent') },
+                    ]}
                   />
                 </div>
                 <div>
                   <h3 className="t-caption" style={{ marginBottom: 12, fontWeight: 600 }}>
-                    With an adapter
+                    {t('problem.withAdapter')}
                   </h3>
                   <Flow
                     stack
                     steps={[
-                      { label: 'Existing website' },
-                      { label: 'Community adapter', strong: true },
-                      { label: 'Extension' },
-                      { label: 'WebMCP agent' },
+                      { label: t('flow.existingWebsite') },
+                      { label: t('flow.communityAdapter'), strong: true },
+                      { label: t('flow.extension') },
+                      { label: t('flow.webmcpAgent') },
                     ]}
                   />
                 </div>
@@ -157,18 +153,13 @@ export function Landing() {
             </div>
 
             <div className="tile tile--dark fact">
-              <p className="t-tiles-headline fact__figure">No change</p>
-              <p className="fact__label">
-                to the target website. No SDK, no script tag, no cooperation from its owner, no account.
-              </p>
+              <p className="t-tiles-headline fact__figure">{t('problem.factNoChangeFigure')}</p>
+              <p className="fact__label">{t('problem.factNoChangeLabel')}</p>
             </div>
 
             <div className="tile fact">
-              <p className="t-tiles-headline fact__figure">Your call</p>
-              <p className="fact__label">
-                An adapter runs because you installed it, on the origins it names, after the extension showed you what
-                it can reach.
-              </p>
+              <p className="t-tiles-headline fact__figure">{t('problem.factYourCallFigure')}</p>
+              <p className="fact__label">{t('problem.factYourCallLabel')}</p>
             </div>
           </div>
         </div>
@@ -177,45 +168,38 @@ export function Landing() {
       {/* ─────────────────────────────────────────────────── the adapter ── */}
       <section className="section section--tiles" id="adapter">
         <div className="section-content">
-          <h2 className="t-tiles-headline section-headline">An adapter is a JSON file, and that is the whole point.</h2>
+          <h2 className="t-tiles-headline section-headline">{t('adapter.headline')}</h2>
           <div className="grid">
             <div className="tile tile--full">
               <div className="tile__copy" style={{ marginBottom: 32 }}>
                 <p className="t-body">
-                  The step vocabulary is closed — click, fill, select, waitFor and a handful more. There is no{' '}
-                  <code>eval</code> step, no expression language and no way to express one, which is what makes a
-                  registry of community-contributed adapters something you can reason about rather than a malware
-                  channel. These are the first {EXCERPT_STEPS} steps of a real tool, unedited:
+                  {tx('adapter.copy', [<code key="eval">eval</code>, String(EXCERPT_STEPS)])}
                 </p>
               </div>
               <div className="excerpt">
                 <pre>{adapterExcerpt()}</pre>
                 <div className="excerpt__notes">
                   <p>
-                    <strong>capability</strong> is declared per tool. <code>DESTRUCTIVE</code> always asks the user
-                    first; <code>WRITE</code> can be set to.
+                    <strong>{t('adapter.noteCapabilityLabel')}</strong> {t('adapter.noteCapability')}
                   </p>
                   <p>
-                    <strong>steps</strong> name one element each. If a selector matches zero or five elements the call
-                    fails rather than guessing which button to press.
+                    <strong>{t('adapter.noteStepsLabel')}</strong> {t('adapter.noteSteps')}
                   </p>
                   <p>
-                    <strong>{'{{placeholders}}'}</strong> interpolate into values, never into selectors — a tool
-                    argument cannot retarget a step.
+                    <strong>{t('adapter.notePlaceholdersLabel')}</strong> {t('adapter.notePlaceholders')}
                   </p>
                   <p>
-                    <strong>The rest</strong> of this tool is {(CRM_TOOL?.steps.length ?? 0) - EXCERPT_STEPS} read
-                    steps that look up the customer it just created, so the tool can report what it actually made
-                    rather than assuming it worked.
+                    <strong>{t('adapter.noteRestLabel')}</strong>{' '}
+                    {t('adapter.noteRest', [(CRM_TOOL?.steps.length ?? 0) - EXCERPT_STEPS])}
                   </p>
                   <p>
                     <Link className="more more--small" to="/adapters/$adapterId" params={{ adapterId: 'demo-crm' }}>
-                      See the whole adapter
+                      {t('adapter.seeWhole')}
                     </Link>
                   </p>
                   <p>
                     <a className="more more--small" href={`${GITHUB_URL}/blob/main/docs/adapter-format.md`}>
-                      Read the full format
+                      {t('adapter.readFormat')}
                     </a>
                   </p>
                 </div>
@@ -228,45 +212,35 @@ export function Landing() {
       {/* ────────────────────────────────────────────────── how it works ── */}
       <section className="section section--tiles" id="how">
         <div className="section-content">
-          <h2 className="t-tiles-headline section-headline">How it reaches the page</h2>
+          <h2 className="t-tiles-headline section-headline">{t('how.headline')}</h2>
           <div className="grid">
             <div className="tile tile--full">
               <div className="tile__copy" style={{ marginBottom: 32 }}>
-                <p className="t-body">
-                  The extension validates the adapter, then injects a small runtime into the page’s own JavaScript
-                  world — the only place <code>document.modelContext</code> can be reached — and registers each tool
-                  there. Your agent sees an ordinary WebMCP tool. When it calls one, the adapter’s steps drive the
-                  site’s real form, so the app’s own logic runs exactly as it would for a person.
-                </p>
+                <p className="t-body">{tx('how.copy', [<code key="mc">document.modelContext</code>])}</p>
               </div>
               <Flow
                 animate
                 steps={[
-                  { label: 'Adapter JSON', detail: 'declarative, origin-scoped' },
-                  { label: 'Chrome extension', detail: 'validates, then injects' },
-                  { label: 'MAIN world', detail: "the page's own JavaScript world" },
-                  { label: 'registerTool()', detail: 'document.modelContext', strong: true },
-                  { label: 'Agent', detail: 'discovers named capabilities' },
+                  { label: t('how.stepAdapterJson'), detail: t('how.stepAdapterJsonDetail') },
+                  { label: t('how.stepExtension'), detail: t('how.stepExtensionDetail') },
+                  { label: t('how.stepMainWorld'), detail: t('how.stepMainWorldDetail') },
+                  { label: t('how.stepRegister'), detail: t('how.stepRegisterDetail'), strong: true },
+                  { label: t('how.stepAgent'), detail: t('how.stepAgentDetail') },
                 ]}
               />
             </div>
 
             <div className="tile">
               <div className="tile__copy">
-                <h3 className="t-headline-sm">This is not browser automation with extra steps.</h3>
-                <p className="t-body">
-                  Automation re-derives what to click on every run, is hard to audit, and has no notion of permission.
-                  The output here is not a click — it is a named capability with a JSON input schema, a capability
-                  classification, and a workflow written once and reviewable by anyone.
-                </p>
+                <h3 className="t-headline-sm">{t('how.notAutomationTitle')}</h3>
+                <p className="t-body">{t('how.notAutomationCopy')}</p>
               </div>
             </div>
 
             <div className="tile tile--blue fact">
-              <p className="t-tiles-headline fact__figure">{STEP_TYPES.length} steps</p>
+              <p className="t-tiles-headline fact__figure">{t('how.factStepsFigure', [STEP_TYPES.length])}</p>
               <p className="fact__label">
-                is the entire vocabulary — {STEP_TYPES.slice(0, 4).join(', ')} and {STEP_TYPES.length - 4} more. Nothing
-                in it can execute code, so there is no version of an adapter that runs a script you did not read.
+                {t('how.factStepsLabel', [STEP_TYPES.slice(0, 4).join(', '), STEP_TYPES.length - 4])}
               </p>
             </div>
           </div>
@@ -276,14 +250,16 @@ export function Landing() {
       {/* ────────────────────────────────────────────────────────── demos ── */}
       <section className="section section--tiles" id="demos">
         <div className="section-content">
-          <h2 className="t-tiles-headline section-headline">Three ordinary web apps with zero WebMCP code.</h2>
+          <h2 className="t-tiles-headline section-headline">{t('demos.headline')}</h2>
           <div className="grid">
             <div className="tile tile--full">
               <div className="tile__copy" style={{ marginBottom: 26 }}>
                 <p className="t-body">
-                  {CATALOG.length} adapters, {toolCount} tools. That the apps implement nothing is asserted against
-                  their sources, their built bundles and the live page — if someone slipped a <code>registerTool()</code>{' '}
-                  into one of them, CI would fail.
+                  {tx('demos.copy', [
+                    String(CATALOG.length),
+                    String(toolCount),
+                    <code key="rt">registerTool()</code>,
+                  ])}
                 </p>
               </div>
               <ul className="demolist" data-testid="demo-list">
@@ -297,7 +273,7 @@ export function Landing() {
                           <span className="lockup__title" style={{ fontWeight: 600 }}>
                             {demo.name}
                           </span>
-                          <span className="lockup__sub">{demo.blurb}</span>
+                          <span className="lockup__sub">{t(demo.blurbKey)}</span>
                           <span className="lockup__meta">
                             {demo.tools.slice(0, 3).map((tool) => (
                               <code key={tool.name} style={{ fontSize: 12 }}>
@@ -314,7 +290,7 @@ export function Landing() {
                                 'READ'
                               }
                             />
-                            {demo.note && <span style={{ fontSize: 12 }}>{demo.note}</span>}
+                            {demo.noteKey && <span style={{ fontSize: 12 }}>{t(demo.noteKey)}</span>}
                           </span>
                         </div>
                         <span style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
@@ -323,10 +299,10 @@ export function Landing() {
                             to="/adapters/$adapterId"
                             params={{ adapterId: demo.adapterId }}
                           >
-                            Adapter
+                            {t('demos.adapter')}
                           </Link>
                           <a className="getbutton getbutton--filled" href={demo.url}>
-                            Open {demo.name}
+                            {t('demos.open', [demo.name])}
                           </a>
                         </span>
                       </div>
@@ -342,27 +318,27 @@ export function Landing() {
       {/* ────────────────────────────────────────────────────────── setup ── */}
       <section className="section section--tiles" id="setup">
         <div className="section-content">
-          <h2 className="t-tiles-headline section-headline">Before the demos will do anything.</h2>
+          <h2 className="t-tiles-headline section-headline">{t('setup.headline')}</h2>
           <div className="grid">
             <div className="tile tile--full">
               <div className="tile__copy" style={{ marginBottom: 30 }}>
-                <p className="t-body">WebMCP is behind a flag in Chrome today, so there is one switch to turn on first.</p>
+                <p className="t-body">{t('setup.copy')}</p>
               </div>
               <ol className="steps" data-testid="setup-steps">
                 {SETUP_STEPS.map((step, index) => (
-                  <li key={step.text}>
+                  <li key={step.key}>
                     <div className="steps__body">
                       <p className="t-body">
-                        {step.text}
+                        {t(step.key)}
                         {step.code && <code>{step.code}</code>}
                       </p>
                       {index === 2 && (
                         <p className="steps__links">
                           <a className="button button--small" href={RELEASES_URL}>
-                            Download extension
+                            {t('setup.download')}
                           </a>
                           <a className="more more--small" href={`${GITHUB_URL}#quick-start`}>
-                            Or build from source
+                            {t('setup.buildFromSource')}
                           </a>
                         </p>
                       )}
@@ -378,23 +354,18 @@ export function Landing() {
       {/* ─────────────────────────────────────────────────────── recorder ── */}
       <section className="section section--tiles" id="recorder">
         <div className="section-content">
-          <h2 className="t-tiles-headline section-headline">Teach an agent by using the website yourself.</h2>
+          <h2 className="t-tiles-headline section-headline">{t('recorder.headline')}</h2>
           <div className="grid">
             <div className="tile tile--full">
               <div className="tile__copy" style={{ marginBottom: 30 }}>
-                <p className="t-body">
-                  The recorder does not let an AI guess at a page and invent an adapter. It watches a workflow a person
-                  performed and turns it into a declarative capability you review before it becomes a tool — selectors
-                  come from the site’s own stable attributes, never class names, and the values you typed become inputs
-                  rather than being baked in.
-                </p>
+                <p className="t-body">{t('recorder.copy')}</p>
               </div>
               <ol className="steps" data-testid="recorder-steps">
-                {RECORDER_STEPS.map(([title, detail], index) => (
-                  <li key={title} className="rise" style={{ animationDelay: `${index * 60}ms` }}>
+                {RECORDER_STEPS.map(([titleKey, detailKey], index) => (
+                  <li key={titleKey} className="rise" style={{ animationDelay: `${index * 60}ms` }}>
                     <div className="steps__body">
                       <p className="t-body">
-                        <strong style={{ fontWeight: 600 }}>{title}</strong> — {detail}
+                        <strong style={{ fontWeight: 600 }}>{t(titleKey)}</strong> — {t(detailKey)}
                       </p>
                     </div>
                   </li>
@@ -408,27 +379,24 @@ export function Landing() {
       {/* ─────────────────────────────────────────────────────── verified ── */}
       <section className="section section--tiles" id="verified">
         <div className="section-content">
-          <h2 className="t-tiles-headline section-headline">What has actually been checked.</h2>
+          <h2 className="t-tiles-headline section-headline">{t('verified.headline')}</h2>
           <div className="grid">
             <div className="tile tile--full">
               <div className="tile__copy" style={{ marginBottom: 30 }}>
-                <p className="t-body">
-                  A real agent, outside the page, discovers and invokes these tools through the DevTools WebMCP domain —
-                  the same surface a Tool Inspector uses. {PROOF.ciNote}
-                </p>
+                <p className="t-body">{t('verified.copy', [t(PROOF.ciNoteKey)])}</p>
               </div>
               <ul className="checklist">
-                {PROOF.facts.map((fact) => (
-                  <li key={fact}>{fact}</li>
+                {PROOF.factKeys.map((key) => (
+                  <li key={key}>{t(key)}</li>
                 ))}
               </ul>
               <dl className="facts" style={{ marginBottom: 0 }}>
                 {PROOF.acceptance.map((run) => (
-                  <div key={run.name}>
-                    <dt>{run.name}</dt>
+                  <div key={run.nameKey}>
+                    <dt>{t(run.nameKey)}</dt>
                     <dd>
                       <span>{run.result}</span>
-                      <small>{run.what}</small>
+                      <small>{t(run.whatKey)}</small>
                     </dd>
                   </div>
                 ))}
@@ -437,18 +405,12 @@ export function Landing() {
 
             <div className="tile tile--dark fact">
               <p className="t-tiles-headline fact__figure">{PROOF.unitAndIntegrationTests}</p>
-              <p className="fact__label">
-                unit and integration tests. The integration layer mounts the real demo apps and runs the real published
-                adapters against them, so an adapter that drifts from the site it targets fails there.
-              </p>
+              <p className="fact__label">{t('verified.factUnitLabel')}</p>
             </div>
 
             <div className="tile tile--blue fact">
               <p className="t-tiles-headline fact__figure">{PROOF.e2eTests}</p>
-              <p className="fact__label">
-                end-to-end tests in a real browser, plus three acceptance runs that drive Chrome over the DevTools
-                protocol.
-              </p>
+              <p className="fact__label">{t('verified.factE2eLabel')}</p>
             </div>
           </div>
         </div>
@@ -457,37 +419,27 @@ export function Landing() {
       {/* ─────────────────────────────────────────────────────── security ── */}
       <section className="section section--tiles" id="security">
         <div className="section-content">
-          <h2 className="t-tiles-headline section-headline">Auditable, origin-scoped and permission-aware.</h2>
+          <h2 className="t-tiles-headline section-headline">{t('security.headline')}</h2>
           <div className="grid">
             <div className="tile tile--full">
               <div className="tile__copy" style={{ marginBottom: 26 }}>
-                <p className="t-body">
-                  Not “safe”. The realistic worst case is a community adapter becoming browser malware, so the format is
-                  built so that is either impossible to express or visible before you install it.
-                </p>
+                <p className="t-body">{t('security.copy')}</p>
               </div>
               <ul className="checklist">
-                <li>No executable JavaScript anywhere in the format — the DSL cannot express it.</li>
-                <li>Exact origins only. A wildcard is rejected at validation, not warned about.</li>
-                <li>A hard refusal to touch password, card or other sensitive fields.</li>
-                <li>Values are never written to logs or traces.</li>
-                <li>Anything destructive asks you first, every time.</li>
+                {SECURITY_POINTS.map((key) => (
+                  <li key={key}>{t(key)}</li>
+                ))}
               </ul>
             </div>
 
             <div className="tile tile--dark tile--full">
               <div className="tile__copy">
-                <h3 className="t-headline-sm">The limitation we can’t engineer away.</h3>
-                <p className="t-body">
-                  WebMCP tools have to be registered in the page’s own JavaScript world, so the extension’s runtime
-                  lives there too. A hostile page can see it, call it, or patch it. It holds no extension privileges —
-                  the worst a page can do with it is drive its own DOM, which it could already do — but the isolation an
-                  extension normally gives you does not apply here, and you should weigh that.
-                </p>
+                <h3 className="t-headline-sm">{t('security.limitTitle')}</h3>
+                <p className="t-body">{t('security.limitCopy')}</p>
               </div>
               <p className="tile__cta">
                 <a className="more more--elevated" href={`${GITHUB_URL}/blob/main/SECURITY.md`}>
-                  Read the full threat model
+                  {t('security.threatModel')}
                 </a>
               </p>
             </div>
@@ -498,22 +450,20 @@ export function Landing() {
       {/* ────────────────────────────────────────────────────────── close ── */}
       <section className="section hero">
         <div className="section-content">
-          <h2 className="t-tiles-headline">Don’t wait for every website to adopt WebMCP.</h2>
-          <p className="t-callout hero__copy">The website never implemented WebMCP. Liha Adapter did.</p>
+          <h2 className="t-tiles-headline">{t('close.headline')}</h2>
+          <p className="t-callout hero__copy">{t('close.copy')}</p>
           <div className="hero__cta">
             <a className="button" href={demos[0]?.url ?? '#demos'}>
-              Try the demo
+              {t('hero.tryDemo')}
             </a>
             <a className="more" href="#setup">
-              Install the extension
+              {t('hero.install')}
             </a>
             <a className="more" href={GITHUB_URL}>
-              View on GitHub
+              {t('hero.github')}
             </a>
           </div>
-          <p className="hero__note">
-            Open source, MIT licensed — extension, runtime, DSL, registry, recorder, demo apps and tests.
-          </p>
+          <p className="hero__note">{t('close.note')}</p>
         </div>
       </section>
     </>

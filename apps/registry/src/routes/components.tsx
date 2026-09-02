@@ -1,21 +1,23 @@
 import type { ReactElement } from 'react';
 import type { Capability, HealthStatus } from '@liha/adapter-schema';
+import { useI18n, type MessageKey } from '../i18n';
 
 export function CapabilityBadge({ capability }: { capability: Capability }) {
   return <span className={`cap cap--${capability}`}>{capability}</span>;
 }
 
-const HEALTH_TEXT: Record<HealthStatus, string> = {
-  healthy: 'healthy',
-  degraded: 'degraded',
-  broken: 'broken',
-  unknown: 'not checked',
+const HEALTH_KEY: Record<HealthStatus, MessageKey> = {
+  healthy: 'health.healthy',
+  degraded: 'health.degraded',
+  broken: 'health.broken',
+  unknown: 'health.unknown',
 };
 
 export function HealthBadge({ status }: { status: HealthStatus }) {
+  const { t } = useI18n();
   return (
-    <span className={`health health--${status}`} title="Reported by your browser extension against the live site">
-      {HEALTH_TEXT[status]}
+    <span className={`health health--${status}`} title={t('health.title')}>
+      {t(HEALTH_KEY[status])}
     </span>
   );
 }

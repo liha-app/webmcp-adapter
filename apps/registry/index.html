@@ -36,6 +36,19 @@
     <link rel="apple-touch-icon" href="/favicon.svg" />
   </head>
   <body>
+    <script>
+      // Applied before first paint so an explicit appearance choice does not
+      // flash the system one first. The app re-applies it on mount anyway.
+      try {
+        var t = localStorage.getItem('liha.theme');
+        if (t === 'light' || t === 'dark') document.documentElement.setAttribute('data-theme', t);
+        var l = localStorage.getItem('liha.locale');
+        document.documentElement.lang =
+          l === 'ja' || l === 'en' ? l : (navigator.language || 'en').toLowerCase().indexOf('ja') === 0 ? 'ja' : 'en';
+      } catch (error) {
+        // Storage blocked: fall through to the system appearance and English.
+      }
+    </script>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>

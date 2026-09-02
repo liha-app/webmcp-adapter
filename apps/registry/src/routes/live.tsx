@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { detectModelContext } from '@liha/adapter-runtime';
 import { REGISTRY_TOOLS, type RegistryTool } from '../lib/webmcp';
+import { useI18n } from '../i18n';
 
 /**
  * Run this page's own WebMCP tools, from this page.
@@ -29,6 +30,7 @@ function initialValues(tool: RegistryTool): Record<string, string> {
 }
 
 export function LiveTools() {
+  const { t } = useI18n();
   const [supported, setSupported] = useState<boolean | null>(null);
   const [selected, setSelected] = useState<string>(REGISTRY_TOOLS[0]!.name);
   const [values, setValues] = useState<Record<string, string>>(() => initialValues(REGISTRY_TOOLS[0]!));
@@ -114,7 +116,10 @@ export function LiveTools() {
       </div>
 
       <div className="live__panel">
-        <p className="live__desc">{tool.description}</p>
+        <p className="live__agentnote">{t('live.asAgentSees')}</p>
+        <p className="live__desc" lang="en">
+          {tool.description}
+        </p>
 
         <div className="live__form">
           {Object.entries(properties).map(([key, property]) => (
@@ -135,19 +140,15 @@ export function LiveTools() {
               )}
             </label>
           ))}
-          {Object.keys(properties).length === 0 && <p className="live__noargs">This tool takes no arguments.</p>}
+          {Object.keys(properties).length === 0 && <p className="live__noargs">{t('live.noArgs')}</p>}
         </div>
 
         <div className="live__run">
           <button type="button" className="getbutton getbutton--filled getbutton--large" onClick={run} disabled={running} data-action="run-tool">
-            {running ? 'Running…' : `Run ${tool.name}`}
+            {running ? t('live.running') : t('live.run', [tool.name])}
           </button>
           <span className="live__route">
-            {supported === null
-              ? ''
-              : supported
-                ? 'will run through document.modelContext'
-                : 'your browser has no WebMCP — this will run the same function directly'}
+            {supported === null ? '' : supported ? t('live.willRunWebmcp') : t('live.willRunDirect')}
           </span>
         </div>
 
@@ -155,7 +156,7 @@ export function LiveTools() {
           <div className="live__result" data-testid="live-result">
             <div className="live__resulthead">
               <span className={`live__badge live__badge--${outcome.route}`}>
-                {outcome.route === 'webmcp' ? 'executed through WebMCP' : 'executed directly'}
+                {outcome.route === 'webmcp' ? t('live.executedWebmcp') : t('live.executedDirect')}
               </span>
               <span>
                 {outcome.tool} · {outcome.ms}ms

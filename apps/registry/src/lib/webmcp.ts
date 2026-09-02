@@ -2,6 +2,9 @@ import { detectModelContext, errorResult, textResult, type ToolResult } from '@l
 import { validateAdapter, type Capability } from '@liha/adapter-schema';
 import { CATALOG, findEntry, searchCatalog } from './catalog';
 import { SETUP_STEPS, demoApps } from './demos';
+// Tool output is read by models and asserted by the acceptance suite, so it
+// stays in one language regardless of what the visitor picked for the UI.
+import { en } from '../i18n/en';
 
 /**
  * The registry practises what it sells: it implements WebMCP itself, natively,
@@ -169,10 +172,12 @@ export const REGISTRY_TOOLS: RegistryTool[] = [
             name: demo.name,
             url: demo.url,
             adapter: demo.adapterId,
-            note: demo.note ?? null,
+            note: demo.noteKey ? en[demo.noteKey] : null,
             tools: demo.tools,
           })),
-          requirements: SETUP_STEPS.map((step) => (step.code ? `${step.text} (${step.code})` : step.text)),
+          requirements: SETUP_STEPS.map((step) =>
+            step.code ? `${en[step.key]} (${step.code})` : en[step.key],
+          ),
           note: 'These sites implement no WebMCP themselves. Their tools come from adapters installed in the browser.',
         };
         return textResult(JSON.stringify(payload, null, 2), payload as unknown as Record<string, unknown>);

@@ -4,6 +4,7 @@ import { useQuery } from '@tanstack/react-query';
 import { CATALOG, CATEGORIES, findEntry, searchCatalog } from '../lib/catalog';
 import { fetchInstalled } from '../lib/extension';
 import { CAPABILITY_OPTIONS } from '../lib/webmcp';
+import { useI18n } from '../i18n';
 import { demoApps } from '../lib/demos';
 import { GITHUB_URL, RELEASES_URL } from '../lib/links';
 import { AdapterIcon, CapabilityBadge, HealthBadge } from './components';
@@ -18,6 +19,7 @@ import { listRoute } from './tree';
  * the store puts them, and because it keeps the URL-shareable state visible.
  */
 export function AdapterList() {
+  const { t, tx } = useI18n();
   const search = useSearch({ from: listRoute.id });
   const navigate = useNavigate({ from: listRoute.id });
 
@@ -55,18 +57,18 @@ export function AdapterList() {
           type="search"
           name="q"
           data-testid="adapter-search"
-          placeholder="Search"
-          aria-label="Search adapters"
+          placeholder={t('store.search')}
+          aria-label={t('store.searchLabel')}
           value={search.q ?? ''}
           onChange={(event) => update({ q: event.target.value || undefined })}
         />
 
         <div className="sidebar__group">
-          <p className="sidebar__label">Category</p>
+          <p className="sidebar__label">{t('store.category')}</p>
           <ul className="sidebar__nav" data-testid="category-filter">
             <li>
               <button type="button" aria-current={activeCategory === 'all'} onClick={() => update({ category: undefined })}>
-                All adapters
+                {t('store.allAdapters')}
                 <span className="sidebar__count">{countFor({ category: 'all' })}</span>
               </button>
             </li>
@@ -86,7 +88,7 @@ export function AdapterList() {
         </div>
 
         <div className="sidebar__group">
-          <p className="sidebar__label">Capability</p>
+          <p className="sidebar__label">{t('store.capability')}</p>
           <ul className="sidebar__nav" data-testid="capability-filter">
             {CAPABILITY_OPTIONS.map((capability) => (
               <li key={capability}>
@@ -95,7 +97,7 @@ export function AdapterList() {
                   aria-current={activeCapability === capability}
                   onClick={() => update({ capability: capability === 'all' ? undefined : capability })}
                 >
-                  {capability === 'all' ? 'Any capability' : capability}
+                  {capability === 'all' ? t('store.anyCapability') : capability}
                   <span className="sidebar__count">{countFor({ capability })}</span>
                 </button>
               </li>
@@ -105,32 +107,24 @@ export function AdapterList() {
       </aside>
 
       <div className="store__main">
-        <h1 className="store__title">Adapters</h1>
-        <p className="store__sub">
-          Each one is declarative JSON, scoped to exact origins, with every step and permission open to inspection
-          before you install it.
-        </p>
+        <h1 className="store__title">{t('store.title')}</h1>
+        <p className="store__sub">{t('store.sub')}</p>
 
         <Link className="featurecard" to="/" hash="live">
-          <p className="featurecard__kicker">Official collection</p>
-          <h2>
-            {CATALOG.length} adapters, {totalTools} tools, and not one line of JavaScript between them.
-          </h2>
-          <p>
-            The step vocabulary has no <code>eval</code> and no expression language, so a community adapter is
-            something you can read rather than something you have to trust.
-          </p>
+          <p className="featurecard__kicker">{t('store.featureKicker')}</p>
+          <h2>{t('store.featureHeadline', [CATALOG.length, totalTools])}</h2>
+          <p>{tx('store.featureCopy', [<code key="eval">eval</code>])}</p>
         </Link>
 
         <section className="shelf shelf--first">
           <div className="shelf__head">
             <h2 className="shelf__title">
               {activeCategory === 'all' && activeCapability === 'all' && !search.q
-                ? 'All adapters'
-                : 'Matching adapters'}
+                ? t('store.allAdapters')
+                : t('store.shelfMatching')}
             </h2>
             <span className="shelf__count" data-testid="result-count">
-              {results.length} adapter{results.length === 1 ? '' : 's'}
+              {results.length === 1 ? t('store.countOne') : t('store.count', [results.length])}
             </span>
           </div>
 
@@ -158,14 +152,14 @@ export function AdapterList() {
                         <span className="chip" data-field="category">
                           {entry.adapter.category ?? 'other'}
                         </span>
-                        <span className="chip">{entry.toolCount} tools</span>
+                        <span className="chip">{t('store.toolCount', [entry.toolCount])}</span>
                         {entry.capabilities.map((capability) => (
                           <CapabilityBadge key={capability} capability={capability} />
                         ))}
                         {live?.health && <HealthBadge status={live.health.status} />}
                         {live && (
                           <span className="chip chip--on" data-field="installed">
-                            installed
+                            {t('store.installed')}
                           </span>
                         )}
                         <span className="chip" data-field="version">
@@ -174,7 +168,7 @@ export function AdapterList() {
                       </span>
                     </div>
                     <Link className="getbutton" to="/adapters/$adapterId" params={{ adapterId: entry.adapter.id }}>
-                      {live ? 'Open' : 'View'}
+                      {live ? t('store.open') : t('store.view')}
                     </Link>
                   </div>
                 </li>
@@ -184,16 +178,16 @@ export function AdapterList() {
 
           {results.length === 0 && (
             <p className="empty" data-testid="no-results">
-              No adapters match that search.
+              {t('store.noResults')}
             </p>
           )}
         </section>
 
         <section className="shelf">
           <div className="shelf__head">
-            <h2 className="shelf__title">Sites you can drive right now</h2>
+            <h2 className="shelf__title">{t('store.demoShelf')}</h2>
             <Link className="shelf__link" to="/" hash="setup">
-              What you need first ›
+              {t('store.demoShelfLink')} ›
             </Link>
           </div>
           <ul className="shelf__body" style={{ gridTemplateColumns: 'minmax(0, 1fr)' }}>
@@ -205,14 +199,14 @@ export function AdapterList() {
                     <AdapterIcon id={demo.adapterId} category={entry?.adapter.category} />
                     <div className="lockup__text">
                       <span className="lockup__title">{demo.name}</span>
-                      <span className="lockup__sub">{demo.blurb}</span>
+                      <span className="lockup__sub">{t(demo.blurbKey)}</span>
                       <span className="lockup__meta">
-                        <span className="chip">no WebMCP code of its own</span>
-                        {demo.note && <span className="chip">{demo.note}</span>}
+                        <span className="chip">{t('store.noOwnWebmcp')}</span>
+                        {demo.noteKey && <span className="chip">{t(demo.noteKey)}</span>}
                       </span>
                     </div>
                     <a className="getbutton getbutton--filled" href={demo.url}>
-                      Open
+                      {t('store.open')}
                     </a>
                   </div>
                 </li>
@@ -223,9 +217,9 @@ export function AdapterList() {
 
         <section className="shelf">
           <div className="shelf__head">
-            <h2 className="shelf__title">The extension</h2>
+            <h2 className="shelf__title">{t('store.extShelf')}</h2>
             <a className="shelf__link" href={`${GITHUB_URL}#quick-start`}>
-              Build from source ›
+              {t('store.extBuild')} ›
             </a>
           </div>
           <ul className="shelf__body" style={{ gridTemplateColumns: 'minmax(0, 1fr)' }}>
@@ -233,17 +227,15 @@ export function AdapterList() {
               <div className="lockup__inner">
                 <AdapterIcon id="liha-extension" category="developer-tools" />
                 <div className="lockup__text">
-                  <span className="lockup__title">Liha WebMCP Adapter for Chrome</span>
-                  <span className="lockup__sub">
-                    Validates an adapter, then registers its tools in the page. Chrome 151+ with the WebMCP flag on.
-                  </span>
+                  <span className="lockup__title">{t('store.extName')}</span>
+                  <span className="lockup__sub">{t('store.extSub')}</span>
                   <span className="lockup__meta">
-                    <span className="chip">MIT</span>
-                    <span className="chip">Firefox build included</span>
+                    <span className="chip">{t('footer.mit')}</span>
+                    <span className="chip">{t('store.extFirefox')}</span>
                   </span>
                 </div>
                 <a className="getbutton" href={RELEASES_URL}>
-                  Get
+                  {t('store.get')}
                 </a>
               </div>
             </li>

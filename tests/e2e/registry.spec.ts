@@ -1,5 +1,7 @@
 import { expect, test } from '@playwright/test';
 import { PROOF } from '../../apps/registry/src/lib/proof';
+import { en } from '../../apps/registry/src/i18n/en';
+import { ja } from '../../apps/registry/src/i18n/ja';
 
 test.describe('Landing page', () => {
   test.beforeEach(async ({ page }) => {
@@ -76,13 +78,14 @@ test.describe('Landing page', () => {
   test('shows what has actually been verified', async ({ page }) => {
     for (const run of PROOF.acceptance) {
       await expect(page.getByText(run.result, { exact: true })).toBeVisible();
+      await expect(page.getByText(en[run.nameKey], { exact: true })).toBeVisible();
     }
     // The two figures are fact tiles now; both still come from the constant.
     await expect(page.getByText(String(PROOF.unitAndIntegrationTests), { exact: true })).toBeVisible();
     await expect(page.getByText(/^unit and integration tests\./)).toBeVisible();
     await expect(page.getByText(String(PROOF.e2eTests), { exact: true })).toBeVisible();
     await expect(page.getByText(/^end-to-end tests in a real browser/)).toBeVisible();
-    await expect(page.getByText(/All three demo apps contain zero WebMCP code/)).toBeVisible();
+    await expect(page.getByText(en['verified.fact5'])).toBeVisible();
   });
 
   test('shows a real adapter definition rather than describing one', async ({ page }) => {
@@ -137,6 +140,82 @@ test.describe('Landing page', () => {
     await expect(page.locator('meta[property="og:title"]')).toHaveAttribute('content', /Make any website agent-ready/);
     await expect(page.locator('meta[name="twitter:card"]')).toHaveAttribute('content', 'summary_large_image');
     await expect(page.locator('link[rel="icon"]')).toHaveAttribute('href', '/favicon.svg');
+  });
+});
+
+
+test.describe('Appearance and language', () => {
+  test.beforeEach(async ({ page }) => {
+    await page.goto('http://localhost:5280/');
+  });
+
+  // The point of the control is that it beats the operating system, in both
+  // directions — otherwise someone on a dark Mac can never see the light one.
+  test('an explicit appearance overrides the operating system', async ({ page }) => {
+    const background = () => page.evaluate(() => getComputedStyle(document.body).backgroundColor);
+    const control = page.getByTestId('theme-control');
+
+    await expect(page.locator('html')).not.toHaveAttribute('data-theme', /.*/);
+
+    await control.locator('[data-theme-option="dark"]').click();
+    await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark');
+    expect(await background()).toBe('rgb(0, 0, 0)');
+
+    await control.locator('[data-theme-option="light"]').click();
+    await expect(page.locator('html')).toHaveAttribute('data-theme', 'light');
+    expect(await background()).toBe('rgb(255, 255, 255)');
+
+    await control.locator('[data-theme-option="auto"]').click();
+    await expect(page.locator('html')).not.toHaveAttribute('data-theme', /.*/);
+  });
+
+  test('the appearance survives a reload, without flashing the wrong one', async ({ page }) => {
+    await page.getByTestId('theme-control').locator('[data-theme-option="dark"]').click();
+    await page.reload({ waitUntil: 'commit' });
+    // Read before the app has mounted: the inline script must have run already.
+    await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark');
+  });
+
+  test('switching language translates the page and sets lang', async ({ page }) => {
+    await expect(page.getByRole('heading', { level: 1 })).toHaveText(en['hero.headline']);
+    await expect(page.locator('html')).toHaveAttribute('lang', 'en');
+
+    await page.getByTestId('language-control').locator('[data-locale-option="ja"]').click();
+    await expect(page.getByRole('heading', { level: 1 })).toHaveText(ja['hero.headline']);
+    await expect(page.locator('html')).toHaveAttribute('lang', 'ja');
+    await expect(page).toHaveTitle(ja['meta.title']);
+    await expect(page.getByText(ja['security.limitTitle'])).toBeVisible();
+
+    await page.reload();
+    await expect(page.getByRole('heading', { level: 1 })).toHaveText(ja['hero.headline']);
+  });
+
+  test('a Japanese browser gets Japanese without being asked', async ({ browser }) => {
+    const context = await browser.newContext({ locale: 'ja-JP' });
+    const page = await context.newPage();
+    await page.goto('http://localhost:5280/');
+    await expect(page.getByRole('heading', { level: 1 })).toHaveText(ja['hero.headline']);
+    await context.close();
+  });
+
+  // The tools are read by models and asserted by the acceptance suite, so they
+  // must not follow the interface language.
+  test('the WebMCP tools stay in one language whatever the page is showing', async ({ page }) => {
+    await page.getByTestId('language-control').locator('[data-locale-option="ja"]').click();
+    await expect(page.locator('.live__desc').first()).toContainText('Search the Liha adapter registry');
+    await page.getByRole('button', { name: /search_adapters/ }).click();
+    await expect(page.getByTestId('live-result')).toContainText('adapter(s)');
+  });
+
+  test('the store and the product page are translated too', async ({ page }) => {
+    await page.getByTestId('language-control').locator('[data-locale-option="ja"]').click();
+    await page.goto('http://localhost:5280/adapters');
+    await expect(page.getByRole('heading', { level: 1 })).toHaveText(ja['store.title']);
+    await expect(page.getByTestId('category-filter')).toContainText(ja['store.allAdapters']);
+    await page.goto('http://localhost:5280/adapters/demo-project');
+    await expect(page.getByText(ja['detail.reachTitle'])).toBeVisible();
+    // Adapter-supplied text is the published definition, so it is not translated.
+    await expect(page.getByRole('heading', { level: 1 })).toHaveText('Kite Project Manager');
   });
 });
 

@@ -2,10 +2,13 @@ import { useEffect, useState } from 'react';
 import { Link, Outlet, useRouterState } from '@tanstack/react-router';
 import { GITHUB_URL } from '../lib/links';
 import { registerRegistryTools, type WebMcpStatus } from '../lib/webmcp';
+import { useI18n } from '../i18n';
+import { LanguageControl, ThemeControl } from './controls';
 
 export function Root() {
   const [status, setStatus] = useState<WebMcpStatus | null>(null);
   const onLanding = useRouterState({ select: (state) => state.location.pathname === '/' });
+  const { t } = useI18n();
 
   useEffect(() => {
     // Aborting the signal unregisters every tool — the same mechanism the
@@ -34,21 +37,25 @@ export function Root() {
               />
               <circle cx="23" cy="10" r="3" fill="#0071e3" />
             </svg>
-            <span>
+            <span className="globalnav__brandname">
               <strong>Liha</strong> WebMCP Adapter
             </span>
           </Link>
           <div className="globalnav__links">
             <Link to="/adapters" activeProps={{ className: 'active' }}>
-              Adapters
+              {t('nav.adapters')}
             </Link>
             <a data-secondary="" href={onLanding ? '#how' : '/#how'}>
-              How it works
+              {t('nav.how')}
             </a>
             <a data-secondary="" href={onLanding ? '#security' : '/#security'}>
-              Trust model
+              {t('nav.trust')}
             </a>
-            <a href={GITHUB_URL}>GitHub</a>
+            <a data-secondary="" href={GITHUB_URL}>
+              {t('nav.github')}
+            </a>
+            <LanguageControl />
+            <ThemeControl />
           </div>
         </nav>
       </header>
@@ -59,10 +66,10 @@ export function Root() {
           {status?.supported === true && <span className="dot dot--on" />}
           {status?.supported === false && <span className="dot dot--off" />}
           {status === null
-            ? 'Checking for WebMCP…'
+            ? t('status.checking')
             : status.supported
-              ? `This site implements WebMCP itself — ${status.registered.length} tools registered: ${status.registered.join(', ')}`
-              : 'WebMCP is not available in this browser. Enable chrome://flags/#enable-webmcp-testing to let an agent use this page directly.'}
+              ? t('status.supported', [status.registered.length, status.registered.join(', ')])
+              : t('status.unsupported')}
         </p>
       </div>
 
@@ -72,38 +79,29 @@ export function Root() {
 
       <footer className="globalfooter">
         <div className="globalfooter__inner">
-          <p>
-            Every adapter here is a JSON file in the repository. Adapters contain no JavaScript — read one before you
-            install it.
-          </p>
-          <p>
-            The runtime that registers these tools lives in the page’s own JavaScript world, which is the only place
-            WebMCP can be reached. A hostile page can see it. That trade-off is documented rather than hidden.
-          </p>
+          <p>{t('footer.readable')}</p>
+          <p>{t('footer.mainWorld')}</p>
           <div className="globalfooter__rule" />
           <div className="globalfooter__links">
-            <span>MIT licensed</span>
+            <span>{t('footer.mit')}</span>
             <span className="globalfooter__sep" aria-hidden="true">
               |
             </span>
-            <a href={GITHUB_URL}>Source</a>
+            <a href={GITHUB_URL}>{t('footer.source')}</a>
             <span className="globalfooter__sep" aria-hidden="true">
               |
             </span>
-            <a href={`${GITHUB_URL}/blob/main/SECURITY.md`}>Security</a>
+            <a href={`${GITHUB_URL}/blob/main/SECURITY.md`}>{t('footer.security')}</a>
             <span className="globalfooter__sep" aria-hidden="true">
               |
             </span>
-            <a href={`${GITHUB_URL}/blob/main/docs/adapter-format.md`}>Adapter format</a>
+            <a href={`${GITHUB_URL}/blob/main/docs/adapter-format.md`}>{t('footer.format')}</a>
             <span className="globalfooter__sep" aria-hidden="true">
               |
             </span>
-            <a href={`${GITHUB_URL}/blob/main/docs/webmcp-api.md`}>WebMCP API notes</a>
+            <a href={`${GITHUB_URL}/blob/main/docs/webmcp-api.md`}>{t('footer.apiNotes')}</a>
           </div>
-          <p style={{ marginTop: 14 }}>
-            Not affiliated with, endorsed by or connected to Apple Inc. or the App Store. The layout follows Apple’s
-            public design conventions; all names, artwork and copy here are this project’s own.
-          </p>
+          <p style={{ marginTop: 14 }}>{t('footer.disclaimer')}</p>
         </div>
       </footer>
     </>

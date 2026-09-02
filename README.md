@@ -161,6 +161,27 @@ press run, and the panel reports whether the call went through
 `document.modelContext` or fell back to calling the same function directly,
 because a demo that fakes the mechanism it is demonstrating is worse than none.
 
+**Appearance and language.** The nav carries two segmented controls. Appearance
+is *Auto / Light / Dark*: `auto` leaves the root element alone so the page
+follows the operating system, and the two explicit values pin `color-scheme`,
+which is the entire switch — every token is declared once with `light-dark()`,
+so there is no second palette to keep in sync. An inline script in
+`index.html` applies the stored choice before first paint, so an explicit
+choice never flashes the system one first.
+
+The interface is English and Japanese. `apps/registry/src/i18n/ja.ts` is typed
+as a complete record of `en.ts`'s keys, so a string added in one language and
+forgotten in the other fails the build rather than shipping half-translated; a
+unit test additionally checks that both languages interpolate the same values.
+Two things are deliberately *not* translated: the WebMCP tool descriptions,
+which are read by models and asserted by the acceptance suite, and the text an
+adapter supplies about itself — its name, description and tool descriptions are
+the published definition an agent receives and a reader audits, so translating
+them in the interface would show you something other than what you are about to
+install. Japanese also gets its own typographic rules, measured off apple.com/jp:
+tracking returns to normal, and `word-break: auto-phrase` breaks lines at phrase
+boundaries instead of splitting 「ツール」 in half.
+
 **On the visual design.** The marketing pages follow Apple's App Store product
 page conventions and the catalogue follows the App Store's own store layout —
 the 980px column and 18px tiles, the 260px sidebar, the 64px lockups and the
@@ -202,8 +223,8 @@ Full model, including the MAIN-world limitation this cannot engineer away:
 ## Verifying it yourself
 
 ```bash
-pnpm verify           # typecheck, lint, 200 unit + integration tests, build
-pnpm e2e              # 38 Playwright tests against the portal and the demo apps
+pnpm verify           # typecheck, lint, 204 unit + integration tests, build
+pnpm e2e              # 44 Playwright tests against the portal and the demo apps
 pnpm acceptance:all   # three real-browser runs through the WebMCP protocol
 ```
 
@@ -242,7 +263,7 @@ apps/
   extension/       MV3 extension: service worker, bridges, MAIN-world runtime,
                    popup, confirmation window, Recorder, Studio, diagnostics
   registry/        the public portal and Adapter Store — React, TanStack
-                   Router/Query, Zod, and WebMCP-native
+                   Router/Query, Zod, WebMCP-native, en/ja under src/i18n
   demo-crm/        ordinary React apps with no WebMCP code whatsoever
   demo-shop/
   demo-project/

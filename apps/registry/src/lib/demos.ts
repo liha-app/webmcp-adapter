@@ -1,26 +1,28 @@
 import { DEMO_SITE_IDS, SITES, siteUrl, type SiteId } from '@liha/config';
 import { findEntry } from './catalog';
 import type { Capability } from '@liha/adapter-schema';
+import type { MessageKey } from '../i18n/en';
 
 export interface DemoApp {
   id: Exclude<SiteId, 'registry'>;
   name: string;
-  blurb: string;
+  /** A message key: the blurb is ours to write, so it exists in both languages. */
+  blurbKey: MessageKey;
   /** Resolved for wherever this page is being served from. */
   url: string;
   adapterId: string;
   tools: Array<{ name: string; capability: Capability }>;
-  note?: string;
+  noteKey?: MessageKey;
 }
 
-const BLURBS: Record<string, string> = {
-  'demo-crm': 'A customer list with an add-and-edit dialog. Ordinary CRUD, ordinary React.',
-  'demo-shop': 'A storefront with search, a cart and coupon codes. No checkout, by design.',
-  'demo-project': 'Tasks with assignees and statuses — including a delete, so you can watch a destructive tool ask first.',
+const BLURB_KEYS: Record<string, MessageKey> = {
+  'demo-crm': 'demos.blurbCrm',
+  'demo-shop': 'demos.blurbShop',
+  'demo-project': 'demos.blurbProject',
 };
 
-const NOTES: Record<string, string> = {
-  'demo-project': 'Use this one to see the DESTRUCTIVE confirmation.',
+const NOTE_KEYS: Record<string, MessageKey> = {
+  'demo-project': 'demos.noteProject',
 };
 
 /**
@@ -35,20 +37,21 @@ export function demoApps(currentOrigin?: string): DemoApp[] {
     return {
       id,
       name: SITES[id].label,
-      blurb: BLURBS[id] ?? '',
+      blurbKey: BLURB_KEYS[id] ?? 'demos.blurbCrm',
       url: siteUrl(id, currentOrigin),
       adapterId: id,
       tools: (entry?.adapter.tools ?? []).map((tool) => ({ name: tool.name, capability: tool.capability })),
-      ...(NOTES[id] ? { note: NOTES[id] } : {}),
+      ...(NOTE_KEYS[id] ? { noteKey: NOTE_KEYS[id] } : {}),
     };
   });
 }
 
-export const SETUP_STEPS = [
-  { text: 'Use Google Chrome 151 or newer.' },
-  { text: 'Enable the WebMCP flag and relaunch.', code: 'chrome://flags/#enable-webmcp-testing' },
-  { text: 'Load the extension: download it, unzip, then Load unpacked at chrome://extensions with Developer mode on.' },
-  { text: 'Open one of the demos below.' },
-  { text: 'Check the Liha popup — the adapter should be enabled and its tools registered.' },
-  { text: 'Ask your WebMCP agent to do something, for example “create a customer named Alice Smith”.' },
+/** The one flag that has to be switched on, plus the five steps around it. */
+export const SETUP_STEPS: Array<{ key: MessageKey; code?: string }> = [
+  { key: 'setup.step1' },
+  { key: 'setup.step2', code: 'chrome://flags/#enable-webmcp-testing' },
+  { key: 'setup.step3' },
+  { key: 'setup.step4' },
+  { key: 'setup.step5' },
+  { key: 'setup.step6' },
 ];

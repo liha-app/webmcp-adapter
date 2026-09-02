@@ -1,23 +1,34 @@
+import type { MessageKey } from '../i18n/en';
+
 /**
  * What has actually been verified, kept in one place so the claims on the
  * landing page cannot quietly drift from the suite that backs them.
  *
+ * The numbers live here; the prose around them lives in the message
+ * catalogue, because it has to exist in both languages.
+ *
  * Update alongside the test suite — CONTRIBUTING points here.
  */
 export const PROOF = {
-  unitAndIntegrationTests: 200,
-  e2eTests: 38,
+  unitAndIntegrationTests: 204,
+  e2eTests: 44,
   acceptance: [
-    { name: 'Phase 0 criteria', result: '10/10', what: 'the core hypothesis, end to end' },
-    { name: 'Full system', result: '43/43', what: 'three adapters, the portal, the confirmation gate' },
-    { name: 'Recorder and Studio', result: '25/25', what: 'record a workflow, get a valid adapter' },
+    { nameKey: 'verified.runPhase0', whatKey: 'verified.runPhase0What', result: '10/10' },
+    { nameKey: 'verified.runFull', whatKey: 'verified.runFullWhat', result: '43/43' },
+    { nameKey: 'verified.runRecorder', whatKey: 'verified.runRecorderWhat', result: '25/25' },
   ],
-  facts: [
-    'A Chrome extension injects a runtime into the page’s MAIN world.',
-    'That runtime calls document.modelContext.registerTool().',
-    'A WebMCP agent outside the page discovers the tools, with their schemas.',
-    'The agent invokes them, and the site’s own form is filled in and submitted.',
-    'All three demo apps contain zero WebMCP code — asserted in CI.',
+  factKeys: [
+    'verified.fact1',
+    'verified.fact2',
+    'verified.fact3',
+    'verified.fact4',
+    'verified.fact5',
   ],
-  ciNote: 'Every push runs all of it, including the real-browser runs, on a clean machine.',
-} as const;
+  ciNoteKey: 'verified.ciNote',
+} as const satisfies {
+  unitAndIntegrationTests: number;
+  e2eTests: number;
+  acceptance: ReadonlyArray<{ nameKey: MessageKey; whatKey: MessageKey; result: string }>;
+  factKeys: readonly MessageKey[];
+  ciNoteKey: MessageKey;
+};

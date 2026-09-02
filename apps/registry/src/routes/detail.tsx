@@ -3,6 +3,7 @@ import { Link, useParams } from '@tanstack/react-router';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { findEntry, toolEffectSummary } from '../lib/catalog';
 import { fetchInstalled, requestInstall } from '../lib/extension';
+import { useI18n } from '../i18n';
 import { AdapterIcon, CapabilityBadge, HealthBadge } from './components';
 import { detailRoute } from './tree';
 
@@ -16,6 +17,7 @@ import { detailRoute } from './tree';
  * file size.
  */
 export function AdapterDetail() {
+  const { t, tx } = useI18n();
   const { adapterId } = useParams({ from: detailRoute.id });
   const entry = findEntry(adapterId);
   const queryClient = useQueryClient();
@@ -34,7 +36,7 @@ export function AdapterDetail() {
       <div className="product">
         <div className="product__inner">
           <p className="empty">
-            No adapter with that id. <Link to="/adapters">Back to the registry</Link>.
+            {t('detail.notFound')} <Link to="/adapters">{t('detail.back')}</Link>
           </p>
         </div>
       </div>
@@ -48,7 +50,8 @@ export function AdapterDetail() {
     <div className="product">
       <article className="product__inner" data-adapter-id={adapter.id}>
         <p className="crumbs">
-          <Link to="/adapters">Adapters</Link> <span aria-hidden="true">›</span> {adapter.category ?? 'other'}
+          <Link to="/adapters">{t('store.title')}</Link> <span aria-hidden="true">›</span>{' '}
+          {adapter.category ?? 'other'}
         </p>
 
         <header className="product__head">
@@ -68,17 +71,19 @@ export function AdapterDetail() {
                 disabled={install.isPending}
                 onClick={() => install.mutate()}
               >
-                {install.isPending ? 'Waiting for confirmation…' : live ? 'Reinstall' : 'Install'}
+                {install.isPending
+                  ? t('detail.installing')
+                  : live
+                    ? t('detail.reinstall')
+                    : t('detail.install')}
               </button>
               <p className="product__hint">
-                {live ? 'Installed in this browser.' : 'The extension will show you the permissions before installing.'}
+                {live ? t('detail.installedHere') : t('detail.willShowPermissions')}
               </p>
             </div>
             {install.data && (
               <p className={install.data.ok ? 'ok' : 'problem'} data-testid="install-result">
-                {install.data.ok
-                  ? 'Installed. Reload the target site to use the tools.'
-                  : install.data.errors.join('; ')}
+                {install.data.ok ? t('detail.installOk') : install.data.errors.join('; ')}
               </p>
             )}
           </div>
@@ -86,39 +91,36 @@ export function AdapterDetail() {
 
         <dl className="facts">
           <div>
-            <dt>Tools</dt>
+            <dt>{t('detail.factTools')}</dt>
             <dd>{adapter.tools.length}</dd>
           </div>
           <div>
-            <dt>Highest capability</dt>
+            <dt>{t('detail.factCapability')}</dt>
             <dd>{entry.maxCapability}</dd>
           </div>
           <div>
-            <dt>Origins</dt>
+            <dt>{t('detail.factOrigins')}</dt>
             <dd>
               {adapter.origins.length}
-              <small>exact, no wildcards</small>
+              <small>{t('detail.factOriginsNote')}</small>
             </dd>
           </div>
           <div>
-            <dt>Version</dt>
+            <dt>{t('detail.factVersion')}</dt>
             <dd>v{adapter.version}</dd>
           </div>
           <div>
-            <dt>Last verified</dt>
+            <dt>{t('detail.factVerified')}</dt>
             <dd>
-              {adapter.verifiedAt ?? 'not verified'}
-              {live?.health && <small>{live.health.status} in this browser</small>}
+              {adapter.verifiedAt ?? t('detail.notVerified')}
+              {live?.health && <small>{t('detail.healthInBrowser', [live.health.status])}</small>}
             </dd>
           </div>
         </dl>
 
         <section className="storesection">
-          <h2>What it can reach</h2>
-          <p>
-            This adapter runs only on these exact origins. It cannot run anywhere else, and it cannot navigate off
-            them.
-          </p>
+          <h2>{t('detail.reachTitle')}</h2>
+          <p>{t('detail.reachCopy')}</p>
           <ul className="origins">
             {adapter.origins.map((origin) => (
               <li key={origin}>
@@ -128,14 +130,16 @@ export function AdapterDetail() {
           </ul>
           {destructive.length > 0 && (
             <p className="warn">
-              {destructive.length} destructive tool{destructive.length === 1 ? '' : 's'} (
-              {destructive.map((tool) => tool.name).join(', ')}). These always ask you before they run.
+              {t(destructive.length === 1 ? 'detail.destructiveWarnOne' : 'detail.destructiveWarn', [
+                destructive.length,
+                destructive.map((tool) => tool.name).join(', '),
+              ])}
             </p>
           )}
         </section>
 
         <section className="storesection">
-          <h2>Tools</h2>
+          <h2>{t('detail.toolsTitle')}</h2>
           {adapter.tools.map((tool) => {
             const health = live?.health?.tools.find((candidate) => candidate.name === tool.name);
             return (
@@ -146,11 +150,9 @@ export function AdapterDetail() {
                   {health && <HealthBadge status={health.status} />}
                 </div>
                 <p className="tool__desc">{tool.description}</p>
-                <p>
-                  Does: {toolEffectSummary(adapter, tool.name)} — {tool.steps.length} declarative steps
-                </p>
+                <p>{t('detail.does', [toolEffectSummary(adapter, tool.name), tool.steps.length])}</p>
                 <details>
-                  <summary>Input schema</summary>
+                  <summary>{t('detail.inputSchema')}</summary>
                   <pre>{JSON.stringify(tool.inputSchema, null, 2)}</pre>
                 </details>
               </div>
@@ -159,14 +161,11 @@ export function AdapterDetail() {
         </section>
 
         <section className="storesection">
-          <h2>Source</h2>
-          <p>
-            Published at <code>{entry.sourcePath}</code>. An adapter you cannot read is an adapter you should not
-            install, so the whole definition is here — there is no hidden code, because the format cannot express any.
-          </p>
+          <h2>{t('detail.sourceTitle')}</h2>
+          <p>{tx('detail.sourceCopy', [<code key="path">{entry.sourcePath}</code>])}</p>
           <p style={{ marginTop: 14 }}>
             <button type="button" className="getbutton" onClick={() => setShowSource((value) => !value)}>
-              {showSource ? 'Hide' : 'Show'} full definition
+              {showSource ? t('detail.hideSource') : t('detail.showSource')}
             </button>
           </p>
           {showSource && (
