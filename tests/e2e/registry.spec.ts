@@ -37,9 +37,10 @@ test.describe('Landing page', () => {
   });
 
   test('says which path executed the call, and does not pretend', async ({ page }) => {
-    // Playwright's Chromium has no WebMCP, so the honest label here is the
-    // direct one. The WebMCP path is covered by the acceptance runner, which
-    // drives a browser that does expose the API.
+    // Which label is honest depends on the browser this runs in, and that has
+    // changed underneath the suite before: Playwright's Chromium exposes WebMCP
+    // now and did not always. So the expectation is read from the page rather
+    // than assumed, and both labels are asserted against what is really there.
     const hasWebMcp = await page.evaluate(() => 'modelContext' in document);
     await page.getByRole('button', { name: /^Run / }).click();
     await expect(page.getByTestId('live-result')).toBeVisible();
@@ -288,8 +289,33 @@ test.describe('Adapter Registry', () => {
     expect(text).not.toMatch(/function\s*\(|=>|eval\(/);
   });
 
-  test('says plainly when WebMCP is unavailable rather than pretending', async ({ page }) => {
+  test('reports its own WebMCP status on the page', async ({ page }) => {
     await expect(page.getByRole('status')).toContainText(/WebMCP is not available|implements WebMCP itself/);
+  });
+
+  test('says plainly when WebMCP is unavailable rather than pretending', async ({ page }) => {
+    /*
+     * The alternation above passes whichever way the browser goes, so for a
+     * long time the branch this test is named after was never reached: the
+     * Chromium Playwright ships has WebMCP on, so every run took the supported
+     * path and the honest-degradation copy went unchecked.
+     *
+     * Take the API away before the page loads instead of hoping for a browser
+     * that lacks it. `detectModelContext` reads `document.modelContext`, so a
+     * getter returning undefined is exactly what a browser without the flag
+     * presents — which is what someone running branded Chrome sees.
+     */
+    await page.addInitScript(() => {
+      Object.defineProperty(Document.prototype, 'modelContext', {
+        configurable: true,
+        get: () => undefined,
+      });
+    });
+    await page.goto('http://localhost:5280/');
+    await expect(page.getByRole('status')).toContainText('WebMCP is not available in this browser');
+    await expect(page.getByRole('status')).toContainText('chrome://flags/#enable-webmcp-testing');
+    // And it must not claim to have registered anything it could not register.
+    await expect(page.getByRole('status')).not.toContainText('implements WebMCP itself');
   });
 
   test('install without the extension reports the truth', async ({ page }) => {

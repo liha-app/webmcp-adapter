@@ -5,7 +5,7 @@
  * a failure.
  */
 import { spawn } from 'node:child_process';
-import { existsSync, mkdtempSync, readFileSync, readdirSync, rmSync } from 'node:fs';
+import { existsSync, mkdtempSync, readFileSync, readdirSync, rmSync, statSync } from 'node:fs';
 import { homedir, tmpdir } from 'node:os';
 import { join } from 'node:path';
 
@@ -23,14 +23,29 @@ export function findChromeBinary() {
   const candidates = [];
   if (process.env.LIHA_CHROME) candidates.push(process.env.LIHA_CHROME);
 
+  // `pnpm chrome:install` writes somewhere under .cache/chrome, and the shape of
+  // that path is @puppeteer/browsers' business, not ours — it has already moved
+  // once, from <version>/ to chrome/<platform>-<version>/, which left the
+  // documented setup command installing a browser this function then ignored.
+  // So walk down and look for the binary rather than predicting where it is.
   const localCache = join(process.cwd(), '.cache/chrome');
-  if (existsSync(localCache)) {
-    for (const entry of readdirSync(localCache)) {
-      candidates.push(join(localCache, entry, 'chrome-mac-arm64', CFT_APP));
-      candidates.push(join(localCache, entry, 'chrome-mac-x64', CFT_APP));
-      candidates.push(join(localCache, entry, 'chrome-linux64/chrome'));
+  const platformDirs = ['chrome-mac-arm64', 'chrome-mac-x64', 'chrome-linux64', 'chrome-linux'];
+  const scan = (dir, depth) => {
+    if (depth < 0 || !existsSync(dir)) return;
+    for (const entry of readdirSync(dir)) {
+      if (platformDirs.includes(entry)) {
+        candidates.push(join(dir, entry, CFT_APP));
+        candidates.push(join(dir, entry, 'chrome'));
+      } else {
+        try {
+          if (statSync(join(dir, entry)).isDirectory()) scan(join(dir, entry), depth - 1);
+        } catch {
+          /* unreadable entry */
+        }
+      }
     }
-  }
+  };
+  scan(localCache, 3);
 
   for (const pw of [join(homedir(), 'Library/Caches/ms-playwright'), join(homedir(), '.cache/ms-playwright')]) {
     if (!existsSync(pw)) continue;
@@ -90,7 +105,16 @@ export class Browser {
         ? ['--no-sandbox', '--disable-dev-shm-usage']
         : []),
       // The WebMCP API itself, plus the DevTools domain an inspector speaks.
-      ...(this.webmcp ? ['--enable-blink-features=WebMCPTesting,DevToolsWebMCPSupport'] : []),
+      //
+      // The off switch is not the mirror of the on switch, and assuming it was
+      // made `webmcp: false` a no-op for a long time: Chrome for Testing has
+      // WebMCP on by compile-time default, `--disable-blink-features=WebMCPTesting`
+      // does not take it away, and every run that meant to observe a browser
+      // without WebMCP was quietly observing one with it. `--disable-features`
+      // reaches the base feature and does.
+      ...(this.webmcp
+        ? ['--enable-blink-features=WebMCPTesting,DevToolsWebMCPSupport']
+        : ['--disable-features=WebMCP']),
       ...(this.extensionPath
         ? [`--load-extension=${this.extensionPath}`, `--disable-extensions-except=${this.extensionPath}`]
         : []),

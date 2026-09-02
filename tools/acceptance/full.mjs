@@ -370,6 +370,60 @@ async function main() {
     diag.close();
   } finally {
     browser?.close?.();
+  }
+
+  /* ------------------------------------------- the same browser, no API --- */
+  /*
+   * Everything above runs in a browser that has WebMCP. What someone actually
+   * installing this hits first is the browser that does not: in branded Chrome
+   * `document.modelContext` is undefined until chrome://flags/#enable-webmcp-testing
+   * is switched on, and the extension's whole promise is that it says so rather
+   * than shimming a fake modelContext an agent could never reach.
+   *
+   * That claim went untested until someone hit it for real. It could not have
+   * been tested before, either: `webmcp: false` did not disable anything.
+   */
+  const degraded = new Browser({ binary, extensionPath: EXT_DIST, webmcp: false }).launch();
+  try {
+    await degraded.ready();
+    group('Without the browser flag, the extension says so instead of faking it');
+    const degradedId = await findExtensionId(degraded);
+    must(Boolean(degradedId), 'the extension still loads without WebMCP');
+
+    const site = await degraded.newPage();
+    await site.goto('http://localhost:5273/');
+    check(
+      (await site.eval('typeof document.modelContext')) === 'undefined',
+      'the browser really has no WebMCP to find',
+    );
+    check(
+      (await site.eval("typeof document.modelContext === 'object'")) === false,
+      'and the injected runtime did not install one of its own',
+    );
+
+    const diag = await degraded.newPage();
+    await diag.goto(`chrome-extension://${degradedId}/diagnostics/diagnostics.html`);
+    const text = await waitFor(async () => {
+      const body = await diag.eval('document.body.innerText');
+      return /capabilities/i.test(body) ? body : null;
+    }, 15000);
+    must(Boolean(text), 'the diagnostics page renders');
+    check(text.includes('WebMCP is not switched on'), 'it names the cause', text.split('\n')[2]);
+    check(
+      text.includes('chrome://flags/#enable-webmcp-testing'),
+      'and tells the reader the one thing that fixes it',
+    );
+    check(
+      !text.includes('Fully supported'),
+      'it does not call the browser supported when tools cannot register',
+    );
+    check(
+      /MAIN world injection[\s\S]*?YES/.test(text),
+      'while still reporting the parts that do work, so the reader can tell them apart',
+    );
+    diag.close();
+  } finally {
+    degraded?.close?.();
     for (const server of servers) await server.close();
   }
 }

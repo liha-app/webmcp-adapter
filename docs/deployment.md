@@ -208,7 +208,7 @@ what does and does not work there.
 
 ```bash
 pnpm verify              # typecheck, lint, 235 unit + integration tests, build
-pnpm e2e                 # 44 Playwright tests against the portal and demo apps
+pnpm e2e                 # 45 Playwright tests against the portal and demo apps
 pnpm acceptance:all      # four real-browser runs through the WebMCP protocol
 ```
 
