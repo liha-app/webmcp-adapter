@@ -36,6 +36,9 @@ h4 { margin: 14px 0 6px; font-size: 11px; text-transform: uppercase; letter-spac
 .btn--danger { border-color: var(--err); color: var(--err); }
 .btn--link { border: 0; padding: 6px 0; color: var(--muted); text-decoration: underline; }
 .notice { background: rgba(180, 83, 9, 0.1); border: 1px solid var(--warn); color: var(--warn); border-radius: 8px; padding: 8px 10px; font-size: 12px; margin: 0 0 12px; }
+.notice__row { display: flex; align-items: center; gap: 8px; margin-top: 8px; }
+.notice__flag { flex: 1; min-width: 0; overflow-x: auto; white-space: nowrap; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 11px; background: rgba(0, 0, 0, 0.18); border-radius: 6px; padding: 5px 7px; }
+.btn--small { padding: 5px 9px; font-size: 11px; border-color: var(--warn); color: var(--warn); flex: none; }
 .health { font-size: 10px; font-weight: 700; letter-spacing: .04em; border-radius: 4px; padding: 1px 5px; border: 1px solid currentColor; }
 .health--healthy { color: var(--ok); }
 .health--degraded { color: var(--warn); }

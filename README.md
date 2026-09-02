@@ -47,7 +47,7 @@ same surface a Tool Inspector or agent uses.
 
 ```
 pnpm acceptance            10/10 Phase 0 criteria
-pnpm acceptance:full       51/51 checks — three demo adapters, the portal's
+pnpm acceptance:full       55/55 checks — three demo adapters, the portal's
                            native WebMCP tools, the destructive confirmation gate,
                            and a browser with the WebMCP flag off, where the
                            extension has to say so rather than fake it

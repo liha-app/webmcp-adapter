@@ -83,24 +83,40 @@ async function render(): Promise<void> {
           'will be registered. Liha will not fake a WebMCP implementation to hide this.',
       ),
     );
+  } else if (!platform.webmcpApi) {
+    /*
+     * Asked before "could not check a page", because it outranks it. This
+     * browser has no WebMCP at all, and that is knowable from this page — so
+     * saying "there is no open site to test against" would send the reader off
+     * to open a tab that could not have helped.
+     */
+    verdict.append(
+      el('h3', {}, 'WebMCP is not switched on'),
+      el(
+        'p',
+        {},
+        'Injection works, but this browser does not expose document.modelContext anywhere. ' +
+          'In Chrome, enable chrome://flags/#enable-webmcp-testing and relaunch the browser.',
+      ),
+    );
   } else if (webmcpOnPage === 'unknown') {
     verdict.append(
       el('h3', {}, 'Could not check a page'),
       el(
         'p',
         {},
-        'Injection works, but there is no open site to test against, or this extension has no access to the ' +
-          'open ones. Open a site an adapter targets and reload this page.',
+        'The browser has WebMCP and injection works, but there is no open site to test against, or this ' +
+          'extension has no access to the open ones. Open a site an adapter targets and reload this page.',
       ),
     );
   } else {
     verdict.append(
-      el('h3', {}, 'WebMCP is not switched on'),
+      el('h3', {}, 'WebMCP is not on this page'),
       el(
         'p',
         {},
-        `Injection works, but ${probedUrl ?? 'the page checked'} does not expose document.modelContext. ` +
-          'In Chrome, enable chrome://flags/#enable-webmcp-testing and restart the browser.',
+        `This browser has WebMCP, but ${probedUrl ?? 'the page checked'} does not expose ` +
+          'document.modelContext. The API needs a secure context, so an http:// page will not have it.',
       ),
     );
   }
@@ -115,6 +131,13 @@ async function render(): Promise<void> {
       'MAIN world injection',
       'the only way an extension can reach document.modelContext',
       platform.mainWorldInjection,
+    ),
+  );
+  panel.append(
+    row(
+      'WebMCP in this browser',
+      'chrome://flags/#enable-webmcp-testing — needs no open page to answer',
+      platform.webmcpApi,
     ),
   );
   panel.append(

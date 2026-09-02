@@ -5,6 +5,9 @@ import { diagnostics } from '../platform';
 
 const app = document.getElementById('app');
 
+/** Not a link: Chrome refuses navigation to chrome:// from an extension page. */
+const FLAG_URL = 'chrome://flags/#enable-webmcp-testing';
+
 function el<K extends keyof HTMLElementTagNameMap>(
   tag: K,
   attrs: Record<string, string> = {},
@@ -117,14 +120,35 @@ function render(state: PopupState): void {
   app.replaceChildren();
 
   const platform = diagnostics();
-  const webmcp = state.runtime?.webmcp;
-  const statusText =
-    webmcp === 'available'
+  /*
+   * Two different questions, and conflating them is what made this popup
+   * unhelpful in the one situation it most needed to help.
+   *
+   * `state.runtime` is reported by the injected runtime, which the background
+   * only reads where an installed adapter matches the current origin. So on
+   * every other page — including this project's own portal, which is where the
+   * README sends people first — there was no runtime to ask, the popup said
+   * "unknown (runtime not loaded on this page)", and the notice below never
+   * appeared. Someone whose browser simply had the flag off was told nothing
+   * about the flag.
+   *
+   * Whether the browser has WebMCP does not depend on the open tab, and this
+   * page can answer it about itself.
+   */
+  const browserHasWebMcp = platform.webmcpApi;
+  const onPage = state.runtime?.webmcp;
+  const statusText = !browserHasWebMcp
+    ? 'not available in this browser'
+    : onPage === 'available'
       ? 'available'
-      : webmcp === 'unsupported'
-        ? 'not available in this browser'
-        : 'unknown (runtime not loaded on this page)';
-  const statusClass = webmcp === 'available' ? 'status--ok' : webmcp === 'unsupported' ? 'status--err' : 'status--warn';
+      : onPage === 'unsupported'
+        ? 'available in this browser, but not on this page'
+        : 'available in this browser (no adapter runs on this page)';
+  const statusClass = !browserHasWebMcp
+    ? 'status--err'
+    : onPage === 'available'
+      ? 'status--ok'
+      : 'status--warn';
 
   const kv = el('dl', { class: 'kv' });
   kv.append(el('dt', {}, 'Page'), el('dd', {}, state.origin ?? '(no page)'));
@@ -132,13 +156,26 @@ function render(state: PopupState): void {
   kv.append(el('dt', {}, 'Runtime'), el('dd', {}, state.runtime ? `v${state.runtime.runtimeVersion}` : '—'));
   app.append(kv);
 
-  if (webmcp === 'unsupported' || !platform.mainWorldInjection) {
+  if (!browserHasWebMcp || !platform.mainWorldInjection) {
     const note = el('p', { class: 'notice' });
     note.append(
       !platform.mainWorldInjection
         ? `This browser (${platform.engine}) cannot inject into a page's MAIN world, which is how WebMCP tools are registered. Adapter management works; tools cannot be registered.`
-        : 'This browser does not expose document.modelContext. Enable chrome://flags/#enable-webmcp-testing and reload.',
+        : 'This browser does not expose document.modelContext, so no adapter can register anything. Turn on WebMCP and relaunch Chrome:',
     );
+    if (browserHasWebMcp === false && platform.mainWorldInjection) {
+      // chrome:// cannot be linked to from an extension page, and typing a flag
+      // URL off a screenshot is exactly where people give up. Hand it over.
+      const flag = el('code', { class: 'notice__flag' }, FLAG_URL);
+      const copy = el('button', { class: 'btn btn--small', type: 'button' }, 'Copy');
+      copy.addEventListener('click', () => {
+        void navigator.clipboard.writeText(FLAG_URL).then(
+          () => (copy.textContent = 'Copied'),
+          () => (copy.textContent = 'Copy failed'),
+        );
+      });
+      note.append(el('span', { class: 'notice__row' }, flag, copy));
+    }
     app.append(note);
   }
 

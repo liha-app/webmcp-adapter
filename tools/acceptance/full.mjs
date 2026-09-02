@@ -363,6 +363,11 @@ async function main() {
       diagText.replace(/\n+/g, ' | ').slice(0, 240),
     );
     check(
+      /WebMCP in this browser[\s\S]*?YES/.test(diagText),
+      'it answers the browser-level question, which needs no page at all',
+      diagText.replace(/\n+/g, ' | ').slice(0, 240),
+    );
+    check(
       diagText.includes('localhost:5273'),
       'it names the page it actually probed rather than guessing',
       diagText.replace(/\n+/g, ' | ').slice(0, 240),
@@ -422,6 +427,33 @@ async function main() {
       'while still reporting the parts that do work, so the reader can tell them apart',
     );
     diag.close();
+
+    /*
+     * And the popup, with no adapter page open at all — which is the state the
+     * bug lived in. The background only reads the injected runtime where an
+     * installed adapter matches the origin, so anywhere else the popup had no
+     * runtime to ask, said "unknown (runtime not loaded on this page)" and
+     * never mentioned the flag. The browser-level answer does not need a tab.
+     */
+    const popup = await degraded.newPage();
+    await popup.goto(`chrome-extension://${degradedId}/popup/popup.html`);
+    const popupText = await waitFor(async () => {
+      const body = await popup.eval('document.body.innerText');
+      // Not /WebMCP/ — that matches the header while the panel still says
+      // "Loading…", and a check that reads a half-rendered popup proves nothing.
+      return /Runtime/.test(body) ? body : null;
+    }, 15000);
+    must(Boolean(popupText), 'the popup renders');
+    check(
+      popupText.includes('not available in this browser'),
+      'the popup names the cause with no adapter page open',
+      popupText.replace(/\n+/g, ' | ').slice(0, 160),
+    );
+    check(
+      popupText.includes('chrome://flags/#enable-webmcp-testing'),
+      'and hands over the flag, which cannot be a link from an extension page',
+    );
+    popup.close();
   } finally {
     degraded?.close?.();
     for (const server of servers) await server.close();
