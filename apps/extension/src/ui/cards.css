@@ -1,0 +1,36 @@
+/*
+ * The adapter card, shared by the popup and the Adapters page.
+ *
+ * Both render the same markup from ui/adapters.ts, so the styling lives with it
+ * rather than being copied into two stylesheets that drift. Each page brings its
+ * own palette and page frame; everything below assumes only the custom
+ * properties, never a width.
+ */
+.card { border: 1px solid var(--line); border-radius: 9px; padding: 10px 11px; margin-bottom: 10px; }
+.card h3 { margin: 0 0 2px; font-size: 13px; }
+.row { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.row--meta { gap: 8px; justify-content: flex-start; flex-wrap: wrap; margin-top: 3px; }
+.muted { color: var(--muted); }
+.tool { border-top: 1px solid var(--line); margin-top: 9px; padding-top: 8px; }
+.tool code { font-size: 12px; }
+.origins { font: 11.5px ui-monospace, SFMono-Regular, Menlo, monospace; color: var(--muted); }
+.cap { font-size: 10px; font-weight: 700; letter-spacing: .04em; border-radius: 4px; padding: 1px 5px; border: 1px solid currentColor; }
+.cap--READ { color: var(--muted); }
+.cap--INTERACT { color: var(--accent); }
+.cap--WRITE { color: var(--warn); }
+.cap--DESTRUCTIVE { color: var(--err); }
+.status { font-weight: 600; }
+.status--ok { color: var(--ok); }
+.status--err { color: var(--err); }
+.status--warn { color: var(--warn); }
+.health { font-size: 10px; font-weight: 700; letter-spacing: .04em; border-radius: 4px; padding: 1px 5px; border: 1px solid currentColor; }
+.health--healthy { color: var(--ok); }
+.health--degraded { color: var(--warn); }
+.health--broken { color: var(--err); }
+.health--unknown { color: var(--muted); }
+.switch { display: inline-flex; align-items: center; gap: 6px; cursor: pointer; user-select: none; }
+.switch--small { font-size: 11.5px; color: var(--muted); margin-top: 6px; }
+.btn { border: 1px solid var(--line); background: transparent; color: var(--ink); border-radius: 8px; padding: 6px 11px; font: inherit; font-size: 12px; cursor: pointer; }
+.btn:hover { border-color: var(--accent); }
+.btn--danger { border-color: var(--err); color: var(--err); }
+.btn--link { border: 0; padding: 6px 0; color: var(--muted); text-decoration: underline; }

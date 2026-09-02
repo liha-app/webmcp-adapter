@@ -134,9 +134,14 @@ change (reload it in `chrome://extensions` to pick changes up).
 
 Manifest V3. A service worker owns the adapter catalogue and decides what gets
 injected where. The MAIN-world runtime registers tools and executes their steps.
-A popup shows WebMCP availability, every adapter with health and capability
-badges, a per-adapter "ask before every WRITE" switch, and a redacted execution
-log.
+The popup answers one question — **what applies to the page in front of you**:
+WebMCP availability here, the adapters scoped to this origin with health and
+capability badges, their "ask before every WRITE" switch, and a redacted
+execution log. It used to list the whole catalogue, which buried that answer
+under two adapters for sites the reader was not on. Everything not about the
+open page moved to an **Adapters** page (the extension's options page), where a
+list belongs: every adapter grouped by where it came from, its exact origins,
+and its settings.
 
 It also contains the **Recorder** — press *Record a tool*, use the site by hand,
 press *Stop* — and the **Studio**, where the recording becomes an adapter you
@@ -324,7 +329,8 @@ by hand in normal Chrome is unaffected.
 ```
 apps/
   extension/       MV3 extension: service worker, bridges, MAIN-world runtime,
-                   popup, confirmation window, Recorder, Studio, diagnostics
+                   popup, Adapters page, confirmation window, Recorder,
+                   Studio, diagnostics
   registry/        the public portal and Adapter Store — React, TanStack
                    Router/Query, Zod, WebMCP-native, en/ja under src/i18n
   demo-crm/        ordinary React apps with no WebMCP code whatsoever

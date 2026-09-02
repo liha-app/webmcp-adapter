@@ -238,13 +238,14 @@ async function main() {
     // The popup is the surface a person actually reads before trusting a tool,
     // so check what it reports rather than only what the runtime knows.
     const popup = await browser.newPage();
+    // The popup reports on the tab in front of it — as it does when opened from
+    // the toolbar — and now shows only the adapters scoped to that page, so the
+    // CRM has to be in front before it renders rather than after.
+    await page.send('Page.bringToFront');
     await popup.goto(`chrome-extension://${extensionId}/popup/popup.html`);
     await waitUntil('popup rendered', async () =>
       popup.eval('Boolean(document.querySelector(\'.card input[type="checkbox"]\'))'),
     );
-    // Put the CRM back in front so the popup reports on it, as it would when
-    // opened from the toolbar over that tab.
-    await page.send('Page.bringToFront');
     const popupState = await popup.eval(
       "chrome.runtime.sendMessage({ type: 'liha/get-state' })",
     );

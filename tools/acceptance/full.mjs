@@ -539,10 +539,11 @@ async function main() {
     const popup = await degraded.newPage();
     await popup.goto(`chrome-extension://${degradedId}/popup/popup.html`);
     const popupText = await waitFor(async () => {
-      const body = await popup.eval('document.body.innerText');
-      // Not /WebMCP/ — that matches the header while the panel still says
-      // "Loading…", and a check that reads a half-rendered popup proves nothing.
-      return /Runtime/.test(body) ? body : null;
+      // Waits on the element the status list renders into, not on a word: the
+      // header contains "WebMCP" while the panel still says "Loading…", and
+      // matching a label meant this broke the moment one was reworded.
+      const ready = await popup.eval(`Boolean(document.querySelector('.kv'))`);
+      return ready ? await popup.eval('document.body.innerText') : null;
     }, 15000);
     must(Boolean(popupText), 'the popup renders');
     check(

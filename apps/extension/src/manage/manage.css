@@ -1,0 +1,12 @@
+:root { color-scheme: light dark; --bg:#f7f8fa; --panel:#fff; --ink:#14161b; --muted:#6b7280; --line:#e5e7eb; --accent:#2f6df6; --ok:#177245; --err:#c02626; --warn:#b45309; }
+@media (prefers-color-scheme: dark) { :root { --bg:#0e1014; --panel:#161920; --ink:#e9ebee; --muted:#98a1b0; --line:#252932; --accent:#6f9dff; --ok:#6ddc9a; --err:#ff8a8a; --warn:#e0a458; } }
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--ink); font: 14px/1.6 ui-sans-serif, system-ui, sans-serif; }
+.wrap { max-width: 760px; margin: 0 auto; padding: 32px 22px 60px; }
+h1 { font-size: 22px; margin: 0 0 6px; letter-spacing: -0.02em; }
+h2 { font-size: 11px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); margin: 26px 0 10px; }
+.lede { color: var(--muted); margin: 0 0 22px; }
+.card { background: var(--panel); padding: 14px 16px; margin-bottom: 12px; }
+.card h3 { font-size: 15px; }
+.actions { display: flex; flex-wrap: wrap; gap: 8px; margin: 0 0 26px; }
+.empty { color: var(--muted); background: var(--panel); border: 1px dashed var(--line); border-radius: 9px; padding: 22px; text-align: center; }

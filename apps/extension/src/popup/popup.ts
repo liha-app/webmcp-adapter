@@ -1,119 +1,11 @@
-import type { Capability, HealthStatus } from '@liha/adapter-schema';
-import type { CatalogEntry, PopupState } from '@liha/shared';
-import { ext } from '../platform';
-import { diagnostics } from '../platform';
+import type { PopupState } from '@liha/shared';
+import { diagnostics, ext } from '../platform';
+import { el, renderAdapterCard, send } from '../ui/adapters';
 
 const app = document.getElementById('app');
 
 /** Not a link: Chrome refuses navigation to chrome:// from an extension page. */
 const FLAG_URL = 'chrome://flags/#enable-webmcp-testing';
-
-function el<K extends keyof HTMLElementTagNameMap>(
-  tag: K,
-  attrs: Record<string, string> = {},
-  ...children: Array<Node | string>
-): HTMLElementTagNameMap[K] {
-  const node = document.createElement(tag);
-  for (const [key, value] of Object.entries(attrs)) node.setAttribute(key, value);
-  for (const child of children) node.append(child);
-  return node;
-}
-
-function capabilityBadge(capability: Capability): HTMLElement {
-  return el('span', { class: `cap cap--${capability}` }, capability);
-}
-
-const HEALTH_LABEL: Record<HealthStatus, string> = {
-  healthy: 'healthy',
-  degraded: 'degraded',
-  broken: 'broken',
-  unknown: 'not checked',
-};
-
-function healthBadge(status: HealthStatus): HTMLElement {
-  return el('span', { class: `health health--${status}`, title: 'Selector probe against the current page' }, HEALTH_LABEL[status]);
-}
-
-function send<T>(message: unknown): Promise<T> {
-  return ext.runtime.sendMessage(message) as Promise<T>;
-}
-
-function renderAdapterCard(entry: CatalogEntry, state: PopupState): HTMLElement {
-  const card = el('div', { class: 'card' });
-
-  const header = el('div', { class: 'row' });
-  header.append(el('h3', {}, entry.adapter.name));
-
-  const toggle = el('label', { class: 'switch' });
-  const checkbox = el('input', { type: 'checkbox' }) as HTMLInputElement;
-  checkbox.checked = entry.enabled;
-  checkbox.addEventListener('change', () => {
-    void send({ type: 'liha/set-enabled', adapterId: entry.adapter.id, enabled: checkbox.checked }).then(load);
-  });
-  toggle.append(checkbox, el('span', {}, entry.enabled ? 'Enabled' : 'Disabled'));
-  header.append(toggle);
-  card.append(header);
-
-  const live = state.runtime?.adapters.find((installed) => installed.id === entry.adapter.id);
-  const meta = el('div', { class: 'row row--meta' });
-  meta.append(el('span', { class: 'muted' }, `v${entry.adapter.version} · ${entry.source}`));
-  if (live?.health) meta.append(healthBadge(live.health.status));
-  card.append(meta);
-
-  card.append(el('div', { class: 'origins' }, entry.adapter.origins.join('  ')));
-  if (!entry.matchesCurrentOrigin) {
-    card.append(el('div', { class: 'muted' }, 'Not scoped to the current page'));
-  }
-
-  const hasWrite = entry.adapter.tools.some((tool) => tool.capability === 'WRITE');
-  if (hasWrite) {
-    const policy = el('label', { class: 'switch switch--small' });
-    const policyBox = el('input', { type: 'checkbox' }) as HTMLInputElement;
-    policyBox.checked = entry.policy.confirmWrite;
-    policyBox.addEventListener('change', () => {
-      void send({
-        type: 'liha/set-policy',
-        adapterId: entry.adapter.id,
-        policy: { confirmWrite: policyBox.checked },
-      }).then(load);
-    });
-    policy.append(policyBox, el('span', {}, 'Ask before every WRITE'));
-    card.append(policy);
-  }
-
-  for (const tool of entry.adapter.tools) {
-    const liveTool = live?.tools.find((candidate) => candidate.name === tool.name);
-    const health = live?.health?.tools.find((candidate) => candidate.name === tool.name);
-    const row = el('div', { class: 'tool' });
-    const line = el('div', { class: 'row' });
-    line.append(el('code', {}, tool.name), capabilityBadge(tool.capability));
-    row.append(line);
-    row.append(el('div', { class: 'muted' }, tool.description));
-    const status = el('div', { class: 'row row--meta' });
-    status.append(
-      el(
-        'span',
-        { class: `status ${liveTool?.registered ? 'status--ok' : 'status--warn'}` },
-        liveTool?.registered ? 'registered with WebMCP' : 'not registered on this page',
-      ),
-    );
-    if (health) status.append(healthBadge(health.status));
-    if (tool.capability === 'DESTRUCTIVE') {
-      status.append(el('span', { class: 'muted' }, 'always confirmed'));
-    }
-    row.append(status);
-    card.append(row);
-  }
-
-  if (entry.source !== 'builtin') {
-    const remove = el('button', { class: 'btn btn--link', type: 'button' }, 'Remove adapter');
-    remove.addEventListener('click', () => {
-      void send({ type: 'liha/remove-adapter', adapterId: entry.adapter.id }).then(load);
-    });
-    card.append(remove);
-  }
-  return card;
-}
 
 function render(state: PopupState): void {
   if (!app) return;
@@ -152,8 +44,11 @@ function render(state: PopupState): void {
 
   const kv = el('dl', { class: 'kv' });
   kv.append(el('dt', {}, 'Page'), el('dd', {}, state.origin ?? '(no page)'));
-  kv.append(el('dt', {}, 'WebMCP'), el('dd', { class: `status ${statusClass}` }, statusText));
-  kv.append(el('dt', {}, 'Runtime'), el('dd', {}, state.runtime ? `v${state.runtime.runtimeVersion}` : '—'));
+  // The runtime version rides along with the status rather than taking a row of
+  // its own; it matters when reporting a problem and never otherwise.
+  const status = el('dd', { class: `status ${statusClass}` }, statusText);
+  if (state.runtime) status.append(el('span', { class: 'muted' }, ` · runtime v${state.runtime.runtimeVersion}`));
+  kv.append(el('dt', {}, 'WebMCP'), status);
   app.append(kv);
 
   if (!browserHasWebMcp || !platform.mainWorldInjection) {
@@ -179,27 +74,77 @@ function render(state: PopupState): void {
     app.append(note);
   }
 
+  /*
+   * One action, and three ways out. Recording is the thing a person came here to
+   * start; the other three open pages, and four buttons of equal weight in a
+   * 380px column wrapped into a second row that read like more choices than
+   * there are.
+   */
   const actions = el('div', { class: 'actions' });
   const recording = state.recording !== null;
-  const record = el('button', { class: `btn ${recording ? 'btn--danger' : ''}`, type: 'button', 'data-action': 'toggle-recording' }, recording ? `Stop recording (${state.recording?.actions.length ?? 0})` : 'Record a tool');
+  const record = el(
+    'button',
+    { class: `btn btn--primary ${recording ? 'btn--danger' : ''}`, type: 'button', 'data-action': 'toggle-recording' },
+    recording ? `Stop recording (${state.recording?.actions.length ?? 0})` : 'Record a tool',
+  );
   record.addEventListener('click', () => {
     void send({ type: recording ? 'liha/stop-recording' : 'liha/start-recording' }).then(() => {
       if (recording) window.close();
       else load();
     });
   });
-  const studio = el('button', { class: 'btn', type: 'button' }, 'Studio');
-  studio.addEventListener('click', () => {
-    void ext.tabs.create({ url: ext.runtime.getURL('studio/studio.html') });
-  });
-  const compat = el('button', { class: 'btn', type: 'button' }, 'Compatibility');
-  compat.addEventListener('click', () => {
-    void ext.tabs.create({ url: ext.runtime.getURL('diagnostics/diagnostics.html') });
-  });
-  actions.append(record, studio, compat);
+  actions.append(record);
   app.append(actions);
 
-  for (const entry of state.catalog) app.append(renderAdapterCard(entry, state));
+  const elsewhere = el('div', { class: 'elsewhere' });
+  for (const [label, page] of [
+    [`Adapters (${state.catalog.length})`, 'manage/manage.html'],
+    ['Studio', 'studio/studio.html'],
+    ['Compatibility', 'diagnostics/diagnostics.html'],
+  ] as Array<[string, string]>) {
+    const link = el('button', { class: 'btn btn--link', type: 'button' }, label);
+    link.addEventListener('click', () => void ext.tabs.create({ url: ext.runtime.getURL(page) }));
+    elsewhere.append(link);
+  }
+  app.append(elsewhere);
+
+  /*
+   * Only what applies to the page in front of the reader.
+   *
+   * This used to list the whole catalogue, so opening the popup anywhere showed
+   * three adapters, a dozen tools and "Not scoped to the current page" three
+   * times — the answer to "does this site work" buried in answers to questions
+   * nobody had asked. Everything else moved to the Adapters page, which is
+   * where a list belongs.
+   */
+  // chrome-extension:// and chrome:// are origins, but they are not sites an
+  // adapter could ever apply to, so the empty state should not name one back at
+  // the reader as though it were the page they are looking at.
+  const onWebsite = /^https?:/.test(state.url ?? '');
+  const here = state.catalog.filter((entry) => entry.matchesCurrentOrigin);
+  for (const entry of here) {
+    app.append(
+      renderAdapterCard(entry, {
+        live: state.runtime?.adapters.find((installed) => installed.id === entry.adapter.id),
+        onChanged: load,
+        showOrigins: false,
+      }),
+    );
+  }
+  if (here.length === 0) {
+    const empty = el('div', { class: 'card' });
+    empty.append(
+      el('h3', {}, 'No adapter for this site'),
+      el(
+        'p',
+        { class: 'muted' },
+        onWebsite && state.origin
+          ? `Nothing installed is scoped to ${state.origin}. Record the workflow you want, or install one from the Store.`
+          : 'Open a website and the adapters scoped to it will appear here.',
+      ),
+    );
+    app.append(empty);
+  }
 
   if (state.runtimeError) app.append(el('p', { class: 'muted' }, `Runtime probe: ${state.runtimeError}`));
 

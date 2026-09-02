@@ -24,6 +24,7 @@ const bundles = [
   { in: 'src/confirm/confirm.ts', out: 'confirm/confirm.js', format: 'iife' },
   { in: 'src/studio/studio.tsx', out: 'studio/studio.js', format: 'iife' },
   { in: 'src/diagnostics/diagnostics.ts', out: 'diagnostics/diagnostics.js', format: 'iife' },
+  { in: 'src/manage/manage.ts', out: 'manage/manage.js', format: 'iife' },
 ];
 
 const common = {
@@ -98,11 +99,15 @@ async function writeManifest() {
 }
 
 async function copyStatic() {
-  for (const dir of ['popup', 'confirm', 'studio', 'diagnostics']) {
+  for (const dir of ['popup', 'confirm', 'studio', 'diagnostics', 'manage']) {
     await mkdir(join(outdir, dir), { recursive: true });
     await cp(join(root, `src/${dir}/${dir}.html`), join(outdir, `${dir}/${dir}.html`));
     await cp(join(root, `src/${dir}/${dir}.css`), join(outdir, `${dir}/${dir}.css`));
   }
+  // The adapter card's styling, shared by the popup and the Adapters page the
+  // same way ui/adapters.ts is shared by their scripts.
+  await mkdir(join(outdir, 'ui'), { recursive: true });
+  await cp(join(root, 'src/ui/cards.css'), join(outdir, 'ui/cards.css'));
   // The toolbar and extensions-page icons. Generated from the brand master by
   // tools/brand/icons.mjs and committed, so packaging needs no browser.
   await cp(join(root, 'icons'), join(outdir, 'icons'), { recursive: true });
