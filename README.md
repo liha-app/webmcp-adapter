@@ -187,6 +187,10 @@ install. Japanese also gets its own typographic rules, measured off apple.com/jp
 tracking returns to normal, and `word-break: auto-phrase` breaks lines at phrase
 boundaries instead of splitting 「ツール」 in half.
 
+**The mark.** The Liha jellyfish, drawn as an A for Adapter — a sibling to the
+C, S and R of the other Liha products, built to measurements taken off those
+marks rather than to taste. `tools/brand/` holds the generator and the reasoning.
+
 **On the visual design.** The marketing pages follow Apple's App Store product
 page conventions and the catalogue follows the App Store's own store layout —
 the 980px column and 18px tiles, the 260px sidebar, the 64px lockups and the

@@ -98,3 +98,47 @@ export function AdapterIcon({ id, category, size = 64 }: { id: string; category?
     </span>
   );
 }
+
+/*
+ * The product mark: the Liha jellyfish, drawn as an "A" for Adapter.
+ *
+ * It belongs to a family — Liha Code Review is a C, Sitebase an S, Run an R —
+ * so it is built to the same measurements: height 500, the bell fringe along
+ * the hem, pill eyes in a rounded face patch, and the four-pointed sparkle at
+ * the top left. Teal is this product's colour; the four already in use are two
+ * blues, a purple and an orange.
+ *
+ * The letter is made by the A's own counter — the rounded triangle below the
+ * face — which is what lets the silhouette stay a jellyfish bell with the
+ * continuous scalloped hem every sibling has.
+ *
+ * Below about 24px the sparkle is a smudge rather than a sparkle, so the app
+ * icon drops it and reverses the mark out of a filled squircle instead. That
+ * is the form used in the nav and in the store, and it is what favicon.svg is.
+ *
+ * tools/brand/ regenerates all of it.
+ */
+export const BRAND_TEAL = '#0FA98C';
+
+const MARK_TRANSFORM = 'translate(10.34 10.97) scale(0.0905)';
+const MARK_BODY = 'M136 166C136 40 388 40 388 166C394.9 299.6 492 386.4 492 500C475.9 500 471.3 454 434.5 454C397.7 454 393.1 500 377 500C360.9 500 356.3 454 319.5 454C282.7 454 278.1 500 262 500C245.9 500 241.3 454 204.5 454C167.7 454 163.1 500 147 500C130.9 500 126.3 454 89.5 454C52.7 454 48.1 500 32 500C32 386.4 129.1 299.6 136 166ZM221 117.5h82a52 52 0 0 1 52 52v21a52 52 0 0 1 -52 52h-82a52 52 0 0 1 -52 -52v-21a52 52 0 0 1 52 -52ZM262 288C280.2 288 291.7 319.2 311.6 370C327 392 294 392 286.3 392L237.7 392C230 392 197 392 212.4 370C232.3 319.2 243.8 288 262 288Z';
+const MARK_EYES = 'M206 171a18 18 0 0 1 36 0v20a18 18 0 0 1 -36 0ZM282 171a18 18 0 0 1 36 0v20a18 18 0 0 1 -36 0Z';
+
+export function BrandMark({ size = 18, className }: { size?: number; className?: string }) {
+  return (
+    <svg
+      className={className}
+      viewBox="0 0 64 64"
+      width={size}
+      height={size}
+      role="img"
+      aria-label="Liha WebMCP Adapter"
+    >
+      <rect width="64" height="64" rx="16" fill={BRAND_TEAL} />
+      <g transform={MARK_TRANSFORM}>
+        <path fill="#fff" fillRule="evenodd" d={MARK_BODY} />
+        <path fill={BRAND_TEAL} d={MARK_EYES} />
+      </g>
+    </svg>
+  );
+}

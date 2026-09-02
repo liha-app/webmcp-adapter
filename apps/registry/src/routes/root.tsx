@@ -3,6 +3,7 @@ import { Link, Outlet, useRouterState } from '@tanstack/react-router';
 import { GITHUB_URL } from '../lib/links';
 import { registerRegistryTools, type WebMcpStatus } from '../lib/webmcp';
 import { useI18n } from '../i18n';
+import { BrandMark } from './components';
 import { LanguageControl, ThemeControl } from './controls';
 
 export function Root() {
@@ -25,18 +26,7 @@ export function Root() {
       <header className="globalnav">
         <nav className="globalnav__inner" aria-label="Global">
           <Link to="/" className="globalnav__brand">
-            <svg className="globalnav__mark" viewBox="0 0 32 32" aria-hidden="true">
-              <rect width="32" height="32" rx="8" className="globalnav__markbg" />
-              <path
-                d="M11 8v16M11 24h8"
-                stroke="#f5f5f7"
-                strokeWidth="3"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                fill="none"
-              />
-              <circle cx="23" cy="10" r="3" fill="#0071e3" />
-            </svg>
+            <BrandMark className="globalnav__mark" size={18} />
             <span className="globalnav__brandname">
               <strong>Liha</strong> WebMCP Adapter
             </span>
