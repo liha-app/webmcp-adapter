@@ -20,6 +20,7 @@ and rejected for reading as those last two at a glance.
 ```bash
 node tools/brand/build.mjs apps/registry/public/brand
 cp apps/registry/public/brand/liha-adapter-icon.svg apps/registry/public/favicon.svg
+node tools/brand/icons.mjs apps/extension/icons
 ```
 
 | File | Use |
@@ -27,6 +28,7 @@ cp apps/registry/public/brand/liha-adapter-icon.svg apps/registry/public/favicon
 | `liha-adapter-mark.svg` | the full mark, sparkle and all — wordmark lockups |
 | `liha-adapter-icon.svg` | squircle app icon — favicon, nav, the store |
 | `liha-adapter-mark-mono.svg` | `currentColor`, for a single-colour context |
+| `apps/extension/icons/icon-{16,32,48,128}.png` | the extension's toolbar and extensions-page icon |
 
 `build.mjs` copies the paths verbatim. What it actually does is the mechanical
 work around them:
@@ -53,3 +55,46 @@ work around them:
 The site follows Apple's App Store design system, where the interface chrome is
 Apple blue and each product brings its own colour. A teal mark beside a blue
 call to action is that system working as intended, not an accident.
+
+## The extension's icons are the one bitmap
+
+Chrome takes no SVG for `icons` or `action.default_icon`. An extension that
+declares neither wears a grey placeholder letter in the toolbar, which is what
+this one did for its first release — the manifest simply had no `icons` key and
+`apps/extension/icons/` was an empty directory.
+
+`icons.mjs` rasterises `liha-adapter-icon.svg` through Chromium at each size
+Chrome asks for. Two things about it are deliberate:
+
+- **The PNGs are committed.** `pnpm build` must not need a browser; Playwright
+  is a test dependency, not a packaging one. So this runs when the mark changes,
+  and `icons.test.ts` is what notices when it should have and did not.
+- **Each size is rasterised on its own**, rather than downsampling one large
+  render. Compared side by side, the direct raster keeps the hem's scallops
+  crisp at 32px and the two eyes separable; a box-filtered 4× render smears
+  them together.
+
+At **16px the eyes merge into the face**. They are 44×65 units inside a 598 unit
+drawing, so at that size they are under a pixel and no rasteriser saves them;
+the icon reads as its silhouette, which is what 16px is for. That is recorded as
+a passing test rather than left as a surprise — if it ever starts failing, the
+mark got simpler and this paragraph is out of date.
+
+One trap worth knowing: an icon declared at a path that does not exist does not
+merely look wrong. **Chrome refuses to load the extension at all**, and the only
+symptom is that nothing starts. `pnpm acceptance:icons` names that case when it
+happens.
+
+## Checking it
+
+```bash
+pnpm test                 # icons.test.ts reads the PNGs pixel by pixel
+pnpm acceptance:icons     # asks a real Chrome what it parsed and can resolve
+```
+
+The unit test decodes each PNG and checks the corners are transparent, the
+commonest colour is the ink from `source.svg`, the jellyfish is really reversed
+out of the squircle, and — by counting colour changes along each row of the top
+half — that the two eyes are still separate from the face. That last one was
+first written to scan the whole icon, and an eyeless icon passed it: the hem's
+four scallops alternate often enough to reach the same count by themselves.

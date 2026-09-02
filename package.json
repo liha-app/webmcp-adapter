@@ -1,6 +1,6 @@
 {
   "name": "liha-webmcp-adapter",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "private": true,
   "description": "Make any website agent-ready. Add WebMCP tools to websites that never implemented WebMCP.",
   "license": "MIT",
@@ -29,16 +29,17 @@
   "scripts": {
     "dev": "pnpm --parallel -r dev",
     "build": "pnpm -r build && pnpm --filter @liha/extension build:firefox",
-    "typecheck": "pnpm -r typecheck",
+    "typecheck": "pnpm -r typecheck && tsc -p tools/tsconfig.json --noEmit",
     "lint": "eslint .",
     "test": "vitest run",
     "verify": "pnpm typecheck && pnpm lint && pnpm test && pnpm build",
     "acceptance": "node tools/acceptance/run.mjs",
     "chrome:install": "npx --yes @puppeteer/browsers install chrome@stable --path .cache/chrome",
     "acceptance:full": "node tools/acceptance/full.mjs",
-    "acceptance:all": "pnpm acceptance && pnpm acceptance:full && pnpm acceptance:recorder",
+    "acceptance:all": "pnpm acceptance && pnpm acceptance:full && pnpm acceptance:recorder && pnpm acceptance:icons",
     "acceptance:recorder": "node tools/acceptance/recorder.mjs",
     "acceptance:prod": "node tools/acceptance/production.mjs",
+    "acceptance:icons": "node tools/acceptance/icons.mjs",
     "e2e": "playwright test",
     "demo": "pnpm --parallel -r preview"
   },

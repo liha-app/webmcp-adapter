@@ -50,8 +50,10 @@ pnpm acceptance            10/10 Phase 0 criteria
 pnpm acceptance:full       43/43 checks — three demo adapters, the portal's
                            native WebMCP tools, the destructive confirmation gate
 pnpm acceptance:recorder   25/25 checks — record a workflow, get a valid adapter
-pnpm verify                200 unit + integration tests, typecheck, lint, build
-pnpm e2e                   32 Playwright tests
+pnpm acceptance:icons      6/6 checks — Chrome parses the extension's icons and
+                           can resolve every path it was given
+pnpm verify                235 unit + integration tests, typecheck, lint, build
+pnpm e2e                   44 Playwright tests
 ```
 
 The demo apps contain no WebMCP code at all — asserted against their sources,
@@ -232,9 +234,9 @@ Full model, including the MAIN-world limitation this cannot engineer away:
 ## Verifying it yourself
 
 ```bash
-pnpm verify           # typecheck, lint, 214 unit + integration tests, build
+pnpm verify           # typecheck, lint, 235 unit + integration tests, build
 pnpm e2e              # 44 Playwright tests against the portal and the demo apps
-pnpm acceptance:all   # three real-browser runs through the WebMCP protocol
+pnpm acceptance:all   # four real-browser runs through the WebMCP protocol
 pnpm acceptance:prod  # 36 checks against the deployed sites, not a local build
                       # LIHA_EXTENSION=<unzipped release> to check the artifact
 ```

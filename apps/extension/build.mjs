@@ -103,6 +103,9 @@ async function copyStatic() {
     await cp(join(root, `src/${dir}/${dir}.html`), join(outdir, `${dir}/${dir}.html`));
     await cp(join(root, `src/${dir}/${dir}.css`), join(outdir, `${dir}/${dir}.css`));
   }
+  // The toolbar and extensions-page icons. Generated from the brand master by
+  // tools/brand/icons.mjs and committed, so packaging needs no browser.
+  await cp(join(root, 'icons'), join(outdir, 'icons'), { recursive: true });
   await writeManifest();
 }
 

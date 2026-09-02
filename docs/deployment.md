@@ -141,8 +141,9 @@ To check a published release rather than the local build — that what people
 download is what was tested — unzip the artifact and point the runner at it:
 
 ```bash
-gh release download v1.0.0 --pattern '*chrome*.zip' && unzip -q liha-webmcp-adapter-chrome-*.zip
+gh release download v1.0.1 --pattern '*chrome*.zip' && unzip -q liha-webmcp-adapter-chrome-*.zip
 LIHA_EXTENSION=./liha-webmcp-adapter-chrome pnpm acceptance:prod
+LIHA_EXTENSION=./liha-webmcp-adapter-chrome pnpm acceptance:icons
 ```
 
 ## Releases
@@ -206,9 +207,9 @@ what does and does not work there.
 ## Reproducing the verification
 
 ```bash
-pnpm verify              # typecheck, lint, 200 unit + integration tests, build
-pnpm e2e                 # 32 Playwright tests against the portal and demo apps
-pnpm acceptance:all      # three real-browser runs through the WebMCP protocol
+pnpm verify              # typecheck, lint, 235 unit + integration tests, build
+pnpm e2e                 # 44 Playwright tests against the portal and demo apps
+pnpm acceptance:all      # four real-browser runs through the WebMCP protocol
 ```
 
 All of it also runs in CI on every push, including the real-browser runs.
