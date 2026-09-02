@@ -188,8 +188,8 @@ tracking returns to normal, and `word-break: auto-phrase` breaks lines at phrase
 boundaries instead of splitting 「ツール」 in half.
 
 **The mark.** The Liha jellyfish, drawn as an A for Adapter — a sibling to the
-C, S and R of the other Liha products, built to measurements taken off those
-marks rather than to taste. `tools/brand/` holds the generator and the reasoning.
+C, S and R of the other Liha products. `tools/brand/` holds the master drawing
+and derives the favicon, the app icon and the monochrome version from it.
 
 **On the visual design.** The marketing pages follow Apple's App Store product
 page conventions and the catalogue follows the App Store's own store layout —

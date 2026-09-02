@@ -1,68 +1,71 @@
 /*
- * Emit the brand assets from the fitted parameters.
- *
- * The geometry in params.json was not drawn by hand or by eye: it was fitted to
- * the approved reference by minimising the pixels where the two disagree, at
- * 512², then verified at 1024². Everything matches to within two pixels except
- * one short segment of the right flank, where the reference is slightly
- * asymmetric — a mark should be symmetric there, so that is left as it is.
+ * Derive the brand assets from the master drawing.
  *
  *   node tools/brand/build.mjs apps/registry/public/brand
+ *
+ * `source.svg` is the master, drawn by hand. Nothing here reshapes it — the
+ * paths are copied verbatim. What this does is the mechanical part:
+ *
+ * - strips the C2PA blob, which is 97% of the exported file and not artwork
+ * - replaces the `.cls-1` stylesheet with plain `fill` attributes. Every mark
+ *   in the Liha family exports with that same class name, so inlining two of
+ *   them in one document makes the second repaint the first. Attributes are
+ *   immune, and BrandMark inlines this geometry into the page.
+ * - builds the app icon, which is not the mark shrunk down: below about 24px
+ *   the sparkle is a smudge rather than a sparkle, so the icon drops it and
+ *   reverses the mark out of a filled squircle. That is also the shape the
+ *   store's product slots want at 64 and 128px.
  */
-import { writeFileSync, readFileSync } from 'node:fs';
+import { readFileSync, writeFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
-import { svg, body, face, counter, eyes } from './shape.mjs';
 
 const here = dirname(fileURLToPath(import.meta.url));
-const fitted = JSON.parse(readFileSync(join(here, 'params.json'), 'utf8'));
+const source = readFileSync(join(here, 'source.svg'), 'utf8');
 
-/** Measured off the reference, not chosen: the most common ink pixel. */
-export const TEAL = '#0FAEA8';
+/** Sampled from the master drawing, not chosen. */
+export const TEAL = '#1caca7';
 
-/**
- * The family normalises marks to height 500 with the sparkle at the top-left,
- * so rescale the fit — which lives in the reference's 1254² frame — into that.
- */
-function normalise(p, height = 500) {
-  const minX = Math.min(p.sparkX, p.bodyX);
-  const minY = Math.min(p.sparkY, p.bodyY);
-  const maxX = Math.max(p.sparkX + p.sparkR * 2, p.bodyX + p.bodyW);
-  const maxY = p.bodyY + p.footY * p.bodyH;
-  const s = height / (maxY - minY);
-  return {
-    ...p,
-    W: Math.round((maxX - minX) * s), H: height,
-    bodyX: (p.bodyX - minX) * s, bodyY: (p.bodyY - minY) * s,
-    bodyW: p.bodyW * s, bodyH: p.bodyH * s,
-    sparkX: (p.sparkX - minX) * s, sparkY: (p.sparkY - minY) * s, sparkR: p.sparkR * s,
-  };
-}
+const viewBox = source.match(/viewBox="([^"]+)"/)[1];
+const paths = [...source.matchAll(/<path[^>]*\bd="([^"]+)"/g)].map((m) => m[1]);
+if (paths.length !== 4) throw new Error(`expected 4 paths in source.svg, found ${paths.length}`);
+const [SPARKLE, BODY, EYE_R, EYE_L] = paths;
 
-const P = normalise(fitted);
-const dir = process.argv[2] ?? '.';
+/* Measured off the master with getBBox, so the icon can be centred on the
+ * jellyfish rather than on the mark's box, which the sparkle skews. */
+const BODY_BOX = { x: 51.2, y: 74.9, w: 547.2, h: 542.4 };
 
-writeFileSync(join(dir, 'liha-adapter-mark.svg'), svg(P, TEAL, true) + '\n');
-writeFileSync(join(dir, 'liha-adapter-mark-mono.svg'), svg(P, 'currentColor', true) + '\n');
+const mark = (fill) =>
+  `<svg xmlns="http://www.w3.org/2000/svg" viewBox="${viewBox}" role="img" aria-label="Liha WebMCP Adapter">
+  <path fill="${fill}" d="${SPARKLE}"/>
+  <path fill="${fill}" d="${BODY}"/>
+  <path fill="${fill}" d="${EYE_R}"/>
+  <path fill="${fill}" d="${EYE_L}"/>
+</svg>
+`;
 
-/*
- * The app icon is not the mark shrunk. Below about 24px the sparkle is a smudge
- * rather than a sparkle, so the icon drops it and reverses the mark out of a
- * filled squircle — which is also the shape the store's product slots want at
- * 64 and 128px.
- */
-const solo = normalise({ ...fitted, sparkX: fitted.bodyX, sparkY: fitted.bodyY, sparkR: 0 }, 500);
-const scale = 44 / 500;                       // the mark occupies 44 of 64
-const ox = 32 - (solo.W * scale) / 2;
-const oy = 32 - (500 * scale) / 2;
-writeFileSync(join(dir, 'liha-adapter-icon.svg'),
-`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="Liha WebMCP Adapter">
-  <rect width="64" height="64" rx="16" fill="${TEAL}"/>
-  <g transform="translate(${ox.toFixed(2)} ${oy.toFixed(2)}) scale(${scale.toFixed(5)})">
-    <path fill="#fff" fill-rule="evenodd" d="${body(solo)}${face(solo)}${counter(solo)}"/>
-    <path fill="${TEAL}" d="${eyes(solo)}"/>
+/** The squircle app icon: the jellyfish reversed out, sparkle dropped. */
+function icon() {
+  const box = 64;
+  const inset = 44;                                   // the mark's optical size
+  const scale = inset / Math.max(BODY_BOX.w, BODY_BOX.h);
+  const ox = box / 2 - (BODY_BOX.x + BODY_BOX.w / 2) * scale;
+  const oy = box / 2 - (BODY_BOX.y + BODY_BOX.h / 2) * scale;
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${box} ${box}" width="${box}" height="${box}" role="img" aria-label="Liha WebMCP Adapter">
+  <rect width="${box}" height="${box}" rx="16" fill="${TEAL}"/>
+  <g transform="translate(${ox.toFixed(3)} ${oy.toFixed(3)}) scale(${scale.toFixed(6)})">
+    <path fill="#fff" d="${BODY}"/>
+    <path fill="${TEAL}" d="${EYE_R}"/>
+    <path fill="${TEAL}" d="${EYE_L}"/>
   </g>
 </svg>
-`);
+`;
+}
 
-console.log(`wrote three assets to ${dir}  (mark ${P.W} × ${P.H}, ink ${TEAL})`);
+const dir = process.argv[2] ?? '.';
+writeFileSync(join(dir, 'liha-adapter-mark.svg'), mark(TEAL));
+writeFileSync(join(dir, 'liha-adapter-mark-mono.svg'), mark('currentColor'));
+writeFileSync(join(dir, 'liha-adapter-icon.svg'), icon());
+console.log(`wrote three assets to ${dir}  (viewBox ${viewBox}, ink ${TEAL})`);
+
+export { BODY, EYE_R, EYE_L, SPARKLE, icon };
