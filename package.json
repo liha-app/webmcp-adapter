@@ -40,6 +40,7 @@
     "acceptance:recorder": "node tools/acceptance/recorder.mjs",
     "acceptance:prod": "node tools/acceptance/production.mjs",
     "acceptance:icons": "node tools/acceptance/icons.mjs",
+    "demo:studio": "node tools/demo/studio.mjs",
     "e2e": "playwright test",
     "demo": "pnpm --parallel -r preview"
   },

@@ -155,6 +155,13 @@ press *Stop* — and the **Studio**, where the recording becomes an adapter you
 name, parameterize, test and install. Selectors come from the site's own stable
 attributes; class names are never used, because they churn on every redeploy.
 
+**[See it happen](docs/demo/README.md)** — recording a workflow on a site with no
+adapter, naming the tool, approving the install, and an agent outside the page
+calling the result. Every frame is a real browser; `pnpm demo:studio` regenerates
+it, and fails rather than fakes it if anything in the chain is broken.
+
+![Teaching a site a WebMCP tool with the Studio](docs/demo/studio.gif)
+
 The Studio exports twice, and the second one is the point:
 
 | | |

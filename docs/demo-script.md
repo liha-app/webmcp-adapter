@@ -83,6 +83,10 @@ closed.
 
 ## Scene 5 — teach it a new tool (2:00–2:40)
 
+> Recorded, end to end, in [demo/README.md](demo/README.md) — useful to watch
+> once before performing it live, and usable as the segment itself.
+
+
 Open the popup on any demo app and press **Record a tool**. Perform the workflow
 by hand: click, type, submit.
 
