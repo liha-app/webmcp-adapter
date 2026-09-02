@@ -19,21 +19,48 @@ face — which is what lets the silhouette stay a jellyfish bell and keep the
 hem every sibling has. Cutting a notch between two legs also spells A, but it
 breaks the hem, and the hem is the part that makes the family a family.
 
-Colour is **`#0FA98C`**. The four already in use are two blues (`#2787f5`
-parent, `#006eb8` Sitebase), a purple (`#6450a1` Code Review) and an orange
-(`#f68c50` Run); teal is the gap. Coral and indigo were drawn and rejected for
-reading as those last two at a glance.
+Colour is **`#0FAEA8`**, sampled from the reference rather than chosen — it is
+the most common ink pixel in it. The four already in use are two blues
+(`#2787f5` parent, `#006eb8` Sitebase), a purple (`#6450a1` Code Review) and an
+orange (`#f68c50` Run); teal is the gap. Coral and indigo were drawn and
+rejected for reading as those last two at a glance.
+
+## How the geometry was arrived at
+
+`reference.png` is the approved design. `params.json` was **fitted** to it, not
+eyeballed: the parametric mark is rasterised and compared to the reference
+pixel by pixel, and a coordinate descent minimises the number that disagree.
+
+Three things the fit found that guessing had got wrong:
+
+- The dome is a **circular arc**, radius `0.32 × body width`, and the flanks are
+  **straight lines tangent to it**. Below 15% of the height the reference's edge
+  is linear to within a pixel. An earlier version drew a cap and two flanks as
+  separate curves, which leaves a tangent break at the shoulder and reads as a
+  flat-topped bucket no matter how the bounding box is tuned.
+- The dome finishes rounding within **18%** of the body height. A first pass
+  used 27%, which made the whole mark tall and narrow.
+- The hem's four feet sit at 9 / 35 / 65 / 91% across, and the **middle hump
+  lifts higher** than the outer two.
+
+Verified at 1024²: everything matches to within two pixels except one short
+segment of the right flank, where the reference is slightly asymmetric. A mark
+should be symmetric there, so that difference is deliberate.
 
 ## Regenerating
 
 ```bash
-node tools/brand/assets.mjs apps/registry/public/brand
+node tools/brand/build.mjs apps/registry/public/brand
 cp apps/registry/public/brand/liha-adapter-icon.svg apps/registry/public/favicon.svg
 ```
 
-`gen.mjs` holds the geometry, `assets.mjs` the three outputs. The paths are
-generated rather than traced, so the curves stay clean and the proportions can
-be adjusted in one place.
+`shape.mjs` holds the geometry, `params.json` the fitted numbers, `build.mjs`
+the three outputs. The paths are generated rather than traced, so the curves
+stay clean and every proportion can be adjusted in one place.
+
+`BrandMark` in `apps/registry/src/routes/components.tsx` inlines exactly what
+`build.mjs` emits, so the nav costs no extra request. Regenerate both together
+— never hand-edit those path strings.
 
 | File | Use |
 |---|---|

@@ -102,27 +102,24 @@ export function AdapterIcon({ id, category, size = 64 }: { id: string; category?
 /*
  * The product mark: the Liha jellyfish, drawn as an "A" for Adapter.
  *
- * It belongs to a family — Liha Code Review is a C, Sitebase an S, Run an R —
- * so it is built to the same measurements: height 500, the bell fringe along
- * the hem, pill eyes in a rounded face patch, and the four-pointed sparkle at
- * the top left. Teal is this product's colour; the four already in use are two
- * blues, a purple and an orange.
+ * A sibling to the C, S and R of the other Liha products, and normalised to
+ * the same height 500 canvas. The letter is made by the A's own counter — the
+ * rounded triangle under the face — which is what lets the silhouette stay a
+ * jellyfish bell and keep the scalloped hem every sibling has.
  *
- * The letter is made by the A's own counter — the rounded triangle below the
- * face — which is what lets the silhouette stay a jellyfish bell with the
- * continuous scalloped hem every sibling has.
+ * The geometry is not eyeballed. It is fitted to the approved reference by
+ * minimising disagreeing pixels, and matches it to within two pixels
+ * everywhere except one short segment of the right flank where the reference
+ * is slightly asymmetric — a mark should be symmetric there.
  *
- * Below about 24px the sparkle is a smudge rather than a sparkle, so the app
- * icon drops it and reverses the mark out of a filled squircle instead. That
- * is the form used in the nav and in the store, and it is what favicon.svg is.
- *
- * tools/brand/ regenerates all of it.
+ * This inlines exactly what tools/brand/build.mjs emits, so the nav costs no
+ * extra request. Regenerate both together; never edit these strings by hand.
  */
-export const BRAND_TEAL = '#0FA98C';
+export const BRAND_TEAL = '#0FAEA8';
 
-const MARK_TRANSFORM = 'translate(10.34 10.97) scale(0.0905)';
-const MARK_BODY = 'M136 166C136 40 388 40 388 166C394.9 299.6 492 386.4 492 500C475.9 500 471.3 454 434.5 454C397.7 454 393.1 500 377 500C360.9 500 356.3 454 319.5 454C282.7 454 278.1 500 262 500C245.9 500 241.3 454 204.5 454C167.7 454 163.1 500 147 500C130.9 500 126.3 454 89.5 454C52.7 454 48.1 500 32 500C32 386.4 129.1 299.6 136 166ZM221 117.5h82a52 52 0 0 1 52 52v21a52 52 0 0 1 -52 52h-82a52 52 0 0 1 -52 -52v-21a52 52 0 0 1 52 -52ZM262 288C280.2 288 291.7 319.2 311.6 370C327 392 294 392 286.3 392L237.7 392C230 392 197 392 212.4 370C232.3 319.2 243.8 288 262 288Z';
-const MARK_EYES = 'M206 171a18 18 0 0 1 36 0v20a18 18 0 0 1 -36 0ZM282 171a18 18 0 0 1 36 0v20a18 18 0 0 1 -36 0Z';
+const MARK_TRANSFORM = 'translate(9.96 10.00) scale(0.08800)';
+const MARK_BODY = 'M95.92 118.42A160.24 160.24 0 0 1 405.29 118.42C407.8 242.63 507.47 373.93 501.21 473.29C479.46 473.29 479.46 500 457.71 500C423.19 500 423.19 458.16 388.66 458.16C354.14 458.16 354.14 500 319.62 500C285.09 500 285.09 433.27 250.57 433.27C216.05 433.27 216.05 500 181.52 500C147 500 147 458.16 112.48 458.16C77.96 458.16 77.96 500 43.43 500C21.72 500 21.72 473.29 0 473.29C-2.5 349.09 89.66 217.79 95.92 118.42ZM217.7 88.39h65.63a64.52 64.52 0 0 1 64.52 64.52v0a64.52 64.52 0 0 1 -64.52 64.52h-65.63a64.52 64.52 0 0 1 -64.52 -64.52v0a64.52 64.52 0 0 1 64.52 -64.52ZM250.42 265.72C274.78 265.72 277.71 295.02 297.74 334.77C314.93 363.4 274.26 363.4 265.67 363.4L235.16 363.4C226.57 363.4 185.91 363.4 203.09 334.77C223.12 295.02 226.05 265.72 250.42 265.72Z';
+const MARK_EYES = 'M190.51 143.08a19.15 19.15 0 0 1 38.3 0v20.92a19.15 19.15 0 0 1 -38.3 0ZM272.22 143.08a19.15 19.15 0 0 1 38.3 0v20.92a19.15 19.15 0 0 1 -38.3 0Z';
 
 export function BrandMark({ size = 18, className }: { size?: number; className?: string }) {
   return (
