@@ -90,10 +90,52 @@ wrangler pages deploy apps/demo-shop/dist    --project-name=webmcp-demo-shop    
 wrangler pages deploy apps/demo-project/dist --project-name=webmcp-demo-project --branch=main
 ```
 
-Both zones carry a proxied wildcard record, so a Pages custom domain does not
-resolve until an explicit record exists for it. Each hostname needs a proxied
-`CNAME` to its project's `*.pages.dev` name; the wildcard answers everything
-else and would otherwise win.
+Each hostname needs a proxied `CNAME` to its project's `*.pages.dev` name:
+
+| Zone | Name | Target |
+|---|---|---|
+| liha.dev | `webmcp-adopter` | `webmcp-adopter.pages.dev` |
+| liha.review | `demo-crm` | `webmcp-demo-crm.pages.dev` |
+| liha.review | `demo-shop` | `webmcp-demo-shop.pages.dev` |
+| liha.review | `demo-project` | `webmcp-demo-project.pages.dev` |
+
+**Two things on these zones will silently swallow a Pages custom domain.** Both
+cost an hour if you do not know about them:
+
+1. *A proxied wildcard DNS record.* Every subdomain already resolves, so
+   nothing looks broken — the hostname simply answers as whatever the wildcard
+   points at. An explicit record beats the wildcard and fixes it.
+
+2. *A wildcard Worker route.* `liha.review` has `*.liha.review/*` bound to
+   another service, and **Cloudflare matches Worker routes before Pages custom
+   domains** — so correct DNS is not enough, and the Pages domain will report
+   itself `active` while the Worker keeps answering. The fix is a more specific
+   route with **no Worker attached** for each hostname:
+
+   ```
+   demo-crm.liha.review/*       → (no worker)
+   demo-shop.liha.review/*      → (no worker)
+   demo-project.liha.review/*   → (no worker)
+   ```
+
+   More specific patterns win, so this affects only those three hostnames and
+   leaves the wildcard route serving everything else.
+
+## Verifying a deploy
+
+```bash
+pnpm acceptance:prod
+```
+
+Reads the production origins from `origins.json`, then checks them the way a
+user and an agent actually meet them: HTTPS and the documented response headers
+on every origin, the SPA fallback on a deep route, the portal's six native
+tools registered on its real origin, and — with the extension loaded — an
+out-of-page agent driving the deployed Acme CRM through its adapter and
+reading back the id the deployed app assigned.
+
+A build passing locally says nothing about certificates, secure contexts,
+response headers or whether a Worker route is eating your traffic.
 
 ## Recommended response headers
 

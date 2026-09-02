@@ -5,6 +5,11 @@
 
 **Make any website agent-ready.** → **[webmcp-adopter.liha.dev](https://webmcp-adopter.liha.dev)**
 
+Live demos, none of which contain a line of WebMCP code:
+[Acme CRM](https://demo-crm.liha.review) ·
+[Nimbus Supply](https://demo-shop.liha.review) ·
+[Kite Project Manager](https://demo-project.liha.review)
+
 WebMCP lets a website hand an agent real tools instead of making it guess at the
 DOM. The catch is who has to build it: today a site becomes agent-ready only
 when its own developers ship `document.modelContext.registerTool()`.
@@ -226,6 +231,7 @@ Full model, including the MAIN-world limitation this cannot engineer away:
 pnpm verify           # typecheck, lint, 204 unit + integration tests, build
 pnpm e2e              # 44 Playwright tests against the portal and the demo apps
 pnpm acceptance:all   # three real-browser runs through the WebMCP protocol
+pnpm acceptance:prod  # 36 checks against the deployed sites, not a local build
 ```
 
 Four layers, each answering a different question:
