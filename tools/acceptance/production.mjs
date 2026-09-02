@@ -10,13 +10,16 @@
  * what the adapters and the extension manifest were built against.
  *
  *   pnpm acceptance:prod
+ *   LIHA_EXTENSION=<unzipped release> pnpm acceptance:prod
  */
 import { existsSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { Browser, findChromeBinary, sleep } from './chrome.mjs';
 
 const root = process.cwd();
-const EXT = join(root, 'apps/extension/dist');
+// Point LIHA_EXTENSION at an unzipped release artifact to check that what
+// people download is what was tested, rather than only the local build.
+const EXT = process.env.LIHA_EXTENSION ?? join(root, 'apps/extension/dist');
 const { sites } = JSON.parse(readFileSync(join(root, 'packages/config/origins.json'), 'utf8'));
 const production = (id) => sites[id].production;
 

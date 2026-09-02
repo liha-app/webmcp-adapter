@@ -137,6 +137,30 @@ reading back the id the deployed app assigned.
 A build passing locally says nothing about certificates, secure contexts,
 response headers or whether a Worker route is eating your traffic.
 
+To check a published release rather than the local build — that what people
+download is what was tested — unzip the artifact and point the runner at it:
+
+```bash
+gh release download v1.0.0 --pattern '*chrome*.zip' && unzip -q liha-webmcp-adapter-chrome-*.zip
+LIHA_EXTENSION=./liha-webmcp-adapter-chrome pnpm acceptance:prod
+```
+
+## Releases
+
+The portal's "Download extension" button points at `/releases/latest`, so a
+release has to exist for it to resolve. Build, package each browser's output as
+a folder a user can hand to *Load unpacked*, and publish the checksums:
+
+```bash
+pnpm build
+cp -R apps/extension/dist         liha-webmcp-adapter-chrome
+cp -R apps/extension/dist-firefox liha-webmcp-adapter-firefox
+zip -qr liha-webmcp-adapter-chrome-vX.Y.Z.zip  liha-webmcp-adapter-chrome
+zip -qr liha-webmcp-adapter-firefox-vX.Y.Z.zip liha-webmcp-adapter-firefox
+shasum -a 256 *.zip > SHA256SUMS.txt
+gh release create vX.Y.Z *.zip SHA256SUMS.txt --title '...' --notes-file NOTES.md --latest
+```
+
 ## Recommended response headers
 
 These ship as `_headers` in each app's `public/` directory, which Cloudflare

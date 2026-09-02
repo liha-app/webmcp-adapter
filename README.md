@@ -232,6 +232,7 @@ pnpm verify           # typecheck, lint, 204 unit + integration tests, build
 pnpm e2e              # 44 Playwright tests against the portal and the demo apps
 pnpm acceptance:all   # three real-browser runs through the WebMCP protocol
 pnpm acceptance:prod  # 36 checks against the deployed sites, not a local build
+                      # LIHA_EXTENSION=<unzipped release> to check the artifact
 ```
 
 Four layers, each answering a different question:
