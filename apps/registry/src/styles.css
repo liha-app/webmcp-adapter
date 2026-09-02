@@ -611,3 +611,4 @@ details pre { margin-top: 10px; }
 .lede--narrow { max-width: 62ch; }
 .buildlist { margin-top: 44px; }
 .buildfoot { max-width: 62ch; margin-top: 36px; }
+.build .notice { border: 1px solid light-dark(#b45309, #e0a458); color: light-dark(#b45309, #e0a458); background: light-dark(rgba(180,83,9,.07), rgba(224,164,88,.1)); border-radius: 9px; padding: 10px 13px; font-size: 14px; }

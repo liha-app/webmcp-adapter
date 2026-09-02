@@ -325,6 +325,8 @@ export const en = {
   'create.step7': 'Call it',
   'create.step7Body': 'Go back to {0}, open the console, and run this. It is your tool, with your arguments.',
   'create.step7Waiting': 'Once your adapter is installed, the snippet that runs it appears here.',
+  'create.staleExtension':
+    'Your extension is older than this page and cannot report what is installed. Update it and this step starts working; everything else here still does.',
   'create.copySnippet': 'Copy the snippet',
   'create.footnote':
     'The same definition is a file you can keep: Export JSON in the Studio publishes it, and Export native WebMCP writes the implementation the site’s own developers would ship — the version that makes the adapter unnecessary.',

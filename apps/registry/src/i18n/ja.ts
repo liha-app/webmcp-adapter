@@ -331,6 +331,8 @@ export const ja: Record<MessageKey, string> = {
   'create.step7': '呼んでみる',
   'create.step7Body': '{0} に戻ってコンソールを開き、これを実行してください。あなたのツールを、あなたの引数で呼びます。',
   'create.step7Waiting': 'Adapter がインストールされると、それを実行するコードがここに出ます。',
+  'create.staleExtension':
+    'お使いの拡張機能はこのページより古く、インストール済みの内容を報告できません。更新するとこのステップが動き始めます。それ以外はそのまま使えます。',
   'create.copySnippet': 'コードをコピー',
   'create.footnote':
     '同じ定義はファイルとして持ち出せます。Studio の「JSON を書き出す」で公開でき、「native WebMCP を書き出す」ではサイト自身の開発者が実装するコード — Adapter を不要にする版 — が出てきます。',

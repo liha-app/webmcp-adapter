@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { detectModelContext } from '@liha/adapter-runtime';
-import type { StoreStateResponse } from '@liha/shared';
 import { extensionPresent, fetchInstalled } from '../lib/extension';
+import { builtHere, callSnippet, reportsDetail, type Installed } from '../lib/installed';
 import { demoApps } from '../lib/demos';
 import { RELEASES_URL } from '../lib/links';
 import { useI18n } from '../i18n';
@@ -23,8 +23,6 @@ const FLAG_URL = 'chrome://flags/#enable-webmcp-testing';
  * thread back up at the end — when the adapter you built appears in the
  * extension, this page notices and writes you the snippet that runs it.
  */
-type Installed = StoreStateResponse['installed'][number];
-
 function useEnvironment() {
   const [webmcp, setWebmcp] = useState<boolean | null>(null);
   const [extension, setExtension] = useState<boolean | null>(null);
@@ -115,23 +113,14 @@ export function Create() {
   const { webmcp, extension, installed } = useEnvironment();
   const shop = useMemo(() => demoApps(window.location.origin).find((app) => app.id === 'demo-shop'), []);
 
-  // Anything the extension did not ship with is something this person built.
-  const built = installed.filter((entry) => entry.source !== 'builtin');
+  // Read without assuming the extension is as new as this page. An older one
+  // answers with fewer fields, which is a browser that cannot report rather
+  // than a broken one — and reading `.tools[0]` off it took this page down.
+  const built = builtHere(installed);
   const newest = built[built.length - 1];
   const firstTool = newest?.tools[0];
-
-  const snippet = firstTool
-    ? [
-        `const tools = await document.modelContext.getTools();`,
-        `const tool = tools.find((t) => t.name === ${JSON.stringify(firstTool.name)});`,
-        `// executeTool takes its input as a JSON string, not an object.`,
-        `await document.modelContext.executeTool(tool, JSON.stringify({`,
-        ...(firstTool.required.length > 0
-          ? firstTool.required.map((name) => `  ${name}: 'cable',`)
-          : ['  // this tool takes no arguments']),
-        `}));`,
-      ].join('\n')
-    : '';
+  const staleExtension = extension === true && !reportsDetail(installed);
+  const snippet = callSnippet(firstTool);
 
   return (
     <main className="page">
@@ -192,8 +181,14 @@ export function Create() {
               </ul>
             </Step>
 
-            <Step index={6} title={t('create.step6')} done={built.length > 0} waiting={extension === true}>
+            <Step
+              index={6}
+              title={t('create.step6')}
+              done={built.length > 0}
+              waiting={extension === true && !staleExtension}
+            >
               <p className="muted">{t('create.step6Body')}</p>
+              {staleExtension && <p className="notice">{t('create.staleExtension')}</p>}
               {newest && (
                 <div className="built">
                   <strong>{newest.name}</strong> <code>{newest.id}</code>
@@ -219,7 +214,7 @@ export function Create() {
                   </div>
                 </>
               ) : (
-                <p className="muted">{t('create.step7Waiting')}</p>
+                <p className="muted">{staleExtension ? t('create.staleExtension') : t('create.step7Waiting')}</p>
               )}
             </Step>
           </ol>
