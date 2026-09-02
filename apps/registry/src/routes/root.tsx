@@ -32,6 +32,9 @@ export function Root() {
             </span>
           </Link>
           <div className="globalnav__links">
+            <Link to="/create" activeProps={{ className: 'active' }}>
+              {t('nav.create')}
+            </Link>
             <Link to="/adapters" activeProps={{ className: 'active' }}>
               {t('nav.adapters')}
             </Link>

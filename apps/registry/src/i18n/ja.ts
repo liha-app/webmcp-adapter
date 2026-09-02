@@ -288,4 +288,50 @@ export const ja: Record<MessageKey, string> = {
   'health.broken': '故障',
   'health.unknown': '未確認',
   'health.title': 'お使いのブラウザ拡張機能が、実際のサイトに対して報告した結果です',
+
+  /* -------------------------------------------- the guided build ---- */
+  'nav.create': '作ってみる',
+  'create.eyebrow': 'Adapter Studio',
+  'create.headline': 'WebMCP を持たないサイトに、WebMCP ツールを作る。',
+  'create.lede':
+    'Web サイトを普通に操作するところを記録し、それをツールの形に整えて、インストールし、ページの外から呼びます。コードは書きません。サイトにも一切手を入れません。このページは進み具合を見ていて、判定できるステップは自動で埋まります。',
+  'create.copy': 'コピー',
+  'create.copied': 'コピーしました',
+  'create.copyFailed': 'コピーできませんでした',
+  'create.done': '完了',
+  'create.watching': '確認中',
+  'create.step1': 'WebMCP を有効にする',
+  'create.step1Body':
+    'Chrome はこの API をフラグの裏に置いています。アドレスバーに貼り付けて Enabled にし、再起動してください。API が見つかればこのステップは自動で埋まります。',
+  'create.copyFlag': 'フラグURLをコピー',
+  'create.step2': '拡張機能を入れる',
+  'create.step2Body':
+    'zip を展開し、chrome://extensions でデベロッパーモードを有効にして「パッケージ化されていない拡張機能を読み込む」。拡張機能が応答すれば自動で埋まります。',
+  'create.getExtension': '拡張機能をダウンロード',
+  'create.step3': '教えたいサイトを開く',
+  'create.step3Body':
+    '拡張機能が到達できるサイトなら何でも構いません。下のストアフロントは、まだ誰も Adapter を書いていないサイトです。別タブで開いたままにしてください。記録が聞いているのはそのタブで、このページではありません。',
+  'create.openDemo': '{0} を開く',
+  'create.step4': '自分でやる操作を記録する',
+  'create.step4Body': 'ここは別タブでの作業なので、このページからは見えません。そちらで Liha のアイコンを押して:',
+  'create.step4a': '「ツールを記録」を押す。',
+  'create.step4b': '実際にやる — 検索する、フォームを埋める、そのツールにやらせたいことを。',
+  'create.step4c': '「記録を停止」を押す。操作を持った状態で Studio が開きます。',
+  'create.step5': 'Studio で整える',
+  'create.step5Body': '記録はまだ素材です。エージェントに渡せるツールにするのは、次の4つです:',
+  'create.step5a':
+    'snake_case で名前を付け、説明を書く。エージェントはその説明を読んで、いつこのツールを使うかを判断します。',
+  'create.step5b': '打ち込んだ値を引数にする。あれは例であって、定数ではありません。',
+  'create.step5c':
+    '誰もクリックしていないステップを足す。結果を読み取るのは操作ではないので、記録には残りません。readText か readList を足して初めて、ツールは値を返します。',
+  'create.step5d': '「セレクタを検査」を押す。2要素に一致するセレクタは実行時に拒否されるので、ここで気づいてください。',
+  'create.step6': 'インストールする',
+  'create.step6Body':
+    '「ローカルにインストール」を押します。拡張機能が定義を再検証し、対象オリジンと capability を明示して承認を求めます。求めるのは要求であって、決めるのはあなたです。入ったらこのページが気づきます。',
+  'create.step7': '呼んでみる',
+  'create.step7Body': '{0} に戻ってコンソールを開き、これを実行してください。あなたのツールを、あなたの引数で呼びます。',
+  'create.step7Waiting': 'Adapter がインストールされると、それを実行するコードがここに出ます。',
+  'create.copySnippet': 'コードをコピー',
+  'create.footnote':
+    '同じ定義はファイルとして持ち出せます。Studio の「JSON を書き出す」で公開でき、「native WebMCP を書き出す」ではサイト自身の開発者が実装するコード — Adapter を不要にする版 — が出てきます。',
 };

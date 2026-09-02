@@ -282,6 +282,52 @@ export const en = {
   'health.broken': 'broken',
   'health.unknown': 'not checked',
   'health.title': 'Reported by your browser extension against the live site',
+
+  /* -------------------------------------------- the guided build ---- */
+  'nav.create': 'Build one',
+  'create.eyebrow': 'Adapter Studio',
+  'create.headline': 'Build a WebMCP tool for a site that has none.',
+  'create.lede':
+    'Record yourself using a website, shape what you did into a tool, install it, and call it from outside the page. Nothing here writes code, and the site is never touched. This page watches as you go — the steps it can check tick themselves.',
+  'create.copy': 'Copy',
+  'create.copied': 'Copied',
+  'create.copyFailed': 'Copy failed',
+  'create.done': 'done',
+  'create.watching': 'watching',
+  'create.step1': 'Turn WebMCP on',
+  'create.step1Body':
+    'Chrome keeps the API behind a flag. Paste this into the address bar, set it to Enabled, and relaunch — this step ticks itself once the API is there.',
+  'create.copyFlag': 'Copy the flag URL',
+  'create.step2': 'Install the extension',
+  'create.step2Body':
+    'Unzip it, open chrome://extensions, turn on Developer mode, and Load unpacked. This step ticks itself once the extension answers.',
+  'create.getExtension': 'Download the extension',
+  'create.step3': 'Open the site you want to teach',
+  'create.step3Body':
+    'Any site the extension can reach will do; the storefront below is one nobody has adapted yet. Open it in another tab and leave it open — the recorder listens to that tab, not this one.',
+  'create.openDemo': 'Open {0}',
+  'create.step4': 'Record what you would do by hand',
+  'create.step4Body':
+    'This happens in the other tab, so this page cannot watch it. Click the Liha icon there and:',
+  'create.step4a': 'Press Record a tool.',
+  'create.step4b': 'Do the thing — search for something, fill a form, whatever the tool should do.',
+  'create.step4c': 'Press Stop recording. The Studio opens with what you did.',
+  'create.step5': 'Shape it in the Studio',
+  'create.step5Body': 'The recording is raw. Four things turn it into a tool worth giving an agent:',
+  'create.step5a': 'Name it in snake_case, and describe it — that description is what an agent reads to decide when to use it.',
+  'create.step5b': 'Turn the value you typed into an argument. It was an example, not a constant.',
+  'create.step5c':
+    'Add the step nobody clicked: reading the answer back is not an interaction, so the recorder never saw it. A readText or readList step is what makes the tool return something.',
+  'create.step5d': 'Press Test selectors. A selector matching two elements is refused at runtime, so find out here.',
+  'create.step6': 'Install it',
+  'create.step6Body':
+    'Press Install locally. The extension re-validates the definition and asks you to approve the exact origins and capabilities — asking is a request, and you decide. This page notices when it lands.',
+  'create.step7': 'Call it',
+  'create.step7Body': 'Go back to {0}, open the console, and run this. It is your tool, with your arguments.',
+  'create.step7Waiting': 'Once your adapter is installed, the snippet that runs it appears here.',
+  'create.copySnippet': 'Copy the snippet',
+  'create.footnote':
+    'The same definition is a file you can keep: Export JSON in the Studio publishes it, and Export native WebMCP writes the implementation the site’s own developers would ship — the version that makes the adapter unnecessary.',
 } as const;
 
 export type MessageKey = keyof typeof en;

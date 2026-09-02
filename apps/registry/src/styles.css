@@ -581,3 +581,33 @@ details pre { margin-top: 10px; }
   *, *::before, *::after { animation: none !important; transition: none !important; }
   .rise { opacity: 1; transform: none; }
 }
+
+/* ---------------------------------------------------------------- build --- */
+/*
+ * The guided build. A numbered column rather than cards: it is one path in one
+ * order, and cards would offer a choice that does not exist.
+ */
+.buildlist { list-style: none; margin: 0; padding: 0; }
+.build { display: grid; grid-template-columns: 34px 1fr; gap: 18px; padding: 22px 0; border-top: 1px solid light-dark(rgba(0, 0, 0, 0.08), rgba(255, 255, 255, 0.1)); }
+.build:first-child { border-top: 0; }
+.build__mark { width: 34px; height: 34px; border-radius: 50%; display: grid; place-items: center; font-size: 14px; font-weight: 600; color: var(--muted); border: 1px solid light-dark(rgba(0, 0, 0, 0.12), rgba(255, 255, 255, 0.16)); }
+.build--done .build__mark { color: #fff; background: var(--ok, #177245); border-color: transparent; }
+.build__title { font-size: 19px; margin: 3px 0 8px; display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+.build__state { font-size: 11px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
+.build__state--done { color: var(--ok, #177245); }
+.build__body p { margin: 0 0 10px; }
+.plainlist { margin: 0; padding-left: 20px; color: var(--muted); }
+.plainlist li { margin-bottom: 6px; }
+.codeline { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.codeline code, .codeblock pre { font: 13px/1.6 ui-monospace, SFMono-Regular, Menlo, monospace; background: light-dark(rgba(0, 0, 0, 0.05), rgba(255, 255, 255, 0.06)); border-radius: 8px; padding: 8px 11px; margin: 0; }
+.codeblock { display: flex; align-items: flex-start; gap: 10px; }
+.codeblock pre { flex: 1; min-width: 0; overflow-x: auto; white-space: pre; }
+.built { border: 1px solid light-dark(rgba(0, 0, 0, 0.1), rgba(255, 255, 255, 0.12)); border-radius: 10px; padding: 12px 14px; }
+.built__tools { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 8px; }
+.built__tool { display: inline-flex; align-items: center; gap: 6px; }
+.btn--quiet { background: transparent; color: var(--muted); border: 1px solid light-dark(rgba(0, 0, 0, 0.12), rgba(255, 255, 255, 0.16)); border-radius: 8px; padding: 7px 13px; font: inherit; font-size: 13px; cursor: pointer; flex: none; }
+.btn--quiet:hover { color: var(--ink); }
+.section--tight { padding: 72px 0 104px; }
+.lede--narrow { max-width: 62ch; }
+.buildlist { margin-top: 44px; }
+.buildfoot { max-width: 62ch; margin-top: 36px; }

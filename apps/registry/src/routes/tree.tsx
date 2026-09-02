@@ -5,6 +5,7 @@ import { Root } from './root';
 import { Landing } from './landing';
 import { AdapterList } from './list';
 import { AdapterDetail } from './detail';
+import { Create } from './create';
 
 export interface RouterContext {
   queryClient: QueryClient;
@@ -35,5 +36,8 @@ const detailRoute = createRoute({
   component: AdapterDetail,
 });
 
-export const routeTree = rootRoute.addChildren([landingRoute, listRoute, detailRoute]);
-export { listRoute, detailRoute };
+/** The guided build: the recorder, the Studio and the install gate, in order. */
+const createRouteDefinition = createRoute({ getParentRoute: () => rootRoute, path: '/create', component: Create });
+
+export const routeTree = rootRoute.addChildren([landingRoute, createRouteDefinition, listRoute, detailRoute]);
+export { listRoute, detailRoute, createRouteDefinition as createRoute_ };

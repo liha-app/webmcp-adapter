@@ -187,8 +187,16 @@ async function buildStoreState(): Promise<StoreStateResponse> {
   return {
     installed: catalogue.map((record) => ({
       id: record.adapter.id,
+      name: record.adapter.name,
       version: record.adapter.version,
       enabled: record.enabled,
+      source: record.source,
+      origins: record.adapter.origins,
+      tools: record.adapter.tools.map((tool) => ({
+        name: tool.name,
+        capability: tool.capability,
+        required: tool.inputSchema.required ?? [],
+      })),
       health: healthByAdapter.get(record.adapter.id) ?? null,
     })),
   };

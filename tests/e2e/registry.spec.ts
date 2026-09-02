@@ -220,6 +220,43 @@ test.describe('Appearance and language', () => {
   });
 });
 
+test.describe('The guided build', () => {
+  test.beforeEach(async ({ page }) => {
+    await page.goto('http://localhost:5280/create');
+  });
+
+  test('lays out the whole path in order', async ({ page }) => {
+    // Seven steps, one order. If a step is dropped the page still renders, so
+    // the count is the assertion.
+    await expect(page.locator('.build')).toHaveCount(7);
+    await expect(page.getByRole('heading', { name: 'Turn WebMCP on' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Call it' })).toBeVisible();
+  });
+
+  test('says what is missing rather than assuming it is there', async ({ page }) => {
+    // No extension is loaded in these runs, so the honest state is "not yet".
+    await expect(page.getByRole('link', { name: 'Download the extension' })).toBeVisible();
+    await expect(page.getByText('Once your adapter is installed')).toBeVisible();
+  });
+
+  test('hands over the flag when the browser has no WebMCP', async ({ page }) => {
+    await page.addInitScript(() => {
+      Object.defineProperty(Document.prototype, 'modelContext', { configurable: true, get: () => undefined });
+    });
+    await page.goto('http://localhost:5280/create');
+    // The status band names the flag too, so this is the one in the step —
+    // together with the button that saves retyping it off a screenshot.
+    await expect(page.locator('.build code', { hasText: 'enable-webmcp-testing' })).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Copy the flag URL' })).toBeVisible();
+  });
+
+  test('points at the demo the recorder can reach', async ({ page }) => {
+    const open = page.getByRole('link', { name: /Open Nimbus Supply/ });
+    await expect(open).toBeVisible();
+    await expect(open).toHaveAttribute('href', 'http://localhost:5274');
+  });
+});
+
 test.describe('Adapter Registry', () => {
   // The store layout: sidebar counts, a feature card, and shelves of lockups.
   test('presents the catalogue as a store with a filter sidebar', async ({ page }) => {

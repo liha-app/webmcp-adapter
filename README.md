@@ -155,10 +155,16 @@ press *Stop* — and the **Studio**, where the recording becomes an adapter you
 name, parameterize, test and install. Selectors come from the site's own stable
 attributes; class names are never used, because they churn on every redeploy.
 
-**[See it happen](docs/demo/README.md)** — recording a workflow on a site with no
-adapter, naming the tool, approving the install, and an agent outside the page
-calling the result. Every frame is a real browser; `pnpm demo:studio` regenerates
-it, and fails rather than fakes it if anything in the chain is broken.
+**[Do it yourself](https://webmcp-adopter.liha.dev/create)** — a guided build that
+watches as you go. It checks whether the flag is on and the extension is
+answering, walks you through recording and shaping the tool, notices when your
+adapter lands in the extension, and then writes you the snippet that runs it.
+
+**[Or watch it happen](docs/demo/README.md)** — the same path, recorded: a site
+with no adapter, naming the tool, approving the install, and an agent outside the
+page calling the result. Every frame is a real browser; `pnpm demo:studio`
+regenerates it, and fails rather than fakes it if anything in the chain is
+broken.
 
 ![Teaching a site a WebMCP tool with the Studio](docs/demo/studio.gif)
 

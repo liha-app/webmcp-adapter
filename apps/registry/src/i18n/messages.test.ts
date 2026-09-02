@@ -17,6 +17,8 @@ const placeholders = (value: string): string[] => [...value.matchAll(/\{(\d+)\}/
  */
 const INTENTIONALLY_IDENTICAL = new Set([
   'hero.eyebrow',
+  // The Studio's own name, which is what it is called in the extension too.
+  'create.eyebrow',
   'nav.github',
   'flow.registerTool',
   'how.stepAdapterJson',

@@ -208,5 +208,20 @@ export interface PendingConfirmation {
 }
 
 export interface StoreStateResponse {
-  installed: Array<{ id: string; version: string; enabled: boolean; health: AdapterHealth | null }>;
+  installed: Array<{
+    id: string;
+    name: string;
+    version: string;
+    enabled: boolean;
+    source: AdapterSource;
+    /** The exact origins this adapter may touch. */
+    origins: string[];
+    /**
+     * Enough of each tool to say what it is and how to call it. The guided
+     * walkthrough on the portal reads this to hand someone a snippet that
+     * runs the tool they just built, rather than one they have to fill in.
+     */
+    tools: Array<{ name: string; capability: Capability; required: string[] }>;
+    health: AdapterHealth | null;
+  }>;
 }
