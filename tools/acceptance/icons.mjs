@@ -21,7 +21,7 @@
 import { readFileSync } from 'node:fs';
 import { join, resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { Browser, Session, findChromeBinary } from './chrome.mjs';
+import { Browser, Session, findChromeBinary, sleep } from './chrome.mjs';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
 const SIZES = [16, 32, 48, 128];
@@ -68,9 +68,31 @@ try {
       awaitPromise: true,
       returnByValue: true,
     });
-    if (exceptionDetails) throw new Error(exceptionDetails.text ?? 'evaluation failed');
+    if (exceptionDetails) {
+      const detail = exceptionDetails.exception?.description ?? exceptionDetails.text ?? 'evaluation failed';
+      throw new Error(`${detail}
+  while evaluating: ${expression.slice(0, 120)}`);
+    }
     return result.value;
   };
+
+  /*
+   * A service worker can be paused at its first statement when a debugger
+   * attaches, and until it runs, the extension bindings are not installed —
+   * `chrome` is genuinely undefined and every question asked of it fails with
+   * a ReferenceError that reads like the extension is broken. Let it run, then
+   * wait for the binding to exist before asking anything.
+   */
+  await worker.send('Runtime.runIfWaitingForDebugger').catch(() => undefined);
+  const bound = await (async () => {
+    for (let attempt = 0; attempt < 50; attempt++) {
+      const typed = await evaluate('typeof chrome').catch(() => 'undefined');
+      if (typed === 'object') return true;
+      await sleep(100);
+    }
+    return false;
+  })();
+  if (!bound) throw new Error('the extension service worker never received its chrome bindings');
 
   const manifest = await evaluate('chrome.runtime.getManifest()');
   const expected = Object.fromEntries(SIZES.map((size) => [String(size), `icons/icon-${size}.png`]));
