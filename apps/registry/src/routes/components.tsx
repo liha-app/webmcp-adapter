@@ -135,8 +135,9 @@ export function BrandMark({ size = 18, className }: { size?: number; className?:
       <rect width="64" height="64" rx="16" fill={BRAND_TEAL} />
       <g transform={MARK_TRANSFORM}>
         <path fill="#fff" d={MARK_BODY} />
-        <path fill={BRAND_TEAL} d={MARK_EYE_R} />
-        <path fill={BRAND_TEAL} d={MARK_EYE_L} />
+        {/* White, not teal: the face is a hole, so it already shows the squircle. */}
+        <path fill="#fff" d={MARK_EYE_R} />
+        <path fill="#fff" d={MARK_EYE_L} />
       </g>
     </svg>
   );

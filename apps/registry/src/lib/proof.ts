@@ -10,7 +10,7 @@ import type { MessageKey } from '../i18n/en';
  * Update alongside the test suite — CONTRIBUTING points here.
  */
 export const PROOF = {
-  unitAndIntegrationTests: 204,
+  unitAndIntegrationTests: 214,
   e2eTests: 44,
   acceptance: [
     { nameKey: 'verified.runPhase0', whatKey: 'verified.runPhase0What', result: '10/10' },

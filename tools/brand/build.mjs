@@ -51,12 +51,20 @@ function icon() {
   const scale = inset / Math.max(BODY_BOX.w, BODY_BOX.h);
   const ox = box / 2 - (BODY_BOX.x + BODY_BOX.w / 2) * scale;
   const oy = box / 2 - (BODY_BOX.y + BODY_BOX.h / 2) * scale;
+  /*
+   * The eyes are white here, not teal.
+   *
+   * In the mark the body is teal and the face is a hole, so the face shows the
+   * page behind it and the eyes are teal dots on that. Reversed, the body is
+   * white and the same hole shows the teal squircle — so teal eyes on a teal
+   * face vanish. Inverting the figure has to invert the eyes with it.
+   */
   return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${box} ${box}" width="${box}" height="${box}" role="img" aria-label="Liha WebMCP Adapter">
   <rect width="${box}" height="${box}" rx="16" fill="${TEAL}"/>
   <g transform="translate(${ox.toFixed(3)} ${oy.toFixed(3)}) scale(${scale.toFixed(6)})">
     <path fill="#fff" d="${BODY}"/>
-    <path fill="${TEAL}" d="${EYE_R}"/>
-    <path fill="${TEAL}" d="${EYE_L}"/>
+    <path fill="#fff" d="${EYE_R}"/>
+    <path fill="#fff" d="${EYE_L}"/>
   </g>
 </svg>
 `;
