@@ -86,6 +86,27 @@ runtime validates before it touches the page — see `src/main-world/input.ts`.
 **Malformed JSON input** is rejected by the browser before `execute` runs, with
 `UnknownError: Failed to parse input arguments`.
 
+**`modelContext.executeTool(tool, input)` wants `input` as a JSON string**, and
+the same error is how it says so. Passing the object an `execute` handler will
+eventually receive fails:
+
+```js
+const [tool] = (await document.modelContext.getTools()).filter(t => t.name === 'search_customers');
+await document.modelContext.executeTool(tool, { query: 'a' });          // UnknownError: Failed to parse input arguments
+await document.modelContext.executeTool(tool, '{"query":"a"}');         // works
+```
+
+Note what that asymmetry means end to end: the caller hands in a **string**, the
+browser parses it, and `execute` is handed the parsed **object**. The DevTools
+`WebMCP.invokeTool` below takes an **object** for the same argument, so code
+moved between the two surfaces breaks with an error that names neither. The
+first argument is the registered tool itself, from `getTools()` — a name string
+is rejected with `TypeError: The provided value is not of type 'RegisteredTool'`.
+
+Measured on both a page whose own developers registered the tools and a page an
+adapter injected them into, so this is Chrome's behaviour rather than this
+runtime's.
+
 ## The DevTools WebMCP domain
 
 With `DevToolsWebMCPSupport` enabled, the DevTools protocol exposes a `WebMCP`
@@ -100,7 +121,8 @@ is what the acceptance runner speaks:
 | `WebMCP.invokeTool` | `{ frameId, toolName, input }` → `{ invocationId }` |
 | `WebMCP.toolInvoked` / `WebMCP.toolResponded` | `{ invocationId, status, output }` |
 
-`input` must be an **object**, not a JSON string.
+`input` must be an **object**, not a JSON string — the opposite of
+`modelContext.executeTool` above.
 
 The `stackTrace` on `toolsAdded` reports where the tool was registered from. For
 a Liha adapter it reads `chrome-extension://<id>/main-world/runtime.js`, so an
@@ -112,3 +134,33 @@ signal is a feature, and later phases should surface it in the UI.
 `tools/acceptance/run.mjs` exercises the whole contract end to end. To poke at
 the API by hand, launch a browser with the flags above and a remote debugging
 port, then drive `Runtime.evaluate` against a page on `http://localhost`.
+
+## What can consume this today
+
+An out-of-page agent needs a way in, and the two that exist are not equally
+available.
+
+**The DevTools `WebMCP` domain works now.** It is what `pnpm acceptance:prod`
+speaks, and it drives the deployed demos end to end. Anything that can attach a
+CDP session can use it.
+
+**The Codex CLI cannot, as of 2026-09-02.** Its Chrome plugin documents
+`tab.capabilities.get("webmcp")` → `fetchTools()` → `tools.call(name, input)`,
+and the installed extension really does implement the underlying
+`webmcp_list_tools` / `webmcp_invoke_tool` commands. But the capability is only
+advertised for a tab when a server-side feature gate says so:
+
+```js
+capabilities: { tab: [ ..., ...await this.webMcpConfig?.enabled() ? [Ra] : [] ] }
+// webMcpConfig = Pg(), which subscribes to the Statsig gate "codex-app-webmcp"
+```
+
+With the gate off, `tab.capabilities.list()` returns only `pageAssets` and
+`get("webmcp")` throws `Capability is not available: webmcp` — on any page,
+including one whose own developers registered the tools, so it says nothing
+about the page. The `cdp` capability is unavailable in the same build, so the
+DevTools fallback is closed off too. Nothing local turns this on:
+`webmcp_enabled` in `~/.codex/browser/config.toml` is read by the browser
+service, not by the gate that decides what the extension advertises.
+
+Worth re-checking rather than trusting: gates move.
