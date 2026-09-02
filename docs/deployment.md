@@ -141,7 +141,7 @@ To check a published release rather than the local build — that what people
 download is what was tested — unzip the artifact and point the runner at it:
 
 ```bash
-gh release download v1.0.2 --pattern '*chrome*.zip' && unzip -q liha-webmcp-adapter-chrome-*.zip
+gh release download v1.0.3 --pattern '*chrome*.zip' && unzip -q liha-webmcp-adapter-chrome-*.zip
 LIHA_EXTENSION=./liha-webmcp-adapter-chrome pnpm acceptance:prod
 LIHA_EXTENSION=./liha-webmcp-adapter-chrome pnpm acceptance:icons
 ```
