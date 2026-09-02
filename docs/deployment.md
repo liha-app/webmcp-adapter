@@ -10,11 +10,16 @@ the portal's demo links all derive from it.
 ```json
 {
   "registry":     { "port": 5280, "production": "https://webmcp-adopter.liha.dev" },
-  "demo-crm":     { "port": 5273, "production": "https://crm.webmcp-adopter.liha.dev" },
-  "demo-shop":    { "port": 5274, "production": "https://shop.webmcp-adopter.liha.dev" },
-  "demo-project": { "port": 5275, "production": "https://project.webmcp-adopter.liha.dev" }
+  "demo-crm":     { "port": 5273, "production": "https://demo-crm.liha.review" },
+  "demo-shop":    { "port": 5274, "production": "https://demo-shop.liha.review" },
+  "demo-project": { "port": 5275, "production": "https://demo-project.liha.review" }
 }
 ```
+
+The portal is on `liha.dev`; the three demo apps are on `liha.review`, on a
+separate domain on purpose — they are deliberately plain sample applications and
+do not belong on the product domain. Nothing in the design depends on them
+sharing a parent domain: every origin is exact and independent.
 
 Development and production origins are both listed, as **separate exact
 origins**. Adapters are scoped to each one individually — there is no wildcard
@@ -54,18 +59,48 @@ does not, and the tools will silently not register there.
 
 | App | Port | Production | Build |
 |---|---|---|---|
-| Acme CRM | 5273 | `crm.webmcp-adopter.liha.dev` | `pnpm --filter @liha/demo-crm build` |
-| Nimbus Supply | 5274 | `shop.webmcp-adopter.liha.dev` | `pnpm --filter @liha/demo-shop build` |
-| Kite Project Manager | 5275 | `project.webmcp-adopter.liha.dev` | `pnpm --filter @liha/demo-project build` |
+| Acme CRM | 5273 | `demo-crm.liha.review` | `pnpm --filter @liha/demo-crm build` |
+| Nimbus Supply | 5274 | `demo-shop.liha.review` | `pnpm --filter @liha/demo-shop build` |
+| Kite Project Manager | 5275 | `demo-project.liha.review` | `pnpm --filter @liha/demo-project build` |
 
 Nimbus Supply has a `/cart` route, so it needs the same SPA fallback as the
 portal. The other two are single-route but the fallback does no harm.
 
 `pnpm demo` serves all four locally from their production builds.
 
+## What is actually deployed
+
+Cloudflare Pages, four projects in the `Liha` account. Each one is a plain
+static upload of a built `dist` — no build step runs on Cloudflare, so what is
+served is exactly what `pnpm build` produced locally and what CI tested.
+
+| Project | Directory | Domain |
+|---|---|---|
+| `webmcp-adopter` | `apps/registry/dist` | `webmcp-adopter.liha.dev` |
+| `webmcp-demo-crm` | `apps/demo-crm/dist` | `demo-crm.liha.review` |
+| `webmcp-demo-shop` | `apps/demo-shop/dist` | `demo-shop.liha.review` |
+| `webmcp-demo-project` | `apps/demo-project/dist` | `demo-project.liha.review` |
+
+```bash
+pnpm build
+export CLOUDFLARE_ACCOUNT_ID=<the Liha account id>
+wrangler pages deploy apps/registry/dist     --project-name=webmcp-adopter      --branch=main
+wrangler pages deploy apps/demo-crm/dist     --project-name=webmcp-demo-crm     --branch=main
+wrangler pages deploy apps/demo-shop/dist    --project-name=webmcp-demo-shop    --branch=main
+wrangler pages deploy apps/demo-project/dist --project-name=webmcp-demo-project --branch=main
+```
+
+Both zones carry a proxied wildcard record, so a Pages custom domain does not
+resolve until an explicit record exists for it. Each hostname needs a proxied
+`CNAME` to its project's `*.pages.dev` name; the wildcard answers everything
+else and would otherwise win.
+
 ## Recommended response headers
 
-Static hosts, not the app, set these. Nothing in the build needs an inline
+These ship as `_headers` in each app's `public/` directory, which Cloudflare
+Pages reads from the build output. `tools/` verifies them against the built
+sites before a deploy — a policy that has never been run against the app it
+protects is a guess. Nothing in the build needs an inline
 script or an external origin, so a strict policy holds:
 
 ```

@@ -9,7 +9,7 @@
   "origins": [
     "http://localhost:5273",
     "http://127.0.0.1:5273",
-    "https://crm.webmcp-adopter.liha.dev"
+    "https://demo-crm.liha.review"
   ],
   "tools": [
     {

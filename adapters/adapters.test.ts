@@ -29,7 +29,9 @@ describe('official adapters', () => {
 
   it.each(OFFICIAL_ADAPTERS)('$id uses no wildcard or third-party origin', (adapter) => {
     for (const origin of adapter.origins) {
-      expect(origin).toMatch(/^(http:\/\/(localhost|127\.0\.0\.1):52\d\d|https:\/\/[a-z-]+\.webmcp-adopter\.liha\.dev)$/);
+      expect(origin).toMatch(
+        /^(http:\/\/(localhost|127\.0\.0\.1):52\d\d|https:\/\/webmcp-adopter\.liha\.dev|https:\/\/demo-[a-z]+\.liha\.review)$/,
+      );
       expect(origin).not.toContain('*');
     }
   });

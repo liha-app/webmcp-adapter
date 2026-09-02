@@ -275,7 +275,7 @@ test.describe('Adapter Registry', () => {
     await page.getByTestId('adapter-list').getByRole('link', { name: /Kite Project Manager/ }).click();
     await expect(page).toHaveURL(/\/adapters\/demo-project$/);
     await expect(page.getByText('http://localhost:5275')).toBeVisible();
-    await expect(page.getByText('https://project.webmcp-adopter.liha.dev')).toBeVisible();
+    await expect(page.getByText('https://demo-project.liha.review')).toBeVisible();
     await expect(page.locator('[data-tool-name="delete_task"]')).toContainText('DESTRUCTIVE');
     await expect(page.getByText(/destructive tool/i)).toBeVisible();
 

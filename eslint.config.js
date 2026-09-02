@@ -49,4 +49,11 @@ export default tseslint.config(
     languageOptions: { globals: { ...globals.node }, ecmaVersion: 2023, sourceType: 'module' },
     rules: { ...noDynamicCode },
   },
+  {
+    // Static assets served verbatim: browser globals, classic script, and no
+    // build step between the file and the page.
+    files: ['apps/*/public/**/*.js'],
+    languageOptions: { globals: { ...globals.browser }, ecmaVersion: 2019, sourceType: 'script' },
+    rules: { ...noDynamicCode },
+  },
 );

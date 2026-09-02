@@ -1,0 +1,2 @@
+# Single-page app: every unmatched path is the app, not a 404.
+/*    /index.html   200

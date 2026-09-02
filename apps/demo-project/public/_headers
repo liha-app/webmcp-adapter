@@ -1,0 +1,9 @@
+# Cloudflare Pages reads this file from the build output. The policy is the one
+# documented in docs/deployment.md, and it is verified against the built site
+# before every deploy — nothing here needs an inline script or an outside host.
+/*
+  Content-Security-Policy: default-src 'self'; img-src 'self' data:; style-src 'self' 'unsafe-inline'; script-src 'self'; connect-src 'self'; frame-ancestors 'none'; base-uri 'none'
+  Referrer-Policy: strict-origin-when-cross-origin
+  X-Content-Type-Options: nosniff
+  Cross-Origin-Opener-Policy: same-origin
+  Permissions-Policy: geolocation=(), microphone=(), camera=(), payment=()
