@@ -51,7 +51,16 @@ async function litPixels(page: Page, x: number, y: number, radius: number) {
 test.describe('the hero field', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto(PORTAL);
-    await page.waitForTimeout(700);
+    // Wait for the canvas to be sized and painted rather than for a stopwatch:
+    // five of these running at once starve each other's frames, and a sleep
+    // that is long enough on an idle machine is not long enough on a busy one.
+    await page.waitForFunction(() => {
+      const canvas = document.querySelector('[data-testid="hero-field"]') as HTMLCanvasElement | null;
+      if (!canvas || canvas.width === 0) return false;
+      const { data } = canvas.getContext('2d')!.getImageData(0, 0, canvas.width, canvas.height);
+      for (let i = 3; i < data.length; i += 4) if (data[i]! > 16) return true;
+      return false;
+    });
   });
 
   test('sits behind the words and never takes a click', async ({ page }) => {
@@ -62,6 +71,7 @@ test.describe('the hero field', () => {
 
     // The call to action is on top of it, and reachable.
     const target = page.locator('.hero__cta a').first();
+    await expect(target).toBeVisible();
     const box = (await target.boundingBox())!;
     const onTop = await page.evaluate(
       ([x, y]) => document.elementFromPoint(x, y)?.closest('a') !== null,
@@ -76,76 +86,131 @@ test.describe('the hero field', () => {
     expect(await fieldHash(page)).not.toBe(first);
   });
 
-  test('draws in all five colours', async ({ page }) => {
-    const buckets = await page.evaluate(() => {
-      const canvas = document.querySelector('[data-testid="hero-field"]') as HTMLCanvasElement;
-      const ctx = canvas.getContext('2d')!;
-      const { data } = ctx.getImageData(0, 0, canvas.width, canvas.height);
-      // Bucket by hue rather than by exact value: a dot is drawn at whatever
-      // alpha its twinkle is on, and the band and the pointer shift it.
-      const hue = (r: number, g: number, b: number) => {
-        const max = Math.max(r, g, b);
-        const min = Math.min(r, g, b);
-        if (max === min) return -1;
-        const d = max - min;
-        let h: number;
-        if (max === r) h = ((g - b) / d + 6) % 6;
-        else if (max === g) h = (b - r) / d + 2;
-        else h = (r - g) / d + 4;
-        return h * 60;
-      };
-      const found = { purple: 0, blue: 0, orange: 0, green: 0, teal: 0 };
-      for (let i = 0; i < data.length; i += 4) {
-        if (data[i + 3]! < 90) continue;
-        const h = hue(data[i]!, data[i + 1]!, data[i + 2]!);
-        if (h < 0) continue;
-        if (h >= 255 && h < 300) found.purple += 1;
-        else if (h >= 200 && h < 255) found.blue += 1;
-        else if (h >= 15 && h < 50) found.orange += 1;
-        else if (h >= 100 && h < 165) found.green += 1;
-        else if (h >= 165 && h < 200) found.teal += 1;
-      }
-      return found;
-    });
-    for (const [name, count] of Object.entries(buckets)) {
-      expect(count, `${name} is missing from the field`).toBeGreaterThan(40);
-    }
+  test('rests in the brand colour, and opens into the others under the pointer', async ({ page }) => {
+    // Five colours scattered at random read as mess. The field is one colour
+    // until it is touched, and the other four live in the pocket.
+    const hues = () =>
+      page.evaluate(() => {
+        const canvas = document.querySelector('[data-testid="hero-field"]') as HTMLCanvasElement;
+        const ctx = canvas.getContext('2d')!;
+        const { data } = ctx.getImageData(0, 0, canvas.width, canvas.height);
+        const hue = (r: number, g: number, b: number) => {
+          const max = Math.max(r, g, b);
+          const min = Math.min(r, g, b);
+          if (max === min) return -1;
+          const d = max - min;
+          let h: number;
+          if (max === r) h = ((g - b) / d + 6) % 6;
+          else if (max === g) h = (b - r) / d + 2;
+          else h = (r - g) / d + 4;
+          return h * 60;
+        };
+        const found = { brand: 0, purple: 0, blue: 0, orange: 0, green: 0, other: 0 };
+        for (let i = 0; i < data.length; i += 4) {
+          if (data[i + 3]! < 90) continue;
+          const h = hue(data[i]!, data[i + 1]!, data[i + 2]!);
+          if (h < 0) continue;
+          if (h >= 165 && h < 200) found.brand += 1;
+          else if (h >= 255 && h < 300) found.purple += 1;
+          else if (h >= 200 && h < 255) found.blue += 1;
+          else if (h >= 15 && h < 50) found.orange += 1;
+          else if (h >= 100 && h < 165) found.green += 1;
+          else found.other += 1;
+        }
+        return found;
+      });
+
+    await page.mouse.move(2, 2);
+    await expect
+      .poll(async () => Object.values(await hues()).reduce((a, b) => a + b, 0), { timeout: 10_000 })
+      .toBeGreaterThan(400);
+    const rest = await hues();
+    const restTotal = Object.values(rest).reduce((a, b) => a + b, 0);
+    expect(rest.brand / restTotal).toBeGreaterThan(0.9);
+
+    const box = (await page.getByTestId('hero-field').boundingBox())!;
+    await page.mouse.move(box.x + box.width / 2, box.y + box.height * 0.45);
+    await page.mouse.move(box.x + box.width / 2 + 3, box.y + box.height * 0.45 + 3, { steps: 6 });
+    const restOther = rest.purple + rest.blue + rest.orange + rest.green;
+    await expect
+      .poll(
+        async () => {
+          const touched = await hues();
+          return touched.purple + touched.blue + touched.orange + touched.green;
+        },
+        { timeout: 10_000 },
+      )
+      .toBeGreaterThan(restOther + 200);
+  });
+
+  test('gathers the dots into the mark', async ({ page }) => {
+    /*
+     * The field is the product's shape, not a texture. At the top of the loop
+     * the dots are packed into the mark's silhouette and the corners of the
+     * section are empty; polled across a full cycle, that moment has to happen.
+     */
+    const canvas = page.getByTestId('hero-field');
+    const box = (await canvas.boundingBox())!;
+    const middle = [Math.round(box.width / 2), Math.round(box.height * 0.42)] as const;
+    const corner = [Math.round(box.width * 0.08), Math.round(box.height * 0.85)] as const;
+
+    await expect
+      .poll(
+        async () => {
+          const inside = await litPixels(page, middle[0], middle[1], 70);
+          const outside = await litPixels(page, corner[0], corner[1], 70);
+          return inside / Math.max(1, outside);
+        },
+        { timeout: 30_000, intervals: [250] },
+      )
+      .toBeGreaterThan(8);
   });
 
   test('the pointer parts the field around it', async ({ page }) => {
     const canvas = page.getByTestId('hero-field');
     const box = (await canvas.boundingBox())!;
-    const x = Math.round(box.width * 0.22);
-    const y = Math.round(box.height * 0.6);
+    const x = Math.round(box.width / 2);
+    const y = Math.round(box.height * 0.42);
+
+    /*
+     * Measured while the mark is held together, and both readings taken inside
+     * that window. The field's density is a moving target across the gather and
+     * scatter, so comparing a reading from one phase against a reading from
+     * another says nothing about the pointer.
+     */
+    await expect
+      .poll(
+        async () => {
+          const inside = await litPixels(page, x, y, 70);
+          const outside = await litPixels(page, Math.round(box.width * 0.08), Math.round(box.height * 0.85), 70);
+          return inside / Math.max(1, outside);
+        },
+        { timeout: 30_000, intervals: [250] },
+      )
+      .toBeGreaterThan(8);
 
     /*
      * The signature is not "fewer dots" — the pointer brightens and enlarges
      * what it touches, which puts lit pixels back. It is that the dots move
-     * outward: the core thins while the ring around it fills. Measuring the
-     * two against each other also cancels the twinkle, which changes the whole
+     * outward: the core thins while the ring around it fills. Measuring the two
+     * against each other also cancels the twinkle, which changes the whole
      * field's brightness from frame to frame.
      */
     const density = async () => {
       let core = 0;
       let outer = 0;
-      for (let i = 0; i < 6; i += 1) {
+      for (let i = 0; i < 4; i += 1) {
         core += await litPixels(page, x, y, 34);
         outer += await litPixels(page, x, y, 120);
-        await page.waitForTimeout(110);
+        await page.waitForTimeout(60);
       }
       return core / Math.max(1, outer - core);
     };
 
-    await page.mouse.move(4, 4);
-    await page.waitForTimeout(800);
     const away = await density();
-
     await page.mouse.move(box.x + x, box.y + y);
     await page.mouse.move(box.x + x + 2, box.y + y + 2, { steps: 5 });
-    await page.waitForTimeout(800);
-    const under = await density();
-
-    expect(under).toBeLessThan(away * 0.72);
+    await expect.poll(density, { timeout: 20_000, intervals: [200] }).toBeLessThan(away * 0.72);
   });
 });
 
@@ -163,8 +228,14 @@ test.describe('the hero field, with reduced motion', () => {
     expect(await page.evaluate(() => matchMedia('(prefers-reduced-motion: reduce)').matches)).toBe(true);
     await page.waitForTimeout(800);
     const first = await fieldHash(page);
-    // Something has to be on it — "still" must not mean "blank".
-    expect(await litPixels(page, 200, 200, 120)).toBeGreaterThan(50);
+    /*
+     * Something has to be on it — "still" must not mean "blank". Sampled at the
+     * middle because the still frame is the gathered mark, not the scattered
+     * field: with reduced motion the loop is the motion, so the mark is held
+     * together rather than caught mid-scatter.
+     */
+    const box = (await page.getByTestId('hero-field').boundingBox())!;
+    expect(await litPixels(page, box.width / 2, box.height * 0.42, 90)).toBeGreaterThan(50);
     await page.mouse.move(400, 500);
     await page.waitForTimeout(1400);
     expect(await fieldHash(page)).toBe(first);

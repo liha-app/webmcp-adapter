@@ -34,6 +34,17 @@ const MARK_BODY = 'M596.27,559.42l-53.33-168.11-65.92-205.5c-16.24-50.63-53.68-8
 const MARK_EYE_R = 'M392.2,250.22c-.04,12.66-11.68,19.43-22.75,19.01-11.31-.43-20.78-9.62-20.76-21.63l.05-23.26c.02-11.76,10.14-19.6,20.79-20.05,11.56-.49,22.79,7.12,22.75,19.57l-.09,26.36Z';
 const MARK_EYE_L = 'M300.79,248.6c.09,12.57-10.75,20.78-22,20.55s-21.82-8.9-21.74-20.75l.17-24.56c.08-11.96,10.46-19.47,21.62-19.61,10.28-.13,20.45,7.8,21.78,19.14l.17,25.23Z';
 
+/**
+ * The mark's own geometry, for anything that has to draw it as something other
+ * than an <svg> — the portal's hero rasterises these to find out where its
+ * particles should settle. Same paths the component uses, so the two cannot
+ * show different jellyfish.
+ */
+export const MARK_GEOMETRY = {
+  viewBox: MARK_VIEWBOX,
+  paths: [MARK_SPARKLE, MARK_BODY, MARK_EYE_R, MARK_EYE_L] as const,
+} as const;
+
 export interface MarkProps {
   size?: number;
   className?: string;

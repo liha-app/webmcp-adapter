@@ -3,6 +3,12 @@ import {
   bandBoost,
   bandHead,
   clamp01,
+  colourAt,
+  colourPhase,
+  ease,
+  FORMATION,
+  FORMATION_PERIOD,
+  formationAt,
   mix,
   PALETTE,
   PALETTE_SIZE,
@@ -11,14 +17,21 @@ import {
 } from './field';
 
 describe('the hero palette', () => {
-  it('is the five colours that were asked for, in both appearances', () => {
+  it('is five colours, in both appearances', () => {
     expect(PALETTE_SIZE).toBe(5);
-    expect(PALETTE.light).toHaveLength(5);
-    expect(PALETTE.dark).toHaveLength(5);
+    expect(PALETTE.light.cycle).toHaveLength(5);
+    expect(PALETTE.dark.cycle).toHaveLength(5);
+  });
+
+  it('starts and ends the cycle on the brand, so the pocket closes seamlessly', () => {
+    // The field is brand-coloured at rest; the pocket travels away from that
+    // colour and has to arrive back at it rather than at a fifth stranger.
+    expect(PALETTE.light.cycle[0]).toEqual(PALETTE.light.brand);
+    expect(PALETTE.dark.cycle[0]).toEqual(PALETTE.dark.brand);
   });
 
   it('keeps every channel in range', () => {
-    for (const set of [PALETTE.light, PALETTE.dark]) {
+    for (const set of [PALETTE.light.cycle, PALETTE.dark.cycle]) {
       for (const colour of set) {
         for (const channel of [colour.r, colour.g, colour.b]) {
           expect(channel).toBeGreaterThanOrEqual(0);
@@ -33,7 +46,7 @@ describe('the hero palette', () => {
     // round. The two sets exist for that reason, so they cannot be equal.
     const sum = (c: { r: number; g: number; b: number }) => c.r + c.g + c.b;
     for (let i = 0; i < PALETTE_SIZE; i += 1) {
-      expect(sum(PALETTE.dark[i]!)).toBeGreaterThan(sum(PALETTE.light[i]!));
+      expect(sum(PALETTE.dark.cycle[i]!)).toBeGreaterThan(sum(PALETTE.light.cycle[i]!));
     }
   });
 });
@@ -128,5 +141,91 @@ describe('clamp01', () => {
     expect(clamp01(-1)).toBe(0);
     expect(clamp01(2)).toBe(1);
     expect(clamp01(0.4)).toBe(0.4);
+  });
+});
+
+describe('colourPhase', () => {
+  it('gives neighbours the same colour, which is what stops it looking like confetti', () => {
+    // Circular, because the cycle wraps: phase 4.99 and phase 0.01 are the same
+    // colour, and two dots either side of that seam are still neighbours.
+    const apart = (a: number, b: number) => {
+      const d = Math.abs(a - b) % PALETTE_SIZE;
+      return Math.min(d, PALETTE_SIZE - d);
+    };
+    for (const [x, y] of [
+      [400, 300],
+      [625, 0], // sits on the seam
+      [12, 640],
+    ]) {
+      expect(apart(colourPhase(x!, y!, 0), colourPhase(x! + 4, y! + 3, 0))).toBeLessThan(0.1);
+    }
+  });
+
+  it('drifts with time, so the bands travel', () => {
+    expect(colourPhase(400, 300, 0)).not.toBeCloseTo(colourPhase(400, 300, 9000), 3);
+  });
+
+  it('spans every colour across a hero, so a pocket anywhere finds one', () => {
+    const seen = new Set<number>();
+    for (let x = 0; x < 1280; x += 8) seen.add(Math.floor(colourPhase(x, 300, 0)));
+    expect(seen.size).toBe(PALETTE_SIZE);
+  });
+
+  it('stays inside the palette wherever it is asked', () => {
+    for (const [x, y, t] of [
+      [0, 0, 0],
+      [-900, -400, -50000],
+      [4000, 2000, 900000],
+    ]) {
+      const phase = colourPhase(x!, y!, t!);
+      expect(phase).toBeGreaterThanOrEqual(0);
+      expect(phase).toBeLessThan(PALETTE_SIZE);
+    }
+  });
+});
+
+describe('colourAt', () => {
+  it('lands on a palette entry at whole numbers', () => {
+    expect(colourAt(PALETTE.light.cycle, 2)).toEqual(PALETTE.light.cycle[2]);
+    expect(colourAt(PALETTE.light.cycle, 0)).toEqual(PALETTE.light.brand);
+  });
+
+  it('blends between neighbours, and wraps from the last to the first', () => {
+    expect(colourAt(PALETTE.light.cycle, 0.5)).toEqual(mix(PALETTE.light.cycle[0]!, PALETTE.light.cycle[1]!, 0.5));
+    expect(colourAt(PALETTE.light.cycle, 4.5)).toEqual(mix(PALETTE.light.cycle[4]!, PALETTE.light.brand, 0.5));
+  });
+});
+
+describe('the gather and scatter loop', () => {
+  it('starts scattered, settles, holds, and comes apart again', () => {
+    expect(formationAt(0)).toBe(0);
+    expect(formationAt(FORMATION.gather)).toBe(1);
+    expect(formationAt(FORMATION.gather + FORMATION.hold / 2)).toBe(1);
+    expect(formationAt(FORMATION.gather + FORMATION.hold + FORMATION.scatter)).toBe(0);
+  });
+
+  it('holds the mark together for long enough to be seen', () => {
+    // A visitor who lands mid-cycle has to meet the mark, not a smear of it.
+    let formed = 0;
+    for (let t = 0; t < FORMATION_PERIOD; t += 50) if (formationAt(t) > 0.9) formed += 50;
+    expect(formed).toBeGreaterThan(5000);
+  });
+
+  it('repeats, and never leaves the rails', () => {
+    for (let t = -FORMATION_PERIOD * 2; t < FORMATION_PERIOD * 3; t += 37) {
+      const value = formationAt(t);
+      expect(value).toBeGreaterThanOrEqual(0);
+      expect(value).toBeLessThanOrEqual(1);
+    }
+    expect(formationAt(1234)).toBeCloseTo(formationAt(1234 + FORMATION_PERIOD), 10);
+  });
+
+  it('eases in and out rather than snapping', () => {
+    expect(ease(0)).toBe(0);
+    expect(ease(1)).toBe(1);
+    expect(ease(0.5)).toBeCloseTo(0.5, 5);
+    // Slower at the ends than in the middle: that is the whole point of easing.
+    expect(ease(0.1)).toBeLessThan(0.1);
+    expect(ease(0.9)).toBeGreaterThan(0.9);
   });
 });

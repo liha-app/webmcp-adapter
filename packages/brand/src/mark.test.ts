@@ -1,6 +1,7 @@
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
+import { MARK_GEOMETRY } from './mark';
 
 /**
  * The components inline geometry that is generated somewhere else, and
@@ -44,6 +45,13 @@ describe('BrandMark', () => {
     const markFn = component.slice(component.indexOf('export function BrandMark'), component.indexOf('export function BrandIcon'));
     expect(markFn).toContain('currentColor');
     expect(markFn).toContain('BRAND_TEAL');
+  });
+});
+
+describe('MARK_GEOMETRY', () => {
+  it('hands out the same four paths the component draws', () => {
+    expect(MARK_GEOMETRY.paths).toEqual(paths(mark));
+    expect(MARK_GEOMETRY.viewBox).toBe(mark.match(/viewBox="([^"]+)"/)![1]);
   });
 });
 
