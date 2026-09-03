@@ -327,7 +327,7 @@ test.describe('Adapter Registry', () => {
   });
 
   test('reports its own WebMCP status on the page', async ({ page }) => {
-    await expect(page.getByRole('status')).toContainText(/WebMCP is not available|implements WebMCP itself/);
+    await expect(page.getByTestId('webmcp-status')).toContainText(/WebMCP is not available|implements WebMCP itself/);
   });
 
   test('says plainly when WebMCP is unavailable rather than pretending', async ({ page }) => {
@@ -349,14 +349,52 @@ test.describe('Adapter Registry', () => {
       });
     });
     await page.goto('http://localhost:5280/');
-    await expect(page.getByRole('status')).toContainText('WebMCP is not available in this browser');
-    await expect(page.getByRole('status')).toContainText('chrome://flags/#enable-webmcp-testing');
+    await expect(page.getByTestId('webmcp-status')).toContainText('WebMCP is not available in this browser');
+    await expect(page.getByTestId('webmcp-status')).toContainText('chrome://flags/#enable-webmcp-testing');
     // And it must not claim to have registered anything it could not register.
-    await expect(page.getByRole('status')).not.toContainText('implements WebMCP itself');
+    await expect(page.getByTestId('webmcp-status')).not.toContainText('implements WebMCP itself');
   });
 
   test('install without the extension reports the truth', async ({ page }) => {
     await page.goto('http://localhost:5280/adapters/demo-crm');
     await expect(page.getByText('The extension will show you the permissions before installing.')).toBeVisible();
+  });
+});
+
+test.describe('Onboard your agent', () => {
+  test.use({ permissions: ['clipboard-read', 'clipboard-write'] });
+
+  test('copies a sentence that points an agent at this origin', async ({ page }) => {
+    await page.goto('http://localhost:5280/');
+    const chip = page.locator('[data-action="copy-agent-prompt"]');
+    await expect(chip).toBeVisible();
+    await expect(page.getByTestId('onboard-status')).toHaveText('');
+
+    await chip.click();
+    await expect(page.getByTestId('onboard-status')).not.toHaveText('');
+
+    const clipboard = await page.evaluate(() => navigator.clipboard.readText());
+    expect(clipboard).toBe(
+      'Fetch and execute the appropriate instructions to set me up for Liha WebMCP Adapter from http://localhost:5280/agent-setup/prompt.md',
+    );
+  });
+
+  test('and that URL serves the document, not the app', async ({ page }) => {
+    // A single-page app with a catch-all fallback will happily answer any path
+    // with index.html. An agent following the sentence would then be reading
+    // HTML and would have no idea why none of it made sense.
+    const response = await page.request.get('http://localhost:5280/agent-setup/prompt.md');
+    expect(response.status()).toBe(200);
+    const body = await response.text();
+    expect(body).not.toContain('<!doctype html');
+    expect(body).toContain('# Onboard your agent to Liha WebMCP Adapter');
+    expect(body).toContain('"capability": "READ"');
+  });
+
+  test('the chip sits above the eyebrow and never covers the headline', async ({ page }) => {
+    await page.goto('http://localhost:5280/');
+    const chip = (await page.locator('[data-action="copy-agent-prompt"]').boundingBox())!;
+    const eyebrow = (await page.locator('.t-eyebrow-super').first().boundingBox())!;
+    expect(chip.y + chip.height).toBeLessThanOrEqual(eyebrow.y + 1);
   });
 });

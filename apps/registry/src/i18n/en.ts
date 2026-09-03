@@ -38,6 +38,9 @@ export const en = {
     'Not affiliated with, endorsed by or connected to Apple Inc. or the App Store. The layout follows Apple’s public design conventions; all names, artwork and copy here are this project’s own.',
 
   /* --------------------------------------------------------------- hero -- */
+  'onboard.chip': 'Onboard your agent to Liha',
+  'onboard.copied': 'Prompt copied. Paste it into your agent.',
+  'onboard.fallback': 'Copy this and paste it into your agent:',
   'hero.eyebrow': 'Liha WebMCP Adapter',
   'hero.headline': 'Make any website agent-ready.',
   'hero.copy': 'Add WebMCP tools to websites that never implemented WebMCP.',

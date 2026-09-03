@@ -8,6 +8,7 @@ import { GITHUB_URL, RELEASES_URL } from '../lib/links';
 import { REGISTRY_TOOLS } from '../lib/webmcp';
 import { useI18n, type MessageKey } from '../i18n';
 import { AdapterIcon, CapabilityBadge } from './components';
+import { AgentOnboard } from './onboard';
 import { ParticleField } from './particlefield';
 import { Flow } from './diagram';
 import { LiveTools } from './live';
@@ -61,6 +62,7 @@ export function Landing() {
       <section className="hero hero--field">
         <ParticleField />
         <div className="section-content">
+          <AgentOnboard />
           <p className="t-eyebrow-super">{t('hero.eyebrow')}</p>
           <h1 className="t-headline-super">{t('hero.headline')}</h1>
           <p className="t-callout hero__copy">{t('hero.copy')}</p>

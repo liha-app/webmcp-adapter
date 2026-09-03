@@ -54,7 +54,7 @@ export function Root() {
       </header>
 
       <div className="statusband">
-        <p className="statusband__inner" role="status">
+        <p className="statusband__inner" role="status" data-testid="webmcp-status">
           {status === null && <span className="dot dot--idle" />}
           {status?.supported === true && <span className="dot dot--on" />}
           {status?.supported === false && <span className="dot dot--off" />}

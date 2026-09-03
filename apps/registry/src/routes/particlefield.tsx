@@ -50,6 +50,13 @@ interface Particle {
 const POINTER_RADIUS = 220;
 const BAND_WIDTH = 150;
 const BAND_SPEED = 0.045;
+/*
+ * Half of a display's frames, and it is not a compromise: the field is a slow
+ * drift and a gather that takes three and a half seconds, so thirty frames a
+ * second is indistinguishable from sixty — while costing half the CPU on every
+ * machine that renders it, and on every laptop running on battery.
+ */
+const FRAME_MS = 32;
 
 /**
  * Points inside the mark, found by drawing it and reading back the pixels.
@@ -128,6 +135,7 @@ export function ParticleField() {
     let visible = true;
     let started = 0;
     let last = 0;
+    let painted = 0;
     const pointer = { x: 0, y: 0, strength: 0, wanted: 0 };
 
     /** The explicit choice wins; otherwise follow the system, same as the CSS. */
@@ -245,11 +253,13 @@ export function ParticleField() {
        * exactly when a visitor is most likely to be moving the pointer about
        * wondering whether the page is alive.
        */
+      frame = requestAnimationFrame(tick);
+      if (now - painted < FRAME_MS) return;
       const step = Math.min(120, now - (last || now));
       last = now;
+      painted = now;
       pointer.strength += (pointer.wanted - pointer.strength) * (1 - Math.exp(-step / 90));
       draw(now - started);
-      frame = requestAnimationFrame(tick);
     }
 
     function start() {
@@ -263,6 +273,7 @@ export function ParticleField() {
       // The clock stops with it, so a background tab does not come back and
       // apply a ten-second easing step in one frame.
       last = 0;
+      painted = 0;
     }
 
     function onPointerMove(event: PointerEvent) {

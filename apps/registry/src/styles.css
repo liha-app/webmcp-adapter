@@ -259,6 +259,32 @@ code, pre { font-family: var(--mono); }
 .hero { text-align: center; padding: 76px 0 60px; }
 
 /*
+ * "Onboard your agent": a pill that copies one sentence.
+ *
+ * The sentence points an agent at /agent-setup/prompt.md, which is written for
+ * agents rather than for people — so the control is small and quiet, sitting
+ * above the eyebrow rather than competing with the headline. It is a shortcut
+ * for the visitor who has an agent open, not the page's argument.
+ */
+.onboard { display: flex; flex-direction: column; align-items: center; gap: 8px; margin-bottom: 22px; }
+.onboard__chip {
+  appearance: none; cursor: pointer;
+  display: inline-flex; align-items: center; gap: 10px;
+  padding: 8px 8px 8px 16px; border-radius: var(--radius-pill);
+  border: 1px solid var(--hairline-strong); background: var(--tile); color: var(--ink);
+  font: inherit; font-size: 14px; line-height: 1.4286; letter-spacing: -0.016em;
+  transition: border-color 0.14s ease, background-color 0.14s ease;
+}
+.onboard__chip:hover { border-color: var(--ink); }
+.onboard__chip:focus-visible { outline: 3px solid var(--blue); outline-offset: 3px; }
+.onboard__icon {
+  display: grid; place-items: center; width: 26px; height: 26px; flex: none;
+  border-radius: 50%; background: var(--sunken); color: var(--ink-2);
+}
+.onboard__icon svg { width: 15px; height: 15px; display: block; }
+.onboard__status { margin: 0; min-height: 17px; font-size: 12px; line-height: 1.3334; color: var(--ink-2); }
+
+/*
  * The hero's particle field.
  *
  * Behind the words, never in front of a click, and masked so it fades out at

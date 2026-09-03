@@ -242,6 +242,27 @@ a desk nobody sells, no logo, no text — and ship as transparent WebP at around
 35KB each. The flow stops at the review, which is where a real store would start
 asking for payment and this one never does.
 
+### Onboarding an agent
+
+The portal's hero carries one control that copies a single sentence:
+
+```
+Fetch and execute the appropriate instructions to set me up for Liha WebMCP
+Adapter from https://webmcp-adopter.liha.dev/agent-setup/prompt.md
+```
+
+Paste it into an agent and it fetches
+[that document](apps/registry/public/agent-setup/prompt.md), which is written
+for agents rather than for people: the whole adapter format, the closed step
+vocabulary, the rules that get an adapter rejected, the portal's own tools for
+validating a draft and probing selectors, and the two things it must not do —
+install anything without the person's confirmation, or report a tool as working
+because the JSON parsed.
+
+The step table in that document is checked against `stepSchema` by a test. An
+agent that follows a doc listing a step the runtime does not have writes an
+adapter that fails validation after it has told someone the work is finished.
+
 ### The Adapter Registry
 
 A public catalogue with search, categories, per-adapter origins, tools, input
