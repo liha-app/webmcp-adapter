@@ -7,7 +7,7 @@ import {
   type Capability,
 } from '@liha/adapter-schema';
 import { detectModelContext } from '@liha/adapter-runtime';
-import { extensionPresent, requestInstall } from '../lib/extension';
+import { extensionPresent, installProblemText, requestInstall } from '../lib/extension';
 import { useI18n } from '../i18n';
 
 /**
@@ -127,7 +127,7 @@ export function AgentBuild() {
     }
     const outcome = await requestInstall(adapter);
     setInstalling(false);
-    setInstalled({ ok: outcome.ok, message: outcome.ok ? t('agent.installed') : outcome.errors.join(' ') });
+    setInstalled({ ok: outcome.ok, message: outcome.ok ? t('agent.installed') : installProblemText(outcome, t) });
   }
 
   /* Which stage is live, derived from the bench rather than from a click: the

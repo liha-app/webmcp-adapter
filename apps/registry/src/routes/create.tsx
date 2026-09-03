@@ -1,7 +1,7 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { detectModelContext } from '@liha/adapter-runtime';
 import { extensionPresent, fetchInstalled } from '../lib/extension';
-import { builtHere, callSnippet, reportsDetail, type Installed } from '../lib/installed';
+import { baselineOf, callSnippet, flowState, reportsDetail, type Baseline, type Installed } from '../lib/installed';
 import { demoApps } from '../lib/demos';
 import { RELEASES_URL } from '../lib/links';
 import { useI18n } from '../i18n';
@@ -11,6 +11,30 @@ import { AgentOnboard } from './onboard';
 import { VendorMark } from './components';
 
 const FLAG_URL = 'chrome://flags/#enable-webmcp-testing';
+
+const BASELINE_KEY = 'liha.create.baseline';
+
+/**
+ * What was already installed when this walkthrough started.
+ *
+ * Session storage rather than memory, because reloading this page is a normal
+ * thing to do halfway through and a baseline that resets would take the ticked
+ * steps with it. Per-tab rather than per-browser, because a second tab is a
+ * second run: whatever it watches happen, it watched happen.
+ *
+ * Storage can be off. That is not an error here — the walkthrough falls back to
+ * claiming nothing, which is what `flowState` does with a null baseline.
+ */
+function readBaseline(): Baseline | null {
+  try {
+    const raw = sessionStorage.getItem(BASELINE_KEY);
+    if (!raw) return null;
+    const parsed: unknown = JSON.parse(raw);
+    return parsed !== null && typeof parsed === 'object' && !Array.isArray(parsed) ? (parsed as Baseline) : null;
+  } catch {
+    return null;
+  }
+}
 
 /**
  * The guided build.
@@ -30,6 +54,11 @@ function useEnvironment() {
   const [webmcp, setWebmcp] = useState<boolean | null>(null);
   const [extension, setExtension] = useState<boolean | null>(null);
   const [installed, setInstalled] = useState<Installed[]>([]);
+  const [baseline, setBaseline] = useState<Baseline | null>(() => readBaseline());
+  // The poll runs on an interval set up once, so it reads the baseline through
+  // a ref: a stale closure here would retake the baseline on every tick and
+  // nothing would ever look new.
+  const known = useRef<Baseline | null>(baseline);
 
   const poll = useCallback(async () => {
     setWebmcp(detectModelContext(document) !== null);
@@ -41,6 +70,22 @@ function useEnvironment() {
     }
     const state = await fetchInstalled();
     setInstalled(state.installed);
+    /*
+     * Taken once, and only from an answer worth trusting. Silence arrives as an
+     * empty list, and a baseline of nothing would make everything already on
+     * this machine look like it had just been built here — the exact reading
+     * this is here to prevent.
+     */
+    if (known.current === null && state.answered && reportsDetail(state.installed)) {
+      const next = baselineOf(state.installed);
+      known.current = next;
+      setBaseline(next);
+      try {
+        sessionStorage.setItem(BASELINE_KEY, JSON.stringify(next));
+      } catch {
+        // Kept for this page's lifetime either way; a reload starts over.
+      }
+    }
   }, []);
 
   useEffect(() => {
@@ -57,7 +102,7 @@ function useEnvironment() {
     };
   }, [poll]);
 
-  return { webmcp, extension, installed, refresh: poll };
+  return { webmcp, extension, installed, baseline, refresh: poll };
 }
 
 function Copy({ text, label }: { text: string; label: string }) {
@@ -113,15 +158,18 @@ function Step({
 
 export function Create() {
   const { t, tx } = useI18n();
-  const { webmcp, extension, installed } = useEnvironment();
+  const { webmcp, extension, installed, baseline } = useEnvironment();
   const shop = useMemo(() => demoApps(window.location.origin).find((app) => app.id === 'demo-shop'), []);
 
   // Read without assuming the extension is as new as this page. An older one
   // answers with fewer fields, which is a browser that cannot report rather
   // than a broken one — and reading `.tools[0]` off it took this page down.
-  const built = builtHere(installed);
-  const newest = built[built.length - 1];
-  const firstTool = newest?.tools[0];
+  //
+  // `made` is the adapter this run watched arrive, not merely the newest thing
+  // on the machine: a community adapter installed last week used to tick step 6
+  // and hand step 7 a snippet for a tool the reader had never built.
+  const { made, existing } = flowState(installed, baseline);
+  const firstTool = made?.tools[0];
   const staleExtension = extension === true && !reportsDetail(installed);
   const snippet = callSnippet(firstTool);
 
@@ -199,17 +247,17 @@ export function Create() {
             <Step
               index={6}
               title={t('create.step6')}
-              done={built.length > 0}
+              done={Boolean(made)}
               waiting={extension === true && !staleExtension}
             >
               <p className="muted">{t('create.step6Body')}</p>
               {staleExtension && <p className="notice">{t('create.staleExtension')}</p>}
-              {newest && (
-                <div className="built">
-                  <strong>{newest.name}</strong> <code>{newest.id}</code>
-                  <div className="origins">{newest.origins.join('  ')}</div>
+              {made && (
+                <div className="built" data-testid="built-here">
+                  <strong>{made.name}</strong> <code>{made.id}</code>
+                  <div className="origins">{made.origins.join('  ')}</div>
                   <div className="built__tools">
-                    {newest.tools.map((tool) => (
+                    {made.tools.map((tool) => (
                       <span key={tool.name} className="built__tool">
                         <code>{tool.name}</code> <span className={`cap cap--${tool.capability}`}>{tool.capability}</span>
                       </span>
@@ -222,7 +270,7 @@ export function Create() {
             <Step index={7} title={t('create.step7')} done={false}>
               {firstTool ? (
                 <>
-                  <p className="muted">{tx('create.step7Body', [newest?.origins[0] ?? ''])}</p>
+                  <p className="muted">{tx('create.step7Body', [made?.origins[0] ?? ''])}</p>
                   <div className="codeblock">
                     <pre>{snippet}</pre>
                     <Copy text={snippet} label={t('create.copySnippet')} />
@@ -233,6 +281,27 @@ export function Create() {
               )}
             </Step>
           </ol>
+
+          {/*
+            * The adapters that were already here, kept away from the steps.
+            *
+            * They are worth showing — they are why the extension has anything
+            * in it — but they are not evidence that this walkthrough got
+            * anywhere, and the page used to present them as though they were.
+            */}
+          {existing.length > 0 && (
+            <section className="already" data-testid="already-installed">
+              <h3 className="already__title">{t('create.alreadyTitle')}</h3>
+              <p className="muted">{t('create.alreadyBody')}</p>
+              <ul className="plainlist">
+                {existing.map((entry) => (
+                  <li key={entry.id}>
+                    <strong>{entry.name}</strong> <code>{entry.id}</code>
+                  </li>
+                ))}
+              </ul>
+            </section>
+          )}
 
           <p className="muted buildfoot">{t('create.footnote')}</p>
         </div>

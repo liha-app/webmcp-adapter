@@ -294,7 +294,7 @@ export const ja: Record<MessageKey, string> = {
   'store.featureHeadline': 'Adapter {0}個、ツール{1}個。そのどこにもJavaScriptは1行もありません。',
   'store.featureCopy':
     'stepの語彙には{0}も式言語もありません。だからコミュニティのAdapterは、信用するしかないものではなく、読めるものになります。',
-  'store.newAdapters': '投稿された新しいAdapter',
+  'store.newAdapters': '新着Adapter',
   'store.shelfMatching': '条件に合うAdapter',
   'store.count': '{0}件',
   'store.countOne': '1件',
@@ -327,6 +327,7 @@ export const ja: Record<MessageKey, string> = {
   'detail.back': 'Storeに戻る',
   'detail.install': 'インストール',
   'detail.reinstall': '再インストール',
+  'detail.reinstallWhy': '同じバージョンを入れ直します。サイト側が変わってしまったAdapterの修復用です。',
   'detail.installedNow': 'インストール済み',
   'detail.update': '{0} に更新',
   'detail.nextOpen': '{0} を開く',
@@ -410,6 +411,11 @@ export const ja: Record<MessageKey, string> = {
   'create.staleExtension':
     'お使いの拡張機能はこのページより古く、インストール済みの内容を報告できません。更新するとこのステップが動き始めます。それ以外はそのまま使えます。',
   'create.copySnippet': 'コードをコピー',
+  'create.alreadyTitle': 'すでに入っているAdapter',
+  'create.alreadyBody':
+    'この手順を始める前からインストールされていたAdapterです。上の手順とは別のもので、ここで記録したAdapterが現れたときに完了になります。',
+  'install.noResponse': '拡張機能から応答がありませんでした。インストールされ、有効になっているか確認してからやり直してください。',
+  'install.noResult': '拡張機能が結果を返しませんでした。もう一度インストールしてください。',
   'create.footnote':
     '同じ定義はファイルとして持ち出せます。Studio の「JSON を書き出す」で公開でき、「native WebMCP を書き出す」ではサイト自身の開発者が実装するコード — Adapter を不要にする版 — が出てきます。',
 };

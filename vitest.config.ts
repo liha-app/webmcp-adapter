@@ -5,6 +5,9 @@ export default defineConfig({
   esbuild: { jsx: 'automatic' },
   test: {
     environment: 'jsdom',
+    // jsdom has no layout; the shim keeps its "Not implemented" notices out of
+    // the run without changing what the apps do.
+    setupFiles: ['tools/test/jsdom.ts'],
     include: [
       'packages/**/src/**/*.test.ts',
       'apps/**/src/**/*.test.ts',

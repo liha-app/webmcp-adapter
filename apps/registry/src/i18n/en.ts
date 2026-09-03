@@ -288,7 +288,7 @@ export const en = {
   'store.featureHeadline': '{0} adapters, {1} tools, and not one line of JavaScript between them.',
   'store.featureCopy':
     'The step vocabulary has no {0} and no expression language, so a community adapter is something you can read rather than something you have to trust.',
-  'store.newAdapters': 'Newly published adapters',
+  'store.newAdapters': 'Recently added adapters',
   'store.shelfMatching': 'Matching adapters',
   'store.count': '{0} adapters',
   'store.countOne': '1 adapter',
@@ -321,6 +321,7 @@ export const en = {
   'detail.back': 'Back to the Store',
   'detail.install': 'Install',
   'detail.reinstall': 'Reinstall',
+  'detail.reinstallWhy': 'Put the same version back — for an adapter whose site has moved under it.',
   'detail.installedNow': 'Installed',
   'detail.update': 'Update to {0}',
   'detail.nextOpen': 'Open {0}',
@@ -404,6 +405,11 @@ export const en = {
   'create.staleExtension':
     'Your extension is older than this page and cannot report what is installed. Update it and this step starts working; everything else here still does.',
   'create.copySnippet': 'Copy the snippet',
+  'create.alreadyTitle': 'Already in your extension',
+  'create.alreadyBody':
+    'Adapters you installed before this walkthrough. They are not part of the steps above — the build is finished when the one you record here shows up.',
+  'install.noResponse': 'The extension did not answer. Check that it is installed and enabled, then try again.',
+  'install.noResult': 'The extension answered without a result. Try the install again.',
   'create.footnote':
     'The same definition is a file you can keep: Export JSON in the Studio publishes it, and Export native WebMCP writes the implementation the site’s own developers would ship — the version that makes the adapter unnecessary.',
 } as const;

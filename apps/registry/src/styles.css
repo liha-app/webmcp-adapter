@@ -580,6 +580,12 @@ pre {
 .product__badges { display: flex; align-items: center; gap: 6px; margin-top: 12px; }
 .product__actions { margin-top: 18px; display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
 .product__hint { font-size: 13px; line-height: 1.3846; color: var(--store-ink-2); }
+/* Reinstall, once an adapter is already in. A repair belongs on the status
+   line at the size of the status, not in the action row at the size of the
+   button that installed it. */
+.linkbutton { appearance: none; background: none; border: 0; padding: 0; font: inherit; color: var(--store-blue); cursor: pointer; }
+.linkbutton:hover { text-decoration: underline; }
+.linkbutton:disabled { opacity: 0.5; cursor: default; text-decoration: none; }
 @media (max-width: 734px) {
   .product__inner { padding: 20px 20px 56px; }
   .product__head { grid-template-columns: 88px minmax(0, 1fr); gap: 16px; }
@@ -717,6 +723,10 @@ details pre { margin-top: 10px; }
 .lede--narrow { max-width: 62ch; }
 .buildlist { margin-top: 44px; }
 .buildfoot { max-width: 62ch; margin-top: 36px; }
+/* What was already installed, held apart from the steps it is not evidence of. */
+.already { margin-top: 40px; padding-top: 24px; border-top: 1px solid light-dark(rgba(0, 0, 0, 0.1), rgba(255, 255, 255, 0.12)); max-width: 62ch; }
+.already__title { font-size: 17px; margin: 0 0 6px; }
+.already .plainlist { margin-top: 10px; }
 .build .notice { border: 1px solid light-dark(#b45309, #e0a458); color: light-dark(#b45309, #e0a458); background: light-dark(rgba(180,83,9,.07), rgba(224,164,88,.1)); border-radius: 9px; padding: 10px 13px; font-size: 14px; }
 
 /* ═════════════════════════════════════════════════════ the Studio bench ═══ */

@@ -11,7 +11,7 @@ import {
   toolEffectSummary,
   verifiedDate,
 } from '../lib/catalog-copy';
-import { extensionPresent, fetchInstalled, requestInstall } from '../lib/extension';
+import { extensionPresent, fetchInstalled, installProblemText, requestInstall } from '../lib/extension';
 import { RELEASES_URL } from '../lib/links';
 import { useI18n } from '../i18n';
 import { AdapterIcon, CapabilityBadge, HealthBadge } from './components';
@@ -107,38 +107,26 @@ export function AdapterDetail() {
                  * where there is a newer version to move to.
                  *
                  * Putting an adapter back is a repair — for a community adapter
-                 * whose site moved under it — so it stays reachable, as the
-                 * quiet second control rather than as the thing that looks like
-                 * the next step.
+                 * whose site moved under it — so it stays reachable. As a
+                 * repair, though: it sat in the action row at the same size as
+                 * the button beside it, which made a finished install look like
+                 * it still had a step left. It lives on the status line now.
                  */
-                <>
-                  <button
-                    type="button"
-                    className="getbutton getbutton--filled getbutton--large"
-                    data-action={live && !upgrade ? undefined : 'install-adapter'}
-                    disabled={extension.data !== true || install.isPending || (Boolean(live) && !upgrade)}
-                    onClick={() => install.mutate()}
-                  >
-                    {install.isPending
-                      ? t('detail.installing')
-                      : upgrade
-                        ? t('detail.update', [entry.adapter.version])
-                        : live
-                          ? t('detail.installedNow')
-                          : t('detail.install')}
-                  </button>
-                  {live && !upgrade && (
-                    <button
-                      type="button"
-                      className="getbutton getbutton--large"
-                      data-action="install-adapter"
-                      disabled={extension.data !== true || install.isPending}
-                      onClick={() => install.mutate()}
-                    >
-                      {t('detail.reinstall')}
-                    </button>
-                  )}
-                </>
+                <button
+                  type="button"
+                  className="getbutton getbutton--filled getbutton--large"
+                  data-action={live && !upgrade ? undefined : 'install-adapter'}
+                  disabled={extension.data !== true || install.isPending || (Boolean(live) && !upgrade)}
+                  onClick={() => install.mutate()}
+                >
+                  {install.isPending
+                    ? t('detail.installing')
+                    : upgrade
+                      ? t('detail.update', [entry.adapter.version])
+                      : live
+                        ? t('detail.installedNow')
+                        : t('detail.install')}
+                </button>
               )}
               <p className="product__hint">
                 {extension.data === false
@@ -146,11 +134,26 @@ export function AdapterDetail() {
                   : live
                     ? t('detail.installedHere')
                     : t('detail.willShowPermissions')}
+                {live && !upgrade && extension.data === true && (
+                  <>
+                    {' · '}
+                    <button
+                      type="button"
+                      className="linkbutton"
+                      data-action="install-adapter"
+                      disabled={install.isPending}
+                      onClick={() => install.mutate()}
+                      title={t('detail.reinstallWhy')}
+                    >
+                      {t('detail.reinstall')}
+                    </button>
+                  </>
+                )}
               </p>
             </div>
             {install.data && (
               <p className={install.data.ok ? 'ok' : 'problem'} data-testid="install-result">
-                {install.data.ok ? t('detail.installOk') : install.data.errors.join('; ')}
+                {install.data.ok ? t('detail.installOk') : installProblemText(install.data, t)}
               </p>
             )}
             {/*
