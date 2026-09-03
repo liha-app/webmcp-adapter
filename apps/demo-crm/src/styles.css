@@ -11,6 +11,11 @@
 :root {
   color-scheme: light dark;
 
+  /* The page shell. The demo bar reads it too, so its edges line up with
+   * this site's rather than with a width of its own. */
+  --shell: 1080px;
+  --gutter: 40px;
+
   --page: light-dark(#ffffff, #17181a);
   --raised: light-dark(#f3f4f6, #202124);
   --raised-2: light-dark(#e9ebef, #26282b);
@@ -32,11 +37,11 @@ body { background: var(--page); color: var(--ink); font: 500 15px/1.4667 var(--f
   display: flex; align-items: center; background: var(--page);
   border-bottom: 1px solid var(--hairline);
 }
-.topbar__inner { width: 1080px; max-width: calc(100% - 40px); margin: 0 auto; display: flex; align-items: center; gap: 14px; }
+.topbar__inner { width: var(--shell); max-width: calc(100% - var(--gutter)); margin: 0 auto; display: flex; align-items: center; gap: 14px; }
 .topbar__brand { font-size: 15px; font-weight: 600; letter-spacing: -0.014em; margin-right: auto; }
 .topbar__actions { display: flex; align-items: center; gap: 8px; }
 
-.app { width: 1080px; max-width: calc(100% - 40px); margin: 0 auto; padding: 36px 0 88px; }
+.app { width: var(--shell); max-width: calc(100% - var(--gutter)); margin: 0 auto; padding: 36px 0 88px; }
 .pagehead { margin-bottom: 24px; }
 h1 { margin: 0; font-size: 30px; line-height: 1.13; font-weight: 600; letter-spacing: -0.02em; }
 .app__subtitle { margin: 7px 0 0; font-size: 15px; color: var(--muted); letter-spacing: -0.008em; }

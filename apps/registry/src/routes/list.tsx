@@ -7,7 +7,7 @@ import { CAPABILITY_OPTIONS } from '../lib/webmcp';
 import { useI18n } from '../i18n';
 import { demoApps } from '../lib/demos';
 import { GITHUB_URL, RELEASES_URL } from '../lib/links';
-import { AdapterIcon, BrandMark, CapabilityBadge, HealthBadge } from './components';
+import { AdapterIcon, BrandIcon, CapabilityBadge, HealthBadge } from './components';
 import { listRoute } from './tree';
 
 /**
@@ -225,7 +225,7 @@ export function AdapterList() {
           <ul className="shelf__body" style={{ gridTemplateColumns: 'minmax(0, 1fr)' }}>
             <li className="lockup">
               <div className="lockup__inner">
-                <BrandMark size={64} />
+                <BrandIcon size={64} />
                 <div className="lockup__text">
                   <span className="lockup__title">{t('store.extName')}</span>
                   <span className="lockup__sub">{t('store.extSub')}</span>

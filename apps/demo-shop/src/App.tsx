@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { ThemeControl } from "@liha/demo-ui/theme";
+import { DemoBar } from '@liha/demo-ui/demobar';
 import type { BagLine, Coupon, Option, Shot, Step, StepId } from "./types";
 
 const BASE = 899;
@@ -231,6 +232,8 @@ export function App() {
 
   return (
     <>
+      <DemoBar site="demo-shop" />
+
       <header className="topbar">
         <div className="topbar__inner">
           <span className="topbar__brand">Nimbus Supply</span>

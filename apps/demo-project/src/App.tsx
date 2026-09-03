@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react';
 import { ThemeControl } from '@liha/demo-ui/theme';
+import { DemoBar } from '@liha/demo-ui/demobar';
 import type { Task, TaskStatus } from './types';
 
 const PEOPLE = ['Unassigned', 'Mika Tanaka', 'Jordan Reyes', 'Priya Nair'];
@@ -62,6 +63,8 @@ export function App() {
         * do on the right, and it stays put — an action you reach for should not
         * be something you scroll back to.
         */}
+      <DemoBar site="demo-project" />
+
       <header className="topbar">
         <div className="topbar__inner">
           <span className="topbar__brand">Kite Project Manager</span>

@@ -13,13 +13,14 @@
     "@liha/adapter-runtime": "workspace:*",
     "@liha/adapter-schema": "workspace:*",
     "@liha/adapters": "workspace:*",
+    "@liha/brand": "workspace:*",
+    "@liha/config": "workspace:*",
     "@liha/shared": "workspace:*",
     "@tanstack/react-query": "^5.62.7",
     "@tanstack/react-router": "^1.87.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
-    "zod": "^3.24.1",
-    "@liha/config": "workspace:*"
+    "zod": "^3.24.1"
   },
   "devDependencies": {
     "@types/react": "^19.0.2",

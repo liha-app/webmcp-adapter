@@ -26,7 +26,7 @@ export function Root() {
       <header className="globalnav">
         <nav className="globalnav__inner" aria-label="Global">
           <Link to="/" className="globalnav__brand">
-            <BrandMark className="globalnav__mark" size={18} />
+            <BrandMark className="globalnav__mark" size={20} />
             <span className="globalnav__brandname">
               <strong>Liha</strong> WebMCP Adapter
             </span>

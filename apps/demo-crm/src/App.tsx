@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react';
 import { ThemeControl } from '@liha/demo-ui/theme';
+import { DemoBar } from '@liha/demo-ui/demobar';
 import type { Customer } from './types';
 
 const SEED: Customer[] = [
@@ -91,6 +92,8 @@ export function App() {
         * do on the right, and it stays put — an action you reach for should not
         * be something you scroll back to.
         */}
+      <DemoBar site="demo-crm" />
+
       <header className="topbar">
         <div className="topbar__inner">
           <span className="topbar__brand">Acme CRM</span>

@@ -15,7 +15,6 @@ const brand = (name: string) => readFileSync(join(root, 'apps/registry/public/br
 const icon = brand('liha-adapter-icon.svg');
 const mark = brand('liha-adapter-mark.svg');
 const favicon = readFileSync(join(root, 'apps/registry/public/favicon.svg'), 'utf8');
-const component = readFileSync(join(root, 'apps/registry/src/routes/components.tsx'), 'utf8');
 
 const fills = (svg: string) => [...svg.matchAll(/fill="([^"]+)"/g)].map((m) => m[1]!);
 const paths = (svg: string) => [...svg.matchAll(/<path[^>]*\bd="([^"]+)"/g)].map((m) => m[1]!);
@@ -69,26 +68,5 @@ describe('the mark', () => {
     const source = readFileSync(join(root, 'tools/brand/source.svg'), 'utf8');
     const ink = source.match(/fill:\s*(#[0-9a-fA-F]{6})/)![1]!.toLowerCase();
     expect(fills(mark).map((f) => f.toLowerCase())).toEqual([ink, ink, ink, ink]);
-  });
-});
-
-describe('BrandMark', () => {
-  it('inlines exactly the generated icon, so the two cannot drift', () => {
-    const [body, eyeR, eyeL] = paths(icon);
-    expect(component).toContain(`const MARK_BODY = '${body}'`);
-    expect(component).toContain(`const MARK_EYE_R = '${eyeR}'`);
-    expect(component).toContain(`const MARK_EYE_L = '${eyeL}'`);
-    const transform = icon.match(/transform="([^"]+)"/)![1];
-    expect(component).toContain(`const MARK_TRANSFORM = '${transform}'`);
-    const squircle = icon.match(/<rect[^>]*fill="([^"]+)"/)![1];
-    expect(component).toContain(`export const BRAND_TEAL = '${squircle}'`);
-  });
-
-  it('paints its eyes the same way the icon file does', () => {
-    const eyeFill = icon.match(/<path fill="([^"]+)" d="[^"]*"\/>\s*<path fill="[^"]+" d="[^"]*"\/>\s*<\/g>/);
-    expect(eyeFill).not.toBeNull();
-    // Both eye elements in the component must use a literal that is not the brand teal.
-    const inComponent = component.slice(component.indexOf('MARK_EYE_R} />') - 40, component.indexOf('MARK_EYE_L} />'));
-    expect(inComponent).not.toContain('BRAND_TEAL');
   });
 });

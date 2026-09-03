@@ -1,13 +1,12 @@
 {
-  "name": "@liha/demo-ui",
+  "name": "@liha/brand",
   "version": "1.0.3",
   "private": true,
   "type": "module",
   "exports": {
-    "./styles.css": "./styles.css",
-    "./theme": "./src/theme.tsx",
-    "./demobar": "./src/demobar.tsx"
+    ".": "./src/mark.tsx"
   },
+  "types": "./src/mark.tsx",
   "peerDependencies": {
     "react": "^19.0.0"
   },
@@ -17,9 +16,5 @@
   "devDependencies": {
     "@types/react": "^19.0.2",
     "typescript": "^5.7.2"
-  },
-  "dependencies": {
-    "@liha/brand": "workspace:*",
-    "@liha/config": "workspace:*"
   }
 }

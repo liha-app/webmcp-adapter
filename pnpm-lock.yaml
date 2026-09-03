@@ -172,6 +172,9 @@ importers:
       '@liha/adapters':
         specifier: workspace:*
         version: link:../../adapters
+      '@liha/brand':
+        specifier: workspace:*
+        version: link:../../packages/brand
       '@liha/config':
         specifier: workspace:*
         version: link:../../packages/config
@@ -219,10 +222,29 @@ importers:
         specifier: ^3.24.1
         version: 3.25.76
 
+  packages/brand:
+    dependencies:
+      react:
+        specifier: ^19.0.0
+        version: 19.2.8
+    devDependencies:
+      '@types/react':
+        specifier: ^19.0.2
+        version: 19.2.18
+      typescript:
+        specifier: ^5.7.2
+        version: 5.9.3
+
   packages/config: {}
 
   packages/demo-ui:
     dependencies:
+      '@liha/brand':
+        specifier: workspace:*
+        version: link:../brand
+      '@liha/config':
+        specifier: workspace:*
+        version: link:../config
       react:
         specifier: ^19.0.0
         version: 19.2.8
