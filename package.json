@@ -36,10 +36,11 @@
     "acceptance": "node tools/acceptance/run.mjs",
     "chrome:install": "npx --yes @puppeteer/browsers install chrome@stable --path .cache/chrome",
     "acceptance:full": "node tools/acceptance/full.mjs",
-    "acceptance:all": "pnpm acceptance && pnpm acceptance:full && pnpm acceptance:recorder && pnpm acceptance:icons",
+    "acceptance:all": "pnpm acceptance && pnpm acceptance:full && pnpm acceptance:recorder && pnpm acceptance:icons && pnpm acceptance:csp",
     "acceptance:recorder": "node tools/acceptance/recorder.mjs",
     "acceptance:prod": "node tools/acceptance/production.mjs",
     "acceptance:icons": "node tools/acceptance/icons.mjs",
+    "acceptance:csp": "node tools/acceptance/csp.mjs",
     "demo:studio": "node tools/demo/studio.mjs",
     "e2e": "playwright test",
     "demo": "pnpm --parallel -r preview"

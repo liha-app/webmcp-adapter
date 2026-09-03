@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import { ThemeControl } from '@liha/demo-ui/theme';
 import type { Task, TaskStatus } from './types';
 
 const PEOPLE = ['Unassigned', 'Mika Tanaka', 'Jordan Reyes', 'Priya Nair'];
@@ -65,6 +66,7 @@ export function App() {
         <div className="topbar__inner">
           <span className="topbar__brand">Kite Project Manager</span>
           <div className="topbar__actions">
+            <ThemeControl />
             <button type="button" className="btn btn--primary" data-action="new-task" onClick={() => setFormOpen(true)}>
               New task
             </button>

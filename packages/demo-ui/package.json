@@ -3,5 +3,18 @@
   "version": "1.0.3",
   "private": true,
   "type": "module",
-  "exports": { "./styles.css": "./styles.css" }
+  "exports": {
+    "./styles.css": "./styles.css",
+    "./theme": "./src/theme.tsx"
+  },
+  "peerDependencies": {
+    "react": "^19.0.0"
+  },
+  "scripts": {
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "devDependencies": {
+    "@types/react": "^19.0.2",
+    "typescript": "^5.7.2"
+  }
 }

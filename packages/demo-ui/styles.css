@@ -257,3 +257,43 @@ select {
   .list__row { grid-template-columns: 1fr auto !important; row-gap: 6px; }
   .list__row > *:not(.list__name):not(.btn) { grid-column: 1; }
 }
+
+/* ---------------------------------------------------------- appearance --- */
+/*
+ * The switch itself: pinning `color-scheme` is the whole mechanism. There is no
+ * second palette — `light-dark()` above reads whichever one is in force — so
+ * there is nothing here that can fall out of step with the light styles.
+ */
+:root[data-theme='light'] { color-scheme: light; }
+:root[data-theme='dark'] { color-scheme: dark; }
+
+.segmented {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  flex: none;
+  padding: 2px;
+  border-radius: 8px;
+  background: light-dark(rgba(0, 0, 0, 0.05), rgba(255, 255, 255, 0.09));
+}
+.segmented button {
+  appearance: none;
+  border: 0;
+  cursor: pointer;
+  background: transparent;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--ink);
+  border-radius: 6px;
+  padding: 4px 8px;
+  min-width: 26px;
+  height: 22px;
+  transition: background-color 0.12s ease;
+}
+.segmented button:hover { background: light-dark(rgba(0, 0, 0, 0.05), rgba(255, 255, 255, 0.08)); }
+.segmented button[aria-checked='true'] {
+  background: light-dark(#ffffff, #5a5a5e);
+  box-shadow: 0 1px 2px light-dark(rgba(0, 0, 0, 0.14), rgba(0, 0, 0, 0.4));
+}
+.segmented svg { width: 13px; height: 13px; display: block; }

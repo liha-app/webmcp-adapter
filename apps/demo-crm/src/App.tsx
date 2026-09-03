@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import { ThemeControl } from '@liha/demo-ui/theme';
 import type { Customer } from './types';
 
 const SEED: Customer[] = [
@@ -86,6 +87,7 @@ export function App() {
         <div className="topbar__inner">
           <span className="topbar__brand">Acme CRM</span>
           <div className="topbar__actions">
+            <ThemeControl />
             <button type="button" className="btn btn--primary" data-action="add-customer" onClick={openCreate}>
               Add customer
             </button>

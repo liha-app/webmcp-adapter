@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import { ThemeControl } from '@liha/demo-ui/theme';
 import type { CartLine, Coupon, Product } from './types';
 
 const PRODUCTS: Product[] = [
@@ -93,6 +94,7 @@ export function App() {
         <div className="topbar__inner">
           <span className="topbar__brand">Nimbus Supply</span>
           <nav className="topbar__actions">
+            <ThemeControl />
             <button
               type="button"
               className={`btn ${onCart ? '' : 'btn--primary'}`}
