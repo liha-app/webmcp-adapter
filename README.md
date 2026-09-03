@@ -58,7 +58,7 @@ pnpm acceptance:recorder   37/37 checks — record a workflow, get a valid adapt
 pnpm acceptance:csp        4/4 sites load under the policy they ship
 pnpm acceptance:icons      6/6 checks — Chrome parses the extension's icons and
                            can resolve every path it was given
-pnpm verify                510 unit + integration tests, typecheck, lint, build
+pnpm verify                523 unit + integration tests, typecheck, lint, build
 pnpm e2e                   50 Playwright tests
 ```
 
@@ -390,7 +390,7 @@ Full model, including the MAIN-world limitation this cannot engineer away:
 ## Verifying it yourself
 
 ```bash
-pnpm verify           # typecheck, lint, 510 unit + integration tests, build
+pnpm verify           # typecheck, lint, 523 unit + integration tests, build
 pnpm e2e              # 50 Playwright tests against the portal and the demo apps
 pnpm acceptance:all   # four real-browser runs through the WebMCP protocol
 pnpm acceptance:prod  # 41 checks against the deployed sites, not a local build

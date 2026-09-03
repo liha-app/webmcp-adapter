@@ -171,7 +171,14 @@ protects is a guess. Nothing in the build needs an inline
 script or an external origin, so a strict policy holds:
 
 ```
-Content-Security-Policy: default-src 'self'; img-src 'self' data:; style-src 'self' 'unsafe-inline'; script-src 'self'; connect-src 'self'; frame-ancestors 'none'; base-uri 'none'
+Content-Security-Policy: default-src 'self'; img-src 'self' data:; style-src 'self' 'unsafe-inline'; script-src 'self'; connect-src 'self' https://raw.githubusercontent.com; frame-ancestors 'none'; base-uri 'none'
+
+`connect-src` names one host besides this one. The Store reads its catalogue
+from the public adapter registry at
+`raw.githubusercontent.com/liha-app/adapter-registry`, treats the answer as
+untrusted, and falls back to the bundled official collection if the fetch, the
+schema check or `validateAdapter` says no. It is the only outside origin any
+page here is allowed to talk to.
 Referrer-Policy: strict-origin-when-cross-origin
 X-Content-Type-Options: nosniff
 ```

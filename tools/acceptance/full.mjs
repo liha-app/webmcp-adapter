@@ -487,9 +487,23 @@ async function main() {
     /* ----------------------------------------------------- Store install -- */
     group('Installing from the Store shows the permission summary first');
     await page.goto('http://localhost:5280/adapters/demo-project');
+    /*
+     * Wait for the button to be usable, not merely present.
+     *
+     * The Store disables Install until it has heard back from the extension,
+     * which is the right behaviour — offering an install to a browser that
+     * cannot perform one is a lie. It also means a click that lands on the
+     * rendered-but-disabled button does nothing, and this group then fails
+     * claiming a web page installed without confirmation. It did not; nothing
+     * happened at all.
+     */
     must(
-      await waitFor(async () => page.eval(`Boolean(document.querySelector('[data-action="install-adapter"]'))`)),
-      'the adapter detail page rendered',
+      await waitFor(async () =>
+        page.eval(
+          `(() => { const b = document.querySelector('[data-action="install-adapter"]'); return Boolean(b) && !b.disabled; })()`,
+        ),
+      ),
+      'the adapter detail page rendered, with Install ready',
     );
     await page.eval(`document.querySelector('[data-action="install-adapter"]').click()`);
     const installPrompt = await answerConfirmation(browser, 'deny');
