@@ -49,6 +49,20 @@ export function AgentOnboard() {
     <div className="onboard">
       <button type="button" className="onboard__chip" onClick={copy} data-action="copy-agent-prompt">
         <span className="onboard__label">{t('onboard.chip')}</span>
+        {/*
+          * Which agents, named rather than drawn.
+          *
+          * Cloudflare shows the vendors' logos here. Reproducing those from
+          * memory would put four inaccurate imitations of other people's marks
+          * on the page, and using the real files is a licensing decision that
+          * belongs to whoever owns this site, not to whoever built the chip.
+          * The names say the same thing and are simply true — and the actual
+          * requirement is narrower than any list: an agent that can fetch a
+          * URL can follow this.
+          */}
+        <span className="onboard__agents" title={t('onboard.agentsTitle')}>
+          {t('onboard.agents')}
+        </span>
         <span className="onboard__icon" aria-hidden="true">
           {copied ? (
             <svg viewBox="0 0 16 16">

@@ -277,6 +277,16 @@ code, pre { font-family: var(--mono); }
 }
 .onboard__chip:hover { border-color: var(--ink); }
 .onboard__chip:focus-visible { outline: 3px solid var(--blue); outline-offset: 3px; }
+.onboard__agents {
+  display: none;
+  padding-left: 12px;
+  border-left: 1px solid var(--hairline);
+  color: var(--ink-2);
+  font-size: 13px;
+  letter-spacing: -0.008em;
+  white-space: nowrap;
+}
+@media (min-width: 735px) { .onboard__agents { display: inline; } }
 .onboard__icon {
   display: grid; place-items: center; width: 26px; height: 26px; flex: none;
   border-radius: 50%; background: var(--sunken); color: var(--ink-2);

@@ -43,7 +43,9 @@ export const ja: Record<MessageKey, string> = {
     'Apple Inc. およびApp Storeとは一切関係がなく、承認も受けていません。レイアウトはAppleが公開しているデザイン上の慣習に倣っていますが、名称・図版・文章はすべて本プロジェクト独自のものです。',
 
   /* --------------------------------------------------------------- hero -- */
-  'onboard.chip': 'エージェントにLihaを教える',
+  'onboard.chip': 'エージェントに Liha WebMCP Adapter を教える',
+  'onboard.agents': 'Claude · ChatGPT · Cursor · Copilot',
+  'onboard.agentsTitle': 'URLを取得できるエージェントなら何でも',
   'onboard.copied': 'コピーしました。エージェントに貼り付けてください。',
   'onboard.fallback': 'これをコピーしてエージェントに貼り付けてください：',
   'hero.eyebrow': 'Liha WebMCP Adapter',
