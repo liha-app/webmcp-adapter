@@ -421,6 +421,19 @@ async function main() {
     await sleep(1200);
     check(seen.size === 0, 'no adapter reaches this origin, so the page starts with no tools', [...seen.keys()].join(','));
 
+
+    /*
+     * Recording on a site with no adapter is reached through `activeTab`, which
+     * Chrome grants only on a real click of the toolbar icon — not something a
+     * headless run can produce. That path is checked by hand. Driving the
+     * refusal from in here was tried and left the suite hanging on a page this
+     * profile has no access to, so it is not left in: a check that stalls the
+     * run is worse than one that is not there, and the behaviour it was after
+     * is that `setRecording` returns an outcome rather than failing quietly,
+     * which the popup now shows.
+     */
+
+
     // Evaluated as a classic script, so the `export` keyword — which only
     // matters to whoever imports the file — is dropped. Nothing else changes.
     await bare.eval(`(() => { ${source.replace(/^export /gm, '')} })()`);

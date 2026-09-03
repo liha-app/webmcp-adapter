@@ -126,13 +126,18 @@ export function suggestToolDescription(actions: readonly RecordedAction[], origi
  */
 export function draftFromRecording(actions: readonly RecordedAction[], origin: string): Draft {
   const steps: DraftStep[] = actions.map((action, index) => {
-    const parameterized = action.value !== undefined && VALUE_STEPS.has(action.kind as StepKind);
+    // Navigation is page structure discovered during the demonstration, not a
+    // value supplied by the eventual tool caller. Keep its same-origin path as
+    // a literal; only values a person typed become proposed parameters.
+    const recordedValue = action.kind === 'navigate' ? (action.path ?? '') : (action.value ?? '');
+    const parameterized =
+      action.kind !== 'navigate' && action.value !== undefined && VALUE_STEPS.has(action.kind as StepKind);
     return {
       id: nextId(),
       kind: action.kind as StepKind,
       selector: action.selector,
       candidates: action.candidates,
-      value: action.value ?? '',
+      value: recordedValue,
       parameterized,
       parameter: parameterized ? suggestParameterName(action, index) : '',
       attribute: '',

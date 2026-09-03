@@ -1,14 +1,6 @@
 import type { RecordedAction, RecordingState } from '@liha/shared';
 
-/**
- * Recorder session state.
- *
- * Held in memory only. Recorded actions carry the values a person typed while
- * demonstrating the workflow, and those never reach storage: the Studio reads
- * them from the live session, and stopping the recording drops them.
- */
-let session: RecordingState | null = null;
-
+const STORAGE_KEY = 'liha:recording-session';
 const MAX_ACTIONS = 200;
 
 /**
@@ -42,34 +34,141 @@ export function mergeAction(actions: RecordedAction[], action: RecordedAction): 
   return sameGesture ? [...actions.slice(0, -1), action] : [...actions, action];
 }
 
-export function startRecording(tabId: number, origin: string): RecordingState {
-  session = { tabId, origin, startedAt: Date.now(), actions: [] };
-  return session;
+interface RecordingSnapshot {
+  session: RecordingState | null;
+  lastTake: RecordingState | null;
 }
 
-export function addAction(tabId: number, action: RecordedAction): void {
-  if (!session || session.tabId !== tabId) return;
-  if (session.actions.length >= MAX_ACTIONS) return;
-  session.actions = mergeAction(session.actions, action);
+interface SessionStorageArea {
+  get(key: string): Promise<Record<string, unknown>>;
+  set(items: Record<string, unknown>): Promise<void>;
 }
 
-export function getRecording(): RecordingState | null {
-  return session;
+export type ResumePageOutcome = 'inactive' | 'resumed' | 'origin-mismatch';
+
+const EMPTY: RecordingSnapshot = { session: null, lastTake: null };
+
+function pathOf(href: string): string {
+  const url = new URL(href);
+  return `${url.pathname}${url.search}${url.hash}` || '/';
 }
 
-export function stopRecording(): RecordingState | null {
-  const finished = session;
-  session = null;
-  return finished;
-}
+/**
+ * Recorder state that survives a Manifest V3 service-worker restart.
+ *
+ * Demonstrations can contain values typed into ordinary form fields, so the
+ * state deliberately uses `storage.session`: it is kept in memory by the
+ * browser, is not exposed to content scripts, and disappears when the browser
+ * session ends. It must never be moved to `storage.local`.
+ *
+ * The storage dependency is injected so the state machine can be tested
+ * without extension globals. Older engines without `storage.session` get a
+ * volatile fallback rather than persisting potentially sensitive values.
+ */
+export function createRecordingStore(storage?: SessionStorageArea): {
+  start(tabId: number, origin: string, href: string): Promise<RecordingState>;
+  addAction(tabId: number, action: RecordedAction): Promise<void>;
+  resumePage(tabId: number, href: string): Promise<ResumePageOutcome>;
+  getRecording(): Promise<RecordingState | null>;
+  getLastTake(): Promise<RecordingState | null>;
+  stop(): Promise<RecordingState | null>;
+} {
+  let volatile: RecordingSnapshot = { ...EMPTY };
+  let writeQueue: Promise<void> = Promise.resolve();
 
-/** Kept separately so the Studio can still read the last take after Stop. */
-let lastTake: RecordingState | null = null;
+  const read = async (): Promise<RecordingSnapshot> => {
+    if (!storage) return volatile;
+    const stored = await storage.get(STORAGE_KEY);
+    const value = stored[STORAGE_KEY] as RecordingSnapshot | undefined;
+    return value ?? { ...EMPTY };
+  };
 
-export function keepTake(state: RecordingState | null): void {
-  lastTake = state;
-}
+  const mutate = async <T>(change: (snapshot: RecordingSnapshot) => T): Promise<T> => {
+    let result!: T;
+    const operation = writeQueue.then(async () => {
+      const snapshot = await read();
+      result = change(snapshot);
+      if (storage) await storage.set({ [STORAGE_KEY]: snapshot });
+      else volatile = snapshot;
+    });
+    writeQueue = operation.catch(() => undefined);
+    await operation;
+    return result;
+  };
 
-export function getLastTake(): RecordingState | null {
-  return lastTake;
+  return {
+    start(tabId, origin, href) {
+      return mutate((snapshot) => {
+        const session: RecordingState = {
+          tabId,
+          origin,
+          startedAt: Date.now(),
+          lastUrl: href,
+          actions: [],
+        };
+        snapshot.session = session;
+        snapshot.lastTake = null;
+        return session;
+      });
+    },
+
+    async addAction(tabId, action) {
+      await mutate((snapshot) => {
+        if (!snapshot.session || snapshot.session.tabId !== tabId) return;
+        if (snapshot.session.actions.length >= MAX_ACTIONS) return;
+        snapshot.session.actions = mergeAction(snapshot.session.actions, action);
+      });
+    },
+
+    resumePage(tabId, href) {
+      return mutate((snapshot) => {
+        const session = snapshot.session;
+        if (!session || session.tabId !== tabId) return 'inactive';
+        let next: URL;
+        try {
+          next = new URL(href);
+        } catch {
+          return 'origin-mismatch';
+        }
+        if (next.origin !== session.origin) return 'origin-mismatch';
+
+        if (session.lastUrl !== href) {
+          const path = pathOf(href);
+          const previous = session.actions.at(-1);
+          if (
+            session.actions.length < MAX_ACTIONS &&
+            (previous?.kind !== 'navigate' || previous.path !== path)
+          ) {
+            session.actions.push({
+              at: Date.now(),
+              kind: 'navigate',
+              selector: '',
+              candidates: [],
+              path,
+              label: path,
+            });
+          }
+          session.lastUrl = href;
+        }
+        return 'resumed';
+      });
+    },
+
+    async getRecording() {
+      return (await read()).session;
+    },
+
+    async getLastTake() {
+      return (await read()).lastTake;
+    },
+
+    stop() {
+      return mutate((snapshot) => {
+        const finished = snapshot.session;
+        snapshot.session = null;
+        snapshot.lastTake = finished;
+        return finished;
+      });
+    },
+  };
 }

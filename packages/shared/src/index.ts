@@ -93,6 +93,8 @@ export interface RecordingState {
   tabId: number;
   origin: string;
   startedAt: number;
+  /** Last document announced by the recording tab, used to capture navigation. */
+  lastUrl: string;
   actions: RecordedAction[];
 }
 
@@ -136,6 +138,11 @@ export interface GetConfirmationMessage {
 }
 export interface StartRecordingMessage {
   type: 'liha/start-recording';
+}
+
+export interface RecordingCommandOutcome {
+  ok: boolean;
+  error?: 'no-active-page' | 'bridge-unavailable';
 }
 export interface StopRecordingMessage {
   type: 'liha/stop-recording';

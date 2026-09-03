@@ -45,6 +45,7 @@ export const ja: Record<MessageKey, string> = {
   'popup.copyFailed': 'コピーできませんでした',
   'popup.record': 'ツールを記録',
   'popup.stopRecording': '記録を停止（{0}）',
+  'popup.recordUnavailable': 'このページでは記録を開始できませんでした。',
   'popup.adapters': 'Adapter 一覧',
   'popup.studio': 'Studio',
   'popup.compatibility': '対応状況',

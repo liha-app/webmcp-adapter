@@ -1,5 +1,4 @@
 import { originOf, summarizeEffects, validateAdapter } from '@liha/adapter-schema';
-import { ALL_ORIGINS } from '@liha/config';
 import type { AdapterHealth } from '@liha/adapter-schema';
 import { DEFAULT_POLICY } from '@liha/adapter-runtime';
 import type {
@@ -7,6 +6,7 @@ import type {
   CatalogEntry,
   ExtensionMessage,
   PopupState,
+  RecordingCommandOutcome,
   StoreStateResponse,
 } from '@liha/shared';
 import { ext } from '../platform';
@@ -21,18 +21,25 @@ import {
 } from './adapters';
 import { decide, getPendingRequest, handleWindowClosed, requestConfirmation } from './confirmations';
 import { injectAdapter, readHealth, readRuntimeStatus, uninstallFromTab } from './injection';
-import { addAction, getLastTake, getRecording, keepTake, startRecording, stopRecording } from './recording';
+import { createRecordingStore } from './recording';
 
 /**
- * Origins covered by the static content scripts in the manifest, derived from
- * the same config the manifest is generated from. Everything else needs an
+ * Origins actually covered by this build's static content scripts. Reading the
+ * built manifest matters: release builds intentionally omit development
+ * origins that remain in the shared source config. Everything else needs an
  * explicitly granted optional host permission plus a dynamically registered
- * content script, so installing an adapter never silently widens the
- * extension's reach.
+ * content script, so installing an adapter never silently widens reach.
  */
-const STATIC_ORIGINS = ALL_ORIGINS;
+const STATIC_ORIGINS = (ext.runtime.getManifest().host_permissions ?? []).flatMap((pattern: string) => {
+  try {
+    return [new URL(pattern.replace(/\/\*$/, '')).origin];
+  } catch {
+    return [];
+  }
+});
 
 const DYNAMIC_SCRIPT_ID = 'liha-dynamic-bridge';
+const recordingStore = createRecordingStore(ext.storage.session);
 
 /* -------------------------------------------------------------------------- */
 /* Host permissions and dynamic content scripts                                */
@@ -129,11 +136,56 @@ async function injectBridgeIntoOpenTabs(matches: string[]): Promise<void> {
   );
 }
 
+/**
+ * Makes the recorder available on a site that has no adapter yet.
+ *
+ * Opening the toolbar popup grants `activeTab`, which is deliberately used
+ * instead of persistent host access: recording can reach only the tab the
+ * person just chose, and a cross-origin navigation revokes the grant. Sites
+ * with an installed adapter already have the bridge and take the fast path.
+ */
+async function enableRecorderOnTab(tabId: number): Promise<boolean> {
+  try {
+    await ext.tabs.sendMessage(tabId, { type: 'liha/recorder-mode', active: true });
+    return true;
+  } catch {
+    /* This is the expected path for a site with no adapter yet. */
+  }
+
+  if (typeof ext.scripting.executeScript !== 'function') return false;
+
+  try {
+    await ext.scripting.executeScript({
+      target: { tabId },
+      files: ['content/bridge.js'],
+      world: 'ISOLATED',
+    });
+    await ext.tabs.sendMessage(tabId, { type: 'liha/recorder-mode', active: true });
+    return true;
+  } catch (error) {
+    console.warn('[liha] could not start the recorder on this page', error);
+    return false;
+  }
+}
+
 /* -------------------------------------------------------------------------- */
 /* Injection lifecycle                                                          */
 /* -------------------------------------------------------------------------- */
 
 async function handlePageReady(href: string, tabId: number, frameId: number): Promise<void> {
+  if (frameId === 0) {
+    const recording = await recordingStore.resumePage(tabId, href);
+    if (recording === 'resumed') {
+      // The new document has registered its message listener before announcing
+      // readiness, so this also resumes after a normal reload/navigation.
+      await ext.tabs.sendMessage(tabId, { type: 'liha/recorder-mode', active: true }).catch(() => undefined);
+    } else if (recording === 'origin-mismatch') {
+      // A recording may never silently expand to an origin the person did not
+      // approve. Keep the partial take for Studio and stop listening.
+      await recordingStore.stop();
+    }
+  }
+
   const catalogue = await readCatalogue();
   // Every enabled adapter for this origin, not just the first: a site can have
   // an official adapter and a community one, and disabling either must not
@@ -205,7 +257,7 @@ async function buildPopupState(): Promise<PopupState> {
   return {
     url,
     origin,
-    recording: getRecording(),
+    recording: await recordingStore.getRecording(),
     catalog,
     runtime,
     ...(runtimeError ? { runtimeError } : {}),
@@ -292,20 +344,19 @@ async function buildStoreState(): Promise<StoreStateResponse> {
 /* Recorder                                                                     */
 /* -------------------------------------------------------------------------- */
 
-async function setRecording(active: boolean): Promise<void> {
+async function setRecording(active: boolean): Promise<RecordingCommandOutcome> {
   if (active) {
     const [tab] = await ext.tabs.query({ active: true, currentWindow: true });
-    if (tab?.id === undefined || !tab.url) return;
+    if (tab?.id === undefined || !tab.url) return { ok: false, error: 'no-active-page' };
     const origin = originOf(tab.url);
-    if (!origin) return;
-    startRecording(tab.id, origin);
-    keepTake(null);
-    try {
-      await ext.tabs.sendMessage(tab.id, { type: 'liha/recorder-mode', active: true });
-    } catch {
-      // The content script is not present on this page; recording stays empty.
+    if (!origin || !/^https?:$/.test(new URL(origin).protocol)) return { ok: false, error: 'no-active-page' };
+
+    await recordingStore.start(tab.id, origin, tab.url);
+    if (!(await enableRecorderOnTab(tab.id))) {
+      await recordingStore.stop();
+      return { ok: false, error: 'bridge-unavailable' };
     }
-    return;
+    return { ok: true };
   }
 
   /*
@@ -316,8 +367,7 @@ async function setRecording(active: boolean): Promise<void> {
    * the first tab's recorder running — still listening to everything the person
    * did there, with nothing in the UI to say so.
    */
-  const recording = getRecording();
-  keepTake(stopRecording());
+  const recording = await recordingStore.stop();
   if (recording?.tabId !== undefined) {
     try {
       await ext.tabs.sendMessage(recording.tabId, { type: 'liha/recorder-mode', active: false });
@@ -328,6 +378,7 @@ async function setRecording(active: boolean): Promise<void> {
   if (!active) {
     await ext.tabs.create({ url: ext.runtime.getURL('studio/studio.html') });
   }
+  return { ok: true };
 }
 
 /* -------------------------------------------------------------------------- */
@@ -467,22 +518,25 @@ ext.runtime.onMessage.addListener((message: ExtensionMessage, sender, sendRespon
       return false;
 
     case 'liha/start-recording':
-      void setRecording(true).then(() => {
-        announceRecording(0);
-        sendResponse({ ok: true });
+      void setRecording(true).then((outcome) => {
+        // Zero is a real answer here, and only after the take exists: a popup
+        // that hears "0" for a start that failed would show a take that is not
+        // running.
+        if (outcome.ok) announceRecording(0);
+        sendResponse(outcome);
       });
       return true;
 
     case 'liha/stop-recording':
-      void setRecording(false).then(() => {
+      void setRecording(false).then((outcome) => {
         announceRecording(null);
-        sendResponse({ ok: true });
+        sendResponse(outcome);
       });
       return true;
 
     case 'liha/recorded-action': {
       const tabId = sender.tab?.id;
-      if (tabId !== undefined) addAction(tabId, message.action);
+      if (tabId === undefined) return false;
       /*
        * The count goes back to the page that sent the action, and out to
        * anything else listening.
@@ -490,19 +544,27 @@ ext.runtime.onMessage.addListener((message: ExtensionMessage, sender, sendRespon
        * A popup left open while the demonstration happens used to keep showing
        * the count it was rendered with — "Stop recording (0)" while three
        * actions had been captured, which reads as a recorder that is not
-       * working. It is the same number in both places now, and it is this one:
-       * the session's, after a click and the submit it caused have been merged
-       * into the single action they are.
+       * working. It is the same number in both places now, and it is read back
+       * out of the session after the write: a click and the submit it caused
+       * are merged into the one action they are, so counting locally would say
+       * one more than the Studio does.
        */
-      const count = getRecording()?.actions.length ?? 0;
-      announceRecording(count);
-      sendResponse({ count });
-      return false;
+      void recordingStore
+        .addAction(tabId, message.action)
+        .then(() => recordingStore.getRecording())
+        .then((session) => {
+          const count = session?.actions.length ?? 0;
+          announceRecording(count);
+          sendResponse({ ok: true, count });
+        });
+      return true;
     }
 
     case 'liha/get-recording':
-      sendResponse({ recording: getRecording() ?? getLastTake() });
-      return false;
+      void Promise.all([recordingStore.getRecording(), recordingStore.getLastTake()]).then(
+        ([recording, lastTake]) => sendResponse({ recording: recording ?? lastTake }),
+      );
+      return true;
 
     case 'liha/install-adapter':
       void handleInstall(message.adapter, message.source, message.fromOrigin).then(sendResponse);
@@ -555,6 +617,34 @@ ext.runtime.onMessage.addListener((message: ExtensionMessage, sender, sendRespon
 });
 
 ext.windows.onRemoved.addListener(handleWindowClosed);
+
+ext.tabs.onRemoved.addListener((tabId) => {
+  void (async () => {
+    const recording = await recordingStore.getRecording();
+    if (recording?.tabId !== tabId) return;
+    await recordingStore.stop();
+  })();
+});
+
+/*
+ * A cross-origin navigation revokes `activeTab`, so the next document cannot
+ * announce itself through `liha/page-ready`. At load completion, a failed ping
+ * is the reliable signal to stop rather than claiming to record while nothing
+ * is captured. For a same-origin document the grant survives, so the bridge is
+ * injected again and resumes the session.
+ */
+ext.tabs.onUpdated.addListener((tabId, changeInfo) => {
+  if (changeInfo.status !== 'complete') return;
+  void (async () => {
+    const recording = await recordingStore.getRecording();
+    if (recording?.tabId !== tabId) return;
+    const tab = await ext.tabs.get(tabId).catch(() => null);
+    const href = tab?.url;
+    if (!href || originOf(href) !== recording.origin || !(await enableRecorderOnTab(tabId))) {
+      await recordingStore.stop();
+    }
+  })();
+});
 
 /*
  * Host access can be taken away from the extension's own settings page, and

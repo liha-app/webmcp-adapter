@@ -43,6 +43,7 @@ export const en = {
   'popup.copyFailed': 'Copy failed',
   'popup.record': 'Record a tool',
   'popup.stopRecording': 'Stop recording ({0})',
+  'popup.recordUnavailable': 'Recording could not start on this page.',
   'popup.adapters': 'Adapters',
   'popup.studio': 'Studio',
   'popup.compatibility': 'Compatibility',

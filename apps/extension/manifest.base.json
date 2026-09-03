@@ -29,7 +29,7 @@
     "page": "manage/manage.html",
     "open_in_tab": true
   },
-  "permissions": ["scripting", "storage"],
+  "permissions": ["activeTab", "scripting", "storage"],
   "optional_host_permissions": ["http://*/*", "https://*/*"],
   "content_security_policy": {
     "extension_pages": "script-src 'self'; object-src 'self'"
