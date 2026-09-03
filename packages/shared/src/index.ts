@@ -193,7 +193,20 @@ export interface InstallConfirmationRequest {
   source: AdapterSource;
   /** The page that asked for the install, when it was not extension UI. */
   fromOrigin?: string;
-  tools: Array<{ name: string; capability: Capability; description: string }>;
+  /*
+   * What each tool's steps actually do, counted rather than claimed.
+   *
+   * Capability is the author's declaration; these are measured from the steps.
+   * A tool calling itself READ while its steps click three things is the shape
+   * of a malicious adapter, and until this was shown the install screen gave a
+   * reviewer no way to notice.
+   */
+  tools: Array<{
+    name: string;
+    capability: Capability;
+    description: string;
+    effects?: { clicks: number; inputs: number; submits: number; navigations: number; reads: number; readOnly: boolean };
+  }>;
   /** True when the adapter needs host access the extension does not have yet. */
   needsHostPermission: boolean;
 }

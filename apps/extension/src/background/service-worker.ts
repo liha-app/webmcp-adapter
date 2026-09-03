@@ -1,4 +1,4 @@
-import { originOf, validateAdapter } from '@liha/adapter-schema';
+import { originOf, summarizeEffects, validateAdapter } from '@liha/adapter-schema';
 import { ALL_ORIGINS } from '@liha/config';
 import type { AdapterHealth } from '@liha/adapter-schema';
 import { DEFAULT_POLICY } from '@liha/adapter-runtime';
@@ -259,6 +259,10 @@ async function handleInstall(
       source,
       ...(fromOrigin ? { fromOrigin } : {}),
       tools: adapter.tools.map((tool) => ({
+        effects: (() => {
+          const { clicks, inputs, submits, navigations, reads, readOnly } = summarizeEffects(tool);
+          return { clicks, inputs, submits, navigations, reads, readOnly };
+        })(),
         name: tool.name,
         capability: tool.capability,
         description: tool.description,

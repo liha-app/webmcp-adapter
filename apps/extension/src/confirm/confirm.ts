@@ -104,6 +104,21 @@ function renderInstall(payload: Extract<ConfirmationPayload, { kind: 'install' }
     const item = el('div', { class: 'item' });
     item.append(el('code', {}, tool.name), el('span', { class: `cap cap--${tool.capability}` }, tool.capability));
     item.append(el('div', { class: 'muted' }, tool.description));
+    /* The declared capability above, and what the steps do below. A reviewer
+     * can only spot a lie if both are on the screen. */
+    if (tool.effects) {
+      const { clicks, inputs, submits, navigations, reads, readOnly } = tool.effects;
+      const parts = readOnly
+        ? [t('confirm.effectReadOnly')]
+        : [
+            clicks ? t('confirm.effectClicks', [clicks]) : '',
+            inputs ? t('confirm.effectInputs', [inputs]) : '',
+            submits ? t('confirm.effectSubmits', [submits]) : '',
+            navigations ? t('confirm.effectNavigations', [navigations]) : '',
+            reads ? t('confirm.effectReads', [reads]) : '',
+          ].filter(Boolean);
+      item.append(el('div', { class: `effects ${readOnly ? '' : 'effects--writes'}` }, parts.join(' · ')));
+    }
     panel.append(item);
   }
   app.append(panel);

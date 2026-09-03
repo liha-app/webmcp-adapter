@@ -534,6 +534,14 @@ async function main() {
     const summary = installPrompt.summary ?? '';
     check(summary.includes('localhost:5275'), 'the install prompt names the exact origins', summary.slice(0, 120));
     check(summary.includes('DESTRUCTIVE'), 'the install prompt lists the capabilities being granted');
+    /* The declared capability and what the steps measurably do, side by side —
+     * the only way a reviewer can notice a tool calling itself READ while its
+     * steps click three things. */
+    check(
+      /click\(s\)|クリック/.test(summary) && /read\(s\)|reads only|読み取り/.test(summary),
+      'and what each tool’s steps actually do, counted rather than claimed',
+      summary.replace(/\n/g, ' | ').slice(0, 160),
+    );
     check(summary.includes('Requested by http://localhost:5280'), 'the install prompt names the page that asked');
 
     /* ----------------------------------------------------- diagnostics ---- */
