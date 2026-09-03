@@ -1,39 +1,86 @@
-:root { color-scheme: light dark; --bg:#fff; --ink:#16181d; --muted:#6b7280; --line:#e5e7eb; --accent:#2f6df6; --warn:#b45309; --err:#c02626; --ok:#177245; }
-@media (prefers-color-scheme: dark) { :root { --bg:#14161b; --ink:#e8eaed; --muted:#9aa3b2; --line:#282d36; --accent:#6f9dff; --warn:#e0a458; --err:#ff8080; --ok:#6ddc9a; } }
-* { box-sizing: border-box; }
-body { margin: 0; background: var(--bg); color: var(--ink); font: 13.5px/1.5 ui-sans-serif, system-ui, sans-serif; }
-.wrap { padding: 18px 18px 22px; }
-h1 { font-size: 16px; margin: 0 0 4px; }
-.lede { color: var(--muted); margin: 0 0 16px; font-size: 13px; }
-.banner { border-radius: 9px; padding: 10px 12px; margin-bottom: 14px; font-weight: 600; border: 1px solid currentColor; }
-.banner--DESTRUCTIVE { color: var(--err); }
-.banner--WRITE { color: var(--warn); }
-.banner--install { color: var(--accent); }
-dl { display: grid; grid-template-columns: 92px 1fr; gap: 5px 10px; margin: 0 0 14px; font-size: 12.5px; }
-dt { color: var(--muted); }
-dd { margin: 0; overflow-wrap: anywhere; }
-code { font-size: 12.5px; }
-.panel { border: 1px solid var(--line); border-radius: 9px; padding: 10px 12px; margin-bottom: 14px; }
-.panel h2 { font-size: 11px; text-transform: uppercase; letter-spacing: .05em; color: var(--muted); margin: 0 0 8px; }
-.item { padding: 6px 0; border-top: 1px solid var(--line); }
+/*
+ * The confirmation sheet: the window a page cannot touch, asking whether a tool
+ * may run.
+ *
+ * Everything shared is in ../ui/system.css. Shaped as Apple shapes a permission
+ * request rather than as a form: the ask at the top in the largest type on the
+ * sheet, the particulars in grouped rows under it, and the two decisions at the
+ * bottom right with the safe one first. Nothing here is optional reading, so
+ * nothing here is styled as an aside.
+ */
+body { background: var(--grouped); }
+.wrap { padding: 20px 20px 22px; }
+
+h1 { font-size: 19px; line-height: 1.25; letter-spacing: -0.015em; margin-bottom: 5px; }
+.lede { margin-bottom: 18px; font-size: 12.5px; }
+
+/*
+ * What kind of ask this is, tinted rather than outlined. It is the first thing
+ * read and the only thing on the sheet allowed to carry colour on its own.
+ */
+.banner {
+  border: 0;
+  border-radius: var(--radius-group);
+  padding: 11px 14px;
+  margin-bottom: 16px;
+  font-size: 13px;
+  font-weight: 510;
+}
+.banner--DESTRUCTIVE { background: light-dark(rgba(215, 0, 21, 0.1), rgba(255, 69, 58, 0.2)); color: var(--red); }
+.banner--WRITE { background: light-dark(rgba(192, 76, 0, 0.1), rgba(255, 159, 10, 0.18)); color: var(--orange); }
+.banner--install { background: light-dark(rgba(0, 122, 255, 0.1), rgba(10, 132, 255, 0.2)); color: var(--blue); }
+
+/* Who is asking, and on what. A grouped list, not a definition table. */
+dl {
+  display: grid;
+  grid-template-columns: 96px 1fr;
+  gap: 0;
+  margin: 0 0 16px;
+  background: var(--card);
+  border-radius: var(--radius-group);
+  overflow: hidden;
+  font-size: 12.5px;
+}
+dt { padding: 9px 0 9px 14px; color: var(--secondary); }
+dd { padding: 9px 14px 9px 0; margin: 0; overflow-wrap: anywhere; text-align: right; }
+dt:nth-of-type(n + 2) { position: relative; }
+dt:nth-of-type(n + 2)::before { content: ''; position: absolute; inset: 0 -300% auto 14px; height: 1px; background: var(--separator); }
+
+.panel { background: var(--card); border-radius: var(--radius-group); overflow: hidden; margin-bottom: 16px; }
+.panel h2 { margin: 0; padding: 10px 14px 9px; font-size: 12px; font-weight: 400; color: var(--secondary); border-bottom: 1px solid var(--separator); }
+.item { padding: 9px 14px; border-top: 1px solid var(--separator); }
 .item:first-of-type { border-top: 0; }
-.cap { font-size: 10px; font-weight: 700; border-radius: 4px; padding: 1px 5px; border: 1px solid currentColor; margin-left: 6px; }
-.cap--READ { color: var(--muted); } .cap--INTERACT { color: var(--accent); }
-.cap--WRITE { color: var(--warn); } .cap--DESTRUCTIVE { color: var(--err); }
-.muted { color: var(--muted); }
-.values { font: 12px ui-monospace, SFMono-Regular, Menlo, monospace; background: rgba(127,127,127,.08); border-radius: 7px; padding: 8px 10px; }
+.cap { margin-left: 6px; }
+
+/* The values the agent supplied, verbatim. */
+.values { background: var(--card); border-radius: var(--radius-group); padding: 10px 14px; font: 11.5px/1.6 var(--mono); letter-spacing: 0; }
 .values div { overflow-wrap: anywhere; }
-.actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 18px; }
-button { font: inherit; font-weight: 600; border-radius: 8px; padding: 9px 16px; cursor: pointer; border: 1px solid var(--line); background: transparent; color: var(--ink); }
-button.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
-button.danger { background: var(--err); border-color: var(--err); color: #fff; }
-.foot { font-size: 11.5px; color: var(--muted); margin-top: 14px; }
+
+/*
+ * The decisions. Filled, not outlined — and the destructive one carries the
+ * colour, so the button that does the damage is the one that looks like it.
+ */
+.actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px; }
+button {
+  font: inherit;
+  font-size: 13px;
+  font-weight: 510;
+  letter-spacing: -0.008em;
+  border: 0;
+  border-radius: var(--radius-control);
+  padding: 8px 18px;
+  background: var(--fill);
+  color: var(--label);
+  cursor: pointer;
+}
+button:hover { background: var(--fill-strong); }
+button.primary { background: var(--blue); color: var(--on-accent); }
+button.danger { background: var(--red); color: var(--on-accent); }
+button.primary:hover, button.danger:hover { opacity: 0.88; }
+
+.foot { margin-top: 16px; font-size: 11.5px; color: var(--secondary); }
 
 /* What the steps do, under what the author called them. A reviewer can only
    spot a lie when both are on the screen. */
-.effects {
-  margin-top: 6px;
-  font: 400 11px/1.4 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-  color: var(--muted, #6e6e73);
-}
-.effects--writes { color: var(--warn, #8a5300); }
+.effects { margin-top: 4px; font: 400 11px/1.45 var(--mono); letter-spacing: 0; color: var(--secondary); }
+.effects--writes { color: var(--orange); }

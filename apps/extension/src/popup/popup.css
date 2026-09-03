@@ -1,21 +1,88 @@
-:root { color-scheme: light dark; --bg:#fff; --ink:#16181d; --muted:#6b7280; --line:#e5e7eb; --accent:#2f6df6; --warn:#b45309; --err:#c02626; --ok:#177245; }
-@media (prefers-color-scheme: dark) { :root { --bg:#14161b; --ink:#e8eaed; --muted:#9aa3b2; --line:#282d36; --accent:#6f9dff; --warn:#e0a458; --err:#ff8080; --ok:#6ddc9a; } }
-* { box-sizing: border-box; }
-body { width: 380px; margin: 0; background: var(--bg); color: var(--ink); font: 13px/1.45 ui-sans-serif, system-ui, sans-serif; }
-.head { display: flex; align-items: center; justify-content: space-between; padding: 11px 13px; border-bottom: 1px solid var(--line); }
-.app { padding: 12px 13px 16px; }
-.tag { font-size: 10.5px; text-transform: uppercase; letter-spacing: .05em; color: var(--muted); border: 1px solid var(--line); border-radius: 999px; padding: 1px 7px; }
-.kv { display: grid; grid-template-columns: 84px 1fr; gap: 3px 8px; margin-bottom: 12px; font-size: 12px; }
-.kv dt { color: var(--muted); }
-.kv dd { margin: 0; overflow-wrap: anywhere; }
-.log { border: 1px solid var(--line); border-radius: 9px; padding: 8px 10px; max-height: 168px; overflow: auto; font: 11.5px/1.5 ui-monospace, SFMono-Regular, Menlo, monospace; }
+/*
+ * The popup: 380px of settings pane hanging off the toolbar.
+ *
+ * Everything shared is in ../ui/system.css. What is here is the shape of this
+ * one surface — a title bar, a summary of the page you are on, and the
+ * adapters that apply to it.
+ */
+body { width: 380px; background: var(--grouped); }
+
+/*
+ * The title bar. Apple gives a popover a translucent bar that the content
+ * scrolls under; here it is fixed to the top of a 380px sheet, so the blur is
+ * the whole of it.
+ */
+.head {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 11px 16px;
+  background: light-dark(rgba(255, 255, 255, 0.82), rgba(28, 28, 30, 0.82));
+  backdrop-filter: saturate(180%) blur(20px);
+  -webkit-backdrop-filter: saturate(180%) blur(20px);
+  border-bottom: 1px solid var(--separator);
+}
+.head strong { font-size: 13px; font-weight: 590; letter-spacing: -0.008em; }
+.tag { font-size: 11px; color: var(--secondary); letter-spacing: 0; }
+
+.app { padding: 14px 12px 18px; }
+
+/* What page you are on, as a two-row group rather than a definition list. */
+.kv {
+  display: grid;
+  grid-template-columns: 88px 1fr;
+  gap: 0;
+  margin: 0 0 14px;
+  background: var(--card);
+  border-radius: var(--radius-group);
+  overflow: hidden;
+  font-size: 12.5px;
+}
+.kv dt { padding: 9px 0 9px 14px; color: var(--secondary); }
+.kv dd { padding: 9px 14px 9px 0; margin: 0; overflow-wrap: anywhere; text-align: right; }
+/* The hairline starts where the label starts, so it is drawn inside the cell
+ * rather than across the whole grid. */
+.kv dt:nth-of-type(n + 2), .kv dt:nth-of-type(n + 2) + dd { position: relative; }
+.kv dt:nth-of-type(n + 2)::before { content: ''; position: absolute; inset: 0 -300% auto 14px; height: 1px; background: var(--separator); }
+
+h4 { margin: 20px 4px 7px; font-size: 12px; font-weight: 400; color: var(--secondary); }
+
+.actions { display: flex; gap: 8px; margin-bottom: 14px; }
+.elsewhere { display: flex; gap: 16px; margin: 0 4px 16px; font-size: 12.5px; }
+
+/*
+ * The call log. Monospace on a recessed fill, which is how Apple shows a
+ * console rather than as a bordered box.
+ */
+.log {
+  background: var(--card);
+  border-radius: var(--radius-group);
+  padding: 9px 12px;
+  max-height: 168px;
+  overflow: auto;
+  font: 11.5px/1.55 var(--mono);
+  letter-spacing: 0;
+}
 .log div { white-space: pre-wrap; overflow-wrap: anywhere; }
-.log .err { color: var(--err); }
-h4 { margin: 14px 0 6px; font-size: 11px; text-transform: uppercase; letter-spacing: .05em; color: var(--muted); }
-.actions { display: flex; gap: 8px; margin-bottom: 8px; }
-.btn--primary { border-color: var(--accent); color: var(--accent); font-weight: 600; }
-.elsewhere { display: flex; gap: 14px; margin-bottom: 14px; font-size: 12px; }
-.notice { background: rgba(180, 83, 9, 0.1); border: 1px solid var(--warn); color: var(--warn); border-radius: 8px; padding: 8px 10px; font-size: 12px; margin: 0 0 12px; }
-.notice__row { display: flex; align-items: center; gap: 8px; margin-top: 8px; }
-.notice__flag { flex: 1; min-width: 0; overflow-x: auto; white-space: nowrap; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 11px; background: rgba(0, 0, 0, 0.18); border-radius: 6px; padding: 5px 7px; }
-.btn--small { padding: 5px 9px; font-size: 11px; border-color: var(--warn); color: var(--warn); flex: none; }
+.log .err { color: var(--red); }
+
+.empty, .card--empty { background: var(--card); border-radius: var(--radius-group); padding: 14px 16px; }
+
+/* The missing-flag notice, and the flag itself as something you can copy. */
+.notice__row { display: flex; align-items: center; gap: 8px; margin-top: 9px; }
+.notice__flag {
+  flex: 1;
+  min-width: 0;
+  overflow-x: auto;
+  white-space: nowrap;
+  font: 11px var(--mono);
+  letter-spacing: 0;
+  background: light-dark(rgba(0, 0, 0, 0.06), rgba(255, 255, 255, 0.1));
+  border-radius: 6px;
+  padding: 5px 8px;
+}
+.notice .btn { flex: none; background: light-dark(rgba(0, 0, 0, 0.07), rgba(255, 255, 255, 0.12)); color: inherit; }

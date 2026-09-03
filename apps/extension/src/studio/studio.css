@@ -1,99 +1,167 @@
-:root { color-scheme: light dark; --bg:#f6f7f9; --panel:#fff; --ink:#16181d; --muted:#6b7280; --line:#e5e7eb; --accent:#2f6df6; --warn:#b45309; --err:#c02626; --ok:#177245; }
-@media (prefers-color-scheme: dark) { :root { --bg:#0f1115; --panel:#171a21; --ink:#e8eaed; --muted:#9aa3b2; --line:#262a33; --accent:#6f9dff; --warn:#e0a458; --err:#ff8080; --ok:#6ddc9a; } }
-* { box-sizing: border-box; }
-body { margin: 0; background: var(--bg); color: var(--ink); font: 14px/1.5 ui-sans-serif, system-ui, -apple-system, sans-serif; }
 /*
- * The Studio is a workspace, not a document: the canvas takes the window and
- * the details sit beside it, both scrolling on their own. Laying it out as a
- * page meant the flow was a small box near the top with everything else
- * stacked under it — arranged like a builder without reading like one.
+ * The Studio: a flow on the canvas, the open node in an inspector beside it.
+ *
+ * Everything shared is in ../ui/system.css. The reference for this one is
+ * Shortcuts rather than Settings — it is a builder, so it gets a workspace: a
+ * translucent toolbar the canvas scrolls under, rounded action cards down the
+ * middle, and an inspector on the right whose sections are grouped rows. The
+ * two questions a builder answers are different — what is the order, and what
+ * does this one node do — which is why they get different halves of the window.
  */
 html, body { height: 100%; }
-body { overflow: hidden; }
-.shell { display: flex; flex-direction: column; height: 100vh; max-width: none; margin: 0; padding: 0; }
-h1 { font-size: 22px; margin: 0; letter-spacing: -0.01em; }
-h2 { font-size: 13px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); margin: 0; }
-header.top { display: flex; align-items: center; gap: 16px; padding: 12px 20px; border-bottom: 1px solid var(--line); background: var(--panel); flex: none; }
-.top__title { flex: 1; min-width: 0; }
-.lede { color: var(--muted); margin: 2px 0 0; font-size: 12.5px; }
-h1 { font-size: 17px; }
-.steps-flow { display: flex; gap: 6px; flex-wrap: wrap; }
-.steps-flow--bar { padding: 9px 20px; border-bottom: 1px solid var(--line); background: var(--panel); flex: none; }
-.flowstep { font-size: 11.5px; border: 1px solid var(--line); border-radius: 999px; padding: 3px 11px; color: var(--muted); background: var(--panel); }
-.flowstep--on { border-color: var(--accent); color: var(--accent); font-weight: 600; }
-.grid { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; align-items: start; }
-@media (max-width: 900px) { .grid { grid-template-columns: 1fr; } }
-.panel { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; margin-bottom: 18px; overflow: hidden; }
-.panel__head { display: flex; align-items: center; gap: 10px; justify-content: space-between; padding: 13px 16px; border-bottom: 1px solid var(--line); }
-.panel__body { padding: 14px 16px; }
-label.field { display: block; margin-bottom: 12px; }
-label.field > span { display: block; font-size: 12px; color: var(--muted); margin-bottom: 4px; }
-input, select, textarea { width: 100%; padding: 8px 10px; border: 1px solid var(--line); border-radius: 8px; background: var(--bg); color: var(--ink); font: inherit; font-size: 13px; }
-textarea { min-height: 70px; resize: vertical; }
-.two { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-.step { border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; margin-bottom: 10px; background: var(--bg); }
-.step__head { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
-.step__index { font: 11px ui-monospace, Menlo, monospace; color: var(--muted); min-width: 18px; }
-.step select.type { width: auto; min-width: 118px; font-size: 12px; padding: 4px 8px; }
-.step .spacer { flex: 1; }
-.iconbtn { border: 1px solid var(--line); background: var(--panel); color: var(--muted); border-radius: 7px; padding: 2px 8px; font: inherit; font-size: 12px; cursor: pointer; }
-.iconbtn:hover { border-color: var(--accent); color: var(--accent); }
-.sel { font: 12px ui-monospace, SFMono-Regular, Menlo, monospace; }
-.matches { font-size: 11px; padding: 1px 6px; border-radius: 5px; border: 1px solid currentColor; }
-.matches--one { color: var(--ok); } .matches--none { color: var(--err); } .matches--many { color: var(--warn); }
-.row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
-.muted { color: var(--muted); font-size: 12px; }
-.btn { border: 1px solid var(--line); background: var(--panel); color: var(--ink); border-radius: 8px; padding: 8px 14px; font: inherit; font-size: 13px; font-weight: 500; cursor: pointer; }
-.btn:hover { border-color: var(--accent); }
-.btn--primary { background: var(--accent); border-color: var(--accent); color: #fff; }
-.btn:disabled { opacity: .5; cursor: not-allowed; }
-.actions { display: flex; gap: 10px; flex-wrap: wrap; }
-pre { margin: 0; padding: 14px 16px; overflow: auto; max-height: 460px; font: 12px/1.55 ui-monospace, SFMono-Regular, Menlo, monospace; background: var(--bg); }
-.problem { color: var(--err); font-size: 12.5px; margin: 3px 0; }
-.ok { color: var(--ok); font-size: 12.5px; }
-.cap { font-size: 10px; font-weight: 700; border-radius: 4px; padding: 1px 5px; border: 1px solid currentColor; }
-.cap--READ { color: var(--muted); } .cap--INTERACT { color: var(--accent); }
-.cap--WRITE { color: var(--warn); } .cap--DESTRUCTIVE { color: var(--err); }
-.empty { padding: 22px 16px; color: var(--muted); font-size: 13px; }
-.banner { border: 1px solid var(--warn); color: var(--warn); border-radius: 9px; padding: 10px 12px; font-size: 12.5px; margin-bottom: 16px; }
+body { overflow: hidden; background: var(--grouped); }
+.shell { display: flex; flex-direction: column; height: 100vh; }
 
-/* ------------------------------------------------------------- builder --- */
+/* -------------------------------------------------------------- toolbar --- */
+
+header.top {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex: none;
+  padding: 11px 20px;
+  background: light-dark(rgba(242, 242, 247, 0.8), rgba(28, 28, 30, 0.8));
+  backdrop-filter: saturate(180%) blur(20px);
+  -webkit-backdrop-filter: saturate(180%) blur(20px);
+  border-bottom: 1px solid var(--separator);
+}
+.top__title { flex: 1; min-width: 0; }
+h1 { font-size: 15px; font-weight: 590; letter-spacing: -0.012em; margin: 0; }
+.lede { margin: 1px 0 0; font-size: 11.5px; }
+
 /*
- * A flow on the left, the details of one thing on the right — the shape every
- * automation builder uses, because the two questions are different: what is the
- * order, and what does this one node do. The old two-column form answered
- * neither: the steps were a stack of open editors, so the order was buried in
- * the fields and nothing was ever fully visible.
+ * The stage of the build, as a row of pills. Only the one you are on is filled;
+ * Apple does not outline the steps you have not reached yet.
  */
+.steps-flow { display: flex; gap: 6px; flex-wrap: wrap; }
+.steps-flow--bar {
+  flex: none;
+  padding: 8px 20px;
+  background: light-dark(rgba(242, 242, 247, 0.8), rgba(28, 28, 30, 0.8));
+  backdrop-filter: saturate(180%) blur(20px);
+  -webkit-backdrop-filter: saturate(180%) blur(20px);
+  border-bottom: 1px solid var(--separator);
+}
+.flowstep { font-size: 11.5px; border: 0; border-radius: 999px; padding: 3px 11px; color: var(--secondary); background: var(--fill); }
+.flowstep--on { background: var(--blue); color: var(--on-accent); font-weight: 510; }
+
+/* ---------------------------------------------------------------- stage --- */
+
 .stage { flex: 1; display: grid; grid-template-columns: 1fr minmax(340px, 420px); min-height: 0; }
 @media (max-width: 900px) { .stage { grid-template-columns: 1fr; grid-template-rows: 1fr auto; } }
-.flow { overflow: auto; padding: 34px 30px 60px; background-image: radial-gradient(currentColor 1px, transparent 1px); background-size: 18px 18px; color: light-dark(rgba(0,0,0,.08), rgba(255,255,255,.07)); }
-/* The nodes are a column in the middle of the canvas, not a full-width stack. */
-.flow > * { color: var(--ink); }
-.flow { display: flex; flex-direction: column; align-items: flex-start; }
+
+/*
+ * The canvas. A dotted ground says "this is a surface things are placed on",
+ * and the nodes are a column down it rather than a full-width stack.
+ */
+.flow {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  overflow: auto;
+  padding: 34px 30px 60px;
+  background-image: radial-gradient(currentColor 1px, transparent 1px);
+  background-size: 18px 18px;
+  color: light-dark(rgba(0, 0, 0, 0.07), rgba(255, 255, 255, 0.06));
+}
+.flow > * { color: var(--label); }
 .node, .flow__empty { width: 100%; max-width: 340px; }
-.flow__link { width: 1px; height: 18px; margin-left: 21px; background: var(--line); }
-.node { display: grid; gap: 2px; text-align: left; width: 100%; background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 11px 13px; font: inherit; color: var(--ink); cursor: pointer; position: relative; }
-.node:hover { border-color: var(--accent); }
-.node--on { border-color: var(--accent); box-shadow: 0 0 0 3px light-dark(rgba(47,109,246,.14), rgba(111,157,255,.2)); }
-.node--trigger { border-style: dashed; }
-.node__index { position: absolute; top: 11px; right: 12px; font: 11px ui-monospace, Menlo, monospace; color: var(--muted); }
-.node__title { font-weight: 600; font-size: 13.5px; padding-right: 22px; }
-.node__detail { font-size: 12px; color: var(--muted); overflow-wrap: anywhere; }
-.node__detail--code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 11.5px; }
+.flow__link { width: 1px; height: 18px; margin-left: 21px; background: var(--separator); }
+.flow__empty { color: var(--secondary); font-size: 12.5px; margin: 14px 0 0; }
+
+/*
+ * An action card. It is lifted off the canvas by a shadow rather than held down
+ * by a border — the ground already reads as behind it.
+ */
+.node {
+  display: grid;
+  gap: 2px;
+  position: relative;
+  width: 100%;
+  text-align: left;
+  background: var(--card);
+  border: 0;
+  border-radius: 10px;
+  padding: 11px 13px;
+  font: inherit;
+  color: var(--label);
+  cursor: pointer;
+  box-shadow: 0 1px 3px light-dark(rgba(0, 0, 0, 0.1), rgba(0, 0, 0, 0.5));
+  transition: box-shadow 0.15s ease, transform 0.15s ease;
+}
+.node:hover { box-shadow: 0 2px 8px light-dark(rgba(0, 0, 0, 0.14), rgba(0, 0, 0, 0.6)); }
+.node--on { box-shadow: 0 0 0 3px var(--blue); }
+.node--trigger { background: var(--fill); box-shadow: none; }
+.node__index { position: absolute; top: 11px; right: 12px; font: 11px var(--mono); letter-spacing: 0; color: var(--tertiary); }
+.node__title { font-weight: 590; font-size: 13px; letter-spacing: -0.008em; padding-right: 22px; }
+.node__detail { font-size: 12px; color: var(--secondary); overflow-wrap: anywhere; }
+.node__detail--code { font-family: var(--mono); font-size: 11px; letter-spacing: 0; }
 .node .matches { justify-self: start; margin-top: 4px; }
-.node__add { width: 30px; height: 30px; margin-left: 7px; border-radius: 8px; border: 1px solid var(--line); background: var(--panel); color: var(--muted); font: inherit; font-size: 17px; line-height: 1; cursor: pointer; }
-.node__add:hover { border-color: var(--accent); color: var(--accent); }
-.inspector { border-left: 1px solid var(--line); background: var(--panel); overflow: auto; padding: 0 0 24px; }
-.inspector__head { position: sticky; top: 0; background: var(--panel); display: flex; align-items: baseline; gap: 10px; padding: 15px 18px; border-bottom: 1px solid var(--line); z-index: 1; }
+.node__add {
+  width: 30px; height: 30px; margin-left: 7px;
+  border: 0; border-radius: 999px;
+  background: var(--fill); color: var(--secondary);
+  font: inherit; font-size: 17px; line-height: 1; cursor: pointer;
+}
+.node__add:hover { background: var(--blue); color: var(--on-accent); }
+
+/* ------------------------------------------------------------ inspector --- */
+
+.inspector { border-left: 1px solid var(--separator); background: var(--grouped); overflow: auto; padding: 0 0 24px; }
+.inspector__head {
+  position: sticky; top: 0; z-index: 1;
+  display: flex; align-items: baseline; gap: 10px;
+  padding: 14px 18px;
+  background: light-dark(rgba(242, 242, 247, 0.85), rgba(0, 0, 0, 0.85));
+  backdrop-filter: saturate(180%) blur(20px);
+  -webkit-backdrop-filter: saturate(180%) blur(20px);
+  border-bottom: 1px solid var(--separator);
+}
 .inspector__problems { padding: 12px 18px 0; }
-.inspector .panel:last-child { margin-bottom: 0; }
+h2 { margin: 0; font-size: 12px; font-weight: 400; color: var(--secondary); }
+
+/*
+ * Each section of the inspector is a group, and its name sits above it in
+ * secondary ink rather than in a filled bar inside it. That is the difference
+ * between a settings pane and a stack of title-barred boxes.
+ */
+.panel { margin: 18px 14px 0; }
+.panel__head { display: flex; align-items: center; gap: 10px; justify-content: space-between; padding: 0 4px 6px; }
+.panel__body { background: var(--card); border-radius: var(--radius-group); padding: 13px 14px 14px; }
+.panel--flush { margin: 0; }
+.panel--flush .panel__body { border-radius: 0; }
 .inspector .step { border: 0; padding: 0; margin: 0; background: transparent; }
-.panel--flush { border: 0; border-radius: 0; margin: 0; }
-.inspector .panel { border: 0; border-bottom: 1px solid var(--line); border-radius: 0; margin: 0; }
-.inspector .panel__head { padding: 13px 18px 0; border-bottom: 0; }
-.inspector .panel__body { padding: 12px 18px 16px; }
-.flow__empty { color: var(--muted); font-size: 12.5px; margin: 14px 0 0; }
-.jsonbox { margin: 16px 18px 0; border: 1px solid var(--line); border-radius: 9px; background: var(--bg); }
-.jsonbox > summary { padding: 9px 12px; cursor: pointer; font-size: 12px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); }
-.jsonbox pre { max-height: 320px; border-top: 1px solid var(--line); }
+.inspector .panel:last-child { margin-bottom: 0; }
+
+label.field { display: block; margin-bottom: 12px; }
+label.field:last-child { margin-bottom: 0; }
+label.field > span { display: block; font-size: 11.5px; color: var(--secondary); margin-bottom: 4px; }
+input, select, textarea { width: 100%; background: light-dark(#fff, #000); }
+textarea { min-height: 70px; }
+.two { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+
+.step__head { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+.step__index { font: 11px var(--mono); letter-spacing: 0; color: var(--tertiary); min-width: 18px; }
+.step select.type { width: auto; min-width: 118px; font-size: 12px; padding: 4px 8px; }
+.step .spacer { flex: 1; }
+.iconbtn { border: 0; background: var(--fill); color: var(--secondary); border-radius: 6px; padding: 3px 9px; font: inherit; font-size: 12px; cursor: pointer; }
+.iconbtn:hover { background: var(--red); color: var(--on-accent); }
+
+.sel { font: 12px var(--mono); letter-spacing: 0; }
+.matches { font-size: 11px; padding: 2px 6px; border: 0; border-radius: 5px; }
+.matches--one { background: light-dark(rgba(36, 138, 61, 0.12), rgba(48, 209, 88, 0.22)); color: var(--ok); }
+.matches--none { background: light-dark(rgba(215, 0, 21, 0.1), rgba(255, 69, 58, 0.22)); color: var(--red); }
+.matches--many { background: light-dark(rgba(192, 76, 0, 0.12), rgba(255, 159, 10, 0.22)); color: var(--orange); }
+
+.row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; padding: 0; }
+.muted { color: var(--secondary); font-size: 12px; }
+.actions { display: flex; gap: 10px; flex-wrap: wrap; }
+.problem { color: var(--red); font-size: 12.5px; margin: 3px 0; }
+.ok { color: var(--ok); font-size: 12.5px; }
+.empty { padding: 22px 16px; color: var(--secondary); font-size: 13px; }
+.banner { border: 0; background: light-dark(rgba(192, 76, 0, 0.1), rgba(255, 159, 10, 0.18)); color: var(--orange); border-radius: var(--radius-group); padding: 10px 13px; font-size: 12.5px; margin: 0 0 14px; }
+
+/* The JSON, folded away: it is the output, not the workspace. */
+.jsonbox { margin: 16px 14px 0; border-radius: var(--radius-group); background: var(--card); overflow: hidden; }
+.jsonbox > summary { padding: 9px 14px; cursor: pointer; font-size: 12px; color: var(--secondary); background: var(--fill); }
+pre { margin: 0; padding: 14px 16px; overflow: auto; max-height: 320px; font: 11.5px/1.6 var(--mono); letter-spacing: 0; background: var(--card); }

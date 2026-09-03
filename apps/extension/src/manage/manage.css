@@ -1,17 +1,31 @@
-:root { color-scheme: light dark; --bg:#f7f8fa; --panel:#fff; --ink:#14161b; --muted:#6b7280; --line:#e5e7eb; --accent:#2f6df6; --ok:#177245; --err:#c02626; --warn:#b45309; }
-@media (prefers-color-scheme: dark) { :root { --bg:#0e1014; --panel:#161920; --ink:#e9ebee; --muted:#98a1b0; --line:#252932; --accent:#6f9dff; --ok:#6ddc9a; --err:#ff8a8a; --warn:#e0a458; } }
-* { box-sizing: border-box; }
-body { margin: 0; background: var(--bg); color: var(--ink); font: 14px/1.6 ui-sans-serif, system-ui, sans-serif; }
-.wrap { max-width: 760px; margin: 0 auto; padding: 32px 22px 60px; }
-h1 { font-size: 22px; margin: 0 0 6px; letter-spacing: -0.02em; }
-h2 { font-size: 11px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); margin: 26px 0 10px; }
-.lede { color: var(--muted); margin: 0 0 22px; }
-.card { background: var(--panel); padding: 14px 16px; margin-bottom: 12px; }
-.card h3 { font-size: 15px; }
-.actions { display: flex; flex-wrap: wrap; gap: 8px; margin: 0 0 26px; }
-.empty { color: var(--muted); background: var(--panel); border: 1px dashed var(--line); border-radius: 9px; padding: 22px; text-align: center; }
-.setting { display: flex; align-items: center; flex-wrap: wrap; gap: 10px; background: var(--panel); border: 1px solid var(--line); border-radius: 9px; padding: 12px 16px; margin: 0 0 22px; }
-.setting__label { font-size: 13px; }
-.setting__note { flex-basis: 100%; margin: 0; font-size: 12px; }
-.select { font: inherit; font-size: 13px; color: var(--ink); background: transparent; border: 1px solid var(--line); border-radius: 7px; padding: 5px 9px; cursor: pointer; }
-.select:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+/*
+ * The Adapters pane: what is installed, what it may touch, and one setting.
+ *
+ * Everything shared is in ../ui/system.css. A settings pane is a column, not a
+ * page — 700px, because a list of rows read to the full width of a window is a
+ * spreadsheet.
+ */
+.wrap { max-width: 700px; margin: 0 auto; padding: 40px 22px 72px; }
+h1 { margin-bottom: 5px; }
+.lede { margin-bottom: 26px; }
+
+/* The language setting, as one settings row. */
+.setting {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 10px;
+  background: var(--card);
+  border-radius: var(--radius-group);
+  padding: 11px 16px;
+  margin: 0 0 20px;
+}
+.setting__label { flex: 1; }
+.setting__note { flex-basis: 100%; margin: 0; font-size: 11.5px; color: var(--secondary); }
+.select { padding: 4px 8px; }
+
+.actions { display: flex; flex-wrap: wrap; gap: 10px; margin: 0 0 28px; }
+
+h2 { margin: 28px 4px 8px; }
+.empty { background: var(--card); border-radius: var(--radius-group); padding: 28px; text-align: center; color: var(--secondary); }

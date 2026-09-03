@@ -1,0 +1,286 @@
+/*
+ * The extension's design system: Apple's, as it is used for settings.
+ *
+ * The demos measure apple.com — 17px body, 48px statement headings, cards on a
+ * wide marketing grid. That is the wrong half of Apple to copy here. These
+ * pages are not marketing: they are a popup, a list of installed things, a
+ * permission sheet, a compatibility report and a builder. Their reference is
+ * the settings side — grouped inset lists on a recessed background, a hairline
+ * between rows that starts where the text starts, the control on the right, the
+ * section's name in secondary ink above the group. Dense, quiet, and legible at
+ * a glance, because nobody comes to a settings pane to read it.
+ *
+ * Every page links this file first and then adds only what is its own. Before,
+ * five stylesheets each opened with their own palette, and the five had drifted
+ * into four different greys and two different blues.
+ *
+ * Colours are Apple's system set rather than the web ones the marketing pages
+ * use: systemBlue #007aff, not the #0071e3 of a buy button. `light-dark()`
+ * carries both appearances, which is why `color-scheme` is declared once here
+ * and nowhere else.
+ */
+:root {
+  color-scheme: light dark;
+
+  /* Ink. `label` is the text, `secondary` everything explanatory beside it. */
+  --label: light-dark(#1d1d1f, #f5f5f7);
+  --secondary: light-dark(#6e6e73, #98989d);
+  --tertiary: light-dark(#8e8e93, #6e6e73);
+
+  /* Ground. A grouped page is recessed and the groups sit on it, which is the
+   * inverse of a card-on-white layout and the reason it reads as settings. */
+  --grouped: light-dark(#f2f2f7, #000000);
+  --card: light-dark(#ffffff, #1c1c1e);
+  --raised: light-dark(#ffffff, #2c2c2e);
+  --fill: light-dark(rgba(118, 118, 128, 0.12), rgba(118, 118, 128, 0.24));
+  --fill-strong: light-dark(rgba(118, 118, 128, 0.2), rgba(118, 118, 128, 0.36));
+  --separator: light-dark(#d2d2d7, #38383a);
+
+  /* Apple's system accents. Green is the switch, not the accent: an Apple
+   * switch is green when it is on, whatever the app's tint is. */
+  --blue: light-dark(#007aff, #0a84ff);
+  --green: light-dark(#34c759, #30d158);
+  --orange: light-dark(#c04c00, #ff9f0a);
+  --red: light-dark(#d70015, #ff453a);
+  --on-accent: #ffffff;
+
+  --font:
+    -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'SF Pro JP', 'Helvetica Neue', Helvetica, Arial,
+    'Hiragino Sans', 'Noto Sans JP', sans-serif;
+  --mono: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, monospace;
+
+  --radius-group: 12px;
+  --radius-control: 8px;
+  --pad-row: 11px 16px;
+
+  /*
+   * The names the pages were written against. Kept as aliases rather than
+   * renamed through five files: one definition, and a diff that can be read.
+   */
+  --ink: var(--label);
+  --muted: var(--secondary);
+  --line: var(--separator);
+  --accent: var(--blue);
+  --ok: light-dark(#248a3d, #30d158);
+  --warn: var(--orange);
+  --err: var(--red);
+  --bg: var(--grouped);
+  --panel: var(--card);
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: var(--grouped);
+  color: var(--label);
+  /* 13px is the macOS control size. Apple tightens tracking slightly below
+   * 17px rather than letting the default spacing loosen small text. */
+  font: 400 13px/1.45 var(--font);
+  letter-spacing: -0.006em;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ------------------------------------------------------------------ type --- */
+
+h1 { margin: 0 0 4px; font-size: 26px; line-height: 1.15; font-weight: 600; letter-spacing: -0.021em; }
+h2 { margin: 26px 0 7px; font-size: 13px; font-weight: 400; color: var(--secondary); letter-spacing: -0.006em; }
+h3 { margin: 0; font-size: 13px; font-weight: 590; letter-spacing: -0.008em; }
+.lede { margin: 0 0 22px; color: var(--secondary); font-size: 13px; }
+.muted { color: var(--secondary); }
+code, .mono { font-family: var(--mono); font-size: 11.5px; letter-spacing: 0; }
+
+/*
+ * A group header sits above its group and is not a heading of the page. Apple
+ * dropped the tracked-out capitals years ago; this is sentence case in
+ * secondary ink, which is what a current settings pane shows.
+ */
+.section { margin: 26px 0 7px; padding: 0 16px; font-size: 13px; color: var(--secondary); }
+.section:first-child { margin-top: 0; }
+
+/* ----------------------------------------------------------------- group --- */
+
+/*
+ * The grouped inset list. No outer border — the group is defined by its fill
+ * against the recessed page, not by a line around it. Rows are separated by a
+ * hairline that starts where the row's text starts, which is the detail that
+ * makes a list look like Apple's rather than like a table. `.row` on its own is
+ * just a flex line — the separator belongs to the group, not to every row on
+ * every page.
+ */
+.group {
+  background: var(--card);
+  border-radius: var(--radius-group);
+  overflow: hidden;
+  margin: 0 0 18px;
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: var(--pad-row);
+  position: relative;
+}
+.group > .row + .row::before {
+  content: '';
+  position: absolute;
+  inset: 0 0 auto 16px;
+  height: 1px;
+  background: var(--separator);
+}
+.row__label { flex: 1; min-width: 0; }
+.row__note { display: block; margin-top: 1px; color: var(--secondary); font-size: 11.5px; }
+.row__value { color: var(--secondary); text-align: right; }
+
+/* ---------------------------------------------------------------- controls --- */
+
+/*
+ * Buttons. Filled blue for the one action a pane is for, a grey fill for the
+ * rest, plain blue text for anything that only navigates. Apple does not put
+ * an outline round a button, which is what all of these used to be.
+ */
+.btn {
+  font: inherit;
+  font-size: 13px;
+  font-weight: 510;
+  letter-spacing: -0.008em;
+  border: 0;
+  border-radius: var(--radius-control);
+  padding: 7px 14px;
+  background: var(--fill);
+  color: var(--label);
+  cursor: pointer;
+  transition: background 0.15s ease, opacity 0.15s ease;
+}
+.btn:hover { background: var(--fill-strong); }
+.btn:active { opacity: 0.75; }
+.btn--primary { background: var(--blue); color: var(--on-accent); }
+.btn--primary:hover { background: var(--blue); opacity: 0.88; }
+.btn--danger { background: var(--red); color: var(--on-accent); }
+.btn--danger:hover { background: var(--red); opacity: 0.88; }
+.btn--link, .btn--plain {
+  background: none;
+  color: var(--blue);
+  padding: 7px 0;
+  text-decoration: none;
+}
+.btn--link:hover, .btn--plain:hover { background: none; text-decoration: underline; }
+.btn--small { padding: 4px 10px; font-size: 12px; }
+.btn:disabled { opacity: 0.4; cursor: default; }
+
+a { color: var(--blue); text-decoration: none; }
+a:hover { text-decoration: underline; }
+
+/* Apple's focus ring: a soft blue halo outside the control, not a hard outline. */
+:focus-visible {
+  outline: 3px solid light-dark(rgba(0, 122, 255, 0.5), rgba(10, 132, 255, 0.6));
+  outline-offset: 1px;
+  border-radius: 5px;
+}
+
+input, select, textarea {
+  font: inherit;
+  font-size: 13px;
+  color: var(--label);
+  background: var(--card);
+  border: 1px solid var(--separator);
+  border-radius: 6px;
+  padding: 5px 8px;
+}
+select { cursor: pointer; }
+textarea { resize: vertical; }
+
+/*
+ * The switch, at Apple's proportions: 51x31 at full size, so 40x24 here keeps
+ * the same 1.65 ratio and the same 2px of clearance around the knob. Green when
+ * on. The control underneath is still a checkbox, so keyboard behaviour and the
+ * label association survive; only its appearance changes.
+ */
+.switch { display: inline-flex; align-items: center; gap: 8px; cursor: pointer; user-select: none; }
+.switch input[type='checkbox'] {
+  appearance: none;
+  -webkit-appearance: none;
+  margin: 0;
+  position: relative;
+  flex: none;
+  width: 40px;
+  height: 24px;
+  padding: 0;
+  border: 0;
+  border-radius: 999px;
+  background: var(--fill-strong);
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+.switch input[type='checkbox']::after {
+  content: '';
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2), 0 0 1px rgba(0, 0, 0, 0.15);
+  transition: transform 0.2s ease;
+}
+.switch input[type='checkbox']:checked { background: var(--green); }
+.switch input[type='checkbox']:checked::after { transform: translateX(16px); }
+.switch--small { color: var(--secondary); font-size: 11.5px; }
+.switch--small input[type='checkbox'] { width: 32px; height: 20px; }
+.switch--small input[type='checkbox']::after { width: 16px; height: 16px; }
+.switch--small input[type='checkbox']:checked::after { transform: translateX(12px); }
+
+/* -------------------------------------------------------------- badges --- */
+
+/*
+ * Capability and status badges as filled tints rather than outlined chips: at
+ * 10px an outline is most of what you see, and four of them down a list read
+ * as a table of boxes. A tint carries the same information more quietly.
+ */
+.cap, .health, .state {
+  font-size: 10px;
+  font-weight: 590;
+  letter-spacing: 0.004em;
+  border: 0;
+  border-radius: 5px;
+  padding: 2px 6px;
+  white-space: nowrap;
+  background: var(--fill);
+  color: var(--secondary);
+}
+.cap--READ { background: var(--fill); color: var(--secondary); }
+.cap--INTERACT { background: light-dark(rgba(0, 122, 255, 0.12), rgba(10, 132, 255, 0.22)); color: var(--blue); }
+.cap--WRITE { background: light-dark(rgba(192, 76, 0, 0.12), rgba(255, 159, 10, 0.22)); color: var(--orange); }
+.cap--DESTRUCTIVE { background: light-dark(rgba(215, 0, 21, 0.1), rgba(255, 69, 58, 0.22)); color: var(--red); }
+.health--healthy, .state--yes { background: light-dark(rgba(36, 138, 61, 0.12), rgba(48, 209, 88, 0.22)); color: var(--ok); }
+.health--degraded, .state--partial { background: light-dark(rgba(192, 76, 0, 0.12), rgba(255, 159, 10, 0.22)); color: var(--orange); }
+.health--broken, .state--no { background: light-dark(rgba(215, 0, 21, 0.1), rgba(255, 69, 58, 0.22)); color: var(--red); }
+.health--unknown { background: var(--fill); color: var(--secondary); }
+
+.status { font-weight: 510; }
+.status--ok { color: var(--ok); }
+.status--err { color: var(--red); }
+.status--warn { color: var(--orange); }
+
+/* --------------------------------------------------------------- notices --- */
+
+/*
+ * A notice is a tinted block, not a bordered one. Apple tints the background
+ * and keeps the text in the accent's own colour; an outline at this size fights
+ * the group it sits above.
+ */
+.notice {
+  border: 0;
+  border-radius: var(--radius-group);
+  padding: 11px 14px;
+  margin: 0 0 16px;
+  font-size: 12.5px;
+  background: light-dark(rgba(192, 76, 0, 0.1), rgba(255, 159, 10, 0.16));
+  color: var(--orange);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * { transition: none !important; }
+}

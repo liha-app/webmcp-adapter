@@ -116,10 +116,13 @@ async function copyStatic() {
     await cp(join(root, `src/${dir}/${dir}.html`), join(outdir, `${dir}/${dir}.html`));
     await cp(join(root, `src/${dir}/${dir}.css`), join(outdir, `${dir}/${dir}.css`));
   }
-  // The adapter card's styling, shared by the popup and the Adapters page the
-  // same way ui/adapters.ts is shared by their scripts.
+  // The design system every page links first, and the adapter card's styling,
+  // shared by the popup and the Adapters page the same way ui/adapters.ts is
+  // shared by their scripts.
   await mkdir(join(outdir, 'ui'), { recursive: true });
-  await cp(join(root, 'src/ui/cards.css'), join(outdir, 'ui/cards.css'));
+  for (const sheet of ['system.css', 'cards.css']) {
+    await cp(join(root, `src/ui/${sheet}`), join(outdir, `ui/${sheet}`));
+  }
   // The toolbar and extensions-page icons. Generated from the brand master by
   // tools/brand/icons.mjs and committed, so packaging needs no browser.
   await cp(join(root, 'icons'), join(outdir, 'icons'), { recursive: true });

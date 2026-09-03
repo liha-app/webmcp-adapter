@@ -1,22 +1,31 @@
-:root { color-scheme: light dark; --bg:#f7f8fa; --panel:#fff; --ink:#14161b; --muted:#6b7280; --line:#e5e7eb; --ok:#177245; --err:#c02626; --warn:#b45309; }
-@media (prefers-color-scheme: dark) { :root { --bg:#0e1014; --panel:#161920; --ink:#e9ebee; --muted:#98a1b0; --line:#252932; --ok:#6ddc9a; --err:#ff8a8a; --warn:#e0a458; } }
-* { box-sizing: border-box; }
-body { margin: 0; background: var(--bg); color: var(--ink); font: 14px/1.6 ui-sans-serif, system-ui, sans-serif; }
-.wrap { max-width: 720px; margin: 0 auto; padding: 32px 22px 60px; }
-h1 { font-size: 22px; margin: 0 0 6px; letter-spacing: -0.02em; }
-h2 { font-size: 12px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); margin: 0; padding: 12px 16px; border-bottom: 1px solid var(--line); }
-.lede { color: var(--muted); margin: 0 0 22px; }
-.panel { background: var(--panel); border: 1px solid var(--line); border-radius: 11px; overflow: hidden; margin-bottom: 18px; }
-.row { display: flex; align-items: center; justify-content: space-between; gap: 14px; padding: 11px 16px; border-top: 1px solid var(--line); }
-.row:first-of-type { border-top: 0; }
+/*
+ * The compatibility pane: what this browser can and cannot do.
+ *
+ * Everything shared is in ../ui/system.css. This is the page the grouped list
+ * fits best — a verdict, then rows of capability and state — so it adds almost
+ * nothing of its own.
+ */
+.wrap { max-width: 700px; margin: 0 auto; padding: 40px 22px 72px; }
+h1 { margin-bottom: 5px; }
+.lede { margin-bottom: 26px; }
+
+/*
+ * The verdict. Tinted by outcome rather than carrying a coloured rule down its
+ * left edge: Apple colours the surface, not a stripe on it.
+ */
+.verdict { border-radius: var(--radius-group); padding: 15px 18px; margin: 0 0 24px; background: var(--card); }
+.verdict--ok { background: light-dark(rgba(36, 138, 61, 0.1), rgba(48, 209, 88, 0.16)); }
+.verdict--limited { background: light-dark(rgba(192, 76, 0, 0.1), rgba(255, 159, 10, 0.16)); }
+.verdict h3 { font-size: 15px; margin-bottom: 3px; }
+.verdict--ok h3 { color: var(--ok); }
+.verdict--limited h3 { color: var(--orange); }
+.verdict p { margin: 0; color: var(--secondary); }
+
+/* The panels are groups; the header is the group's name, above it. */
+.panel { background: var(--card); border-radius: var(--radius-group); overflow: hidden; margin-bottom: 22px; }
+.panel h2 { margin: 0; padding: 10px 16px 9px; font-size: 12px; color: var(--secondary); border-bottom: 1px solid var(--separator); }
+/* The hairline starts where the row's text starts, as it does everywhere else. */
+.row { padding: 11px 16px; position: relative; }
+.row + .row::before { content: ''; position: absolute; inset: 0 0 auto 16px; height: 1px; background: var(--separator); }
 .row__label { flex: 1; }
-.row__note { color: var(--muted); font-size: 12.5px; display: block; margin-top: 2px; }
-.state { font-size: 11px; font-weight: 700; letter-spacing: .05em; border: 1px solid currentColor; border-radius: 5px; padding: 2px 7px; white-space: nowrap; }
-.state--yes { color: var(--ok); } .state--no { color: var(--err); } .state--partial { color: var(--warn); }
-.verdict { border: 1px solid var(--line); border-left-width: 3px; border-radius: 9px; padding: 14px 16px; margin-bottom: 22px; background: var(--panel); }
-.verdict--ok { border-left-color: var(--ok); }
-.verdict--limited { border-left-color: var(--warn); }
-.verdict h3 { margin: 0 0 5px; font-size: 15px; }
-.verdict p { margin: 0; color: var(--muted); font-size: 13.5px; }
-.muted { color: var(--muted); }
-code { font: 12.5px ui-monospace, SFMono-Regular, Menlo, monospace; }
+.row__note { display: block; margin-top: 2px; color: var(--secondary); font-size: 11.5px; }
