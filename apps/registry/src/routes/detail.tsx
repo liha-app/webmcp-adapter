@@ -1,7 +1,15 @@
 import { useState } from 'react';
 import { Link, useParams } from '@tanstack/react-router';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { findEntry, toolEffectSummary } from '../lib/catalog';
+import { findEntry } from '../lib/catalog';
+import {
+  adapterDescription,
+  categoryLabel,
+  localizedInputSchema,
+  toolDescription,
+  toolEffectSummary,
+  verifiedDate,
+} from '../lib/catalog-copy';
 import { fetchInstalled, requestInstall } from '../lib/extension';
 import { useI18n } from '../i18n';
 import { AdapterIcon, CapabilityBadge, HealthBadge } from './components';
@@ -17,7 +25,7 @@ import { detailRoute } from './tree';
  * file size.
  */
 export function AdapterDetail() {
-  const { t, tx } = useI18n();
+  const { locale, t, tx } = useI18n();
   const { adapterId } = useParams({ from: detailRoute.id });
   const entry = findEntry(adapterId);
   const queryClient = useQueryClient();
@@ -51,7 +59,7 @@ export function AdapterDetail() {
       <article className="product__inner" data-adapter-id={adapter.id}>
         <p className="crumbs">
           <Link to="/adapters">{t('store.title')}</Link> <span aria-hidden="true">›</span>{' '}
-          {adapter.category ?? 'other'}
+          {categoryLabel(adapter.category, locale)}
         </p>
 
         <header className="product__head">
@@ -61,7 +69,7 @@ export function AdapterDetail() {
               {adapter.name}
             </h1>
             <p className="product__sub" data-field="description">
-              {adapter.description}
+              {adapterDescription(adapter, locale)}
             </p>
             <div className="product__actions">
               <button
@@ -112,7 +120,7 @@ export function AdapterDetail() {
           <div>
             <dt>{t('detail.factVerified')}</dt>
             <dd>
-              {adapter.verifiedAt ?? t('detail.notVerified')}
+              {verifiedDate(adapter.verifiedAt, locale, t('detail.notVerified'))}
               {live?.health && <small>{t('detail.healthInBrowser', [live.health.status])}</small>}
             </dd>
           </div>
@@ -149,11 +157,13 @@ export function AdapterDetail() {
                   <CapabilityBadge capability={tool.capability} />
                   {health && <HealthBadge status={health.status} />}
                 </div>
-                <p className="tool__desc">{tool.description}</p>
-                <p>{t('detail.does', [toolEffectSummary(adapter, tool.name), tool.steps.length])}</p>
+                <p className="tool__desc">
+                  {toolDescription(adapter.id, tool.name, tool.description, locale)}
+                </p>
+                <p>{t('detail.does', [toolEffectSummary(adapter, tool.name, locale), tool.steps.length])}</p>
                 <details>
                   <summary>{t('detail.inputSchema')}</summary>
-                  <pre>{JSON.stringify(tool.inputSchema, null, 2)}</pre>
+                  <pre>{JSON.stringify(localizedInputSchema(adapter.id, tool.name, tool.inputSchema, locale), null, 2)}</pre>
                 </details>
               </div>
             );

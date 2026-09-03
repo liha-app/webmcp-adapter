@@ -195,10 +195,42 @@ test.describe('Appearance and language', () => {
     await page.goto('http://localhost:5280/adapters');
     await expect(page.getByRole('heading', { level: 1 })).toHaveText(ja['store.title']);
     await expect(page.getByTestId('category-filter')).toContainText(ja['store.allAdapters']);
-    await page.goto('http://localhost:5280/adapters/demo-project');
+    await expect(page.getByTestId('category-filter')).toContainText('顧客管理');
+    await expect(page.getByTestId('category-filter')).toContainText('EC・コマース');
+    await expect(page.getByTestId('category-filter')).toContainText('仕事効率化');
+    await expect(page.getByTestId('adapter-list')).toContainText('Acme CRMの実際の画面を操作して');
+    await expect(page.getByTestId('adapter-list')).not.toContainText('Search, create and update customers');
+
+    await page.getByTestId('adapter-search').fill('顧客');
+    await expect(page.getByTestId('adapter-list').locator('li')).toHaveCount(1);
+    await expect(page.getByTestId('adapter-list')).toContainText('Acme CRM');
+
+    await page.goto('http://localhost:5280/adapters/demo-crm');
     await expect(page.getByText(ja['detail.reachTitle'])).toBeVisible();
-    // Adapter-supplied text is the published definition, so it is not translated.
-    await expect(page.getByRole('heading', { level: 1 })).toHaveText('Kite Project Manager');
+    await expect(page.getByRole('heading', { level: 1 })).toHaveText('Acme CRM');
+    await expect(page.locator('.crumbs')).toContainText('顧客管理');
+    await expect(page.locator('.product__sub')).toContainText('Acme CRMの実際の画面を操作して');
+    await expect(page.locator('[data-tool-name="search_customers"]')).toContainText(
+      '名前またはメールアドレスで顧客一覧を検索し',
+    );
+    await expect(page.locator('[data-tool-name="search_customers"]')).toContainText('入力1回 · 読み取り1回');
+    await expect(page.locator('.facts')).toContainText('2026年9月1日');
+
+    await page.locator('[data-tool-name="search_customers"] details').click();
+    await expect(page.locator('[data-tool-name="search_customers"] pre')).toContainText(
+      '検索する名前またはメールアドレスの一部',
+    );
+
+    // The localized listing is display-only. The auditable artifact stays the
+    // exact canonical JSON an extension and an agent consume.
+    await page.getByRole('button', { name: ja['detail.showSource'] }).click();
+    await expect(page.getByTestId('adapter-source')).toContainText('Search the customer list by name or email');
+
+    await page.getByTestId('language-control').locator('[data-locale-option="en"]').click();
+    await expect(page.locator('.crumbs')).toContainText('CRM');
+    await expect(page.locator('.product__sub')).toContainText('Search, create and update customers');
+    await expect(page.locator('[data-tool-name="search_customers"]')).toContainText('1 input · 1 read');
+    await expect(page.locator('.facts')).toContainText('Sep 1, 2026');
   });
 });
 
@@ -248,9 +280,11 @@ test.describe('Adapter Registry', () => {
     // The counts beside each filter have to be real, not decoration.
     await expect(sidebar.getByRole('button', { name: 'All adapters' })).toContainText('3');
     await expect(page.locator('.featurecard')).toContainText('3 adapters');
+    await expect(page.locator('.featurecard')).toHaveAttribute('href', '/#how');
     await expect(page.locator('[data-testid="adapter-list"] .appicon svg')).toHaveCount(3);
     // The demo shelf links straight at the running demo apps.
     await expect(page.getByRole('link', { name: 'Open' }).first()).toHaveAttribute('href', /5273|crm\./);
+    await expect(page.getByRole('link', { name: /What you need first/ })).toHaveAttribute('href', '/create');
   });
 
   test.beforeEach(async ({ page }) => {
@@ -274,7 +308,7 @@ test.describe('Adapter Registry', () => {
     await expect(page).toHaveURL(/capability=DESTRUCTIVE/);
 
     await page.getByTestId('capability-filter').getByRole('button', { name: 'Any capability' }).click();
-    await page.getByTestId('category-filter').getByRole('button', { name: 'crm' }).click();
+    await page.getByTestId('category-filter').getByRole('button', { name: 'CRM' }).click();
     await expect(page.getByTestId('adapter-list')).toContainText('Acme CRM');
   });
 

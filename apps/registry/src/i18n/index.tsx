@@ -9,9 +9,9 @@ import { ja } from './ja';
  * page in one language and forgotten in the other is a compile error rather
  * than a half-translated page in production.
  *
- * Adapter-supplied text — names, descriptions, tool descriptions — is left in
- * the language its author wrote it in, which is how a store listing behaves.
- * Only the text this project wrote is translated.
+ * Third-party adapter text stays in the language its author wrote it in. The
+ * official catalogue can add display-only translations for the store, while
+ * canonical definitions and agent-facing WebMCP metadata remain untouched.
  */
 export type Locale = 'en' | 'ja';
 

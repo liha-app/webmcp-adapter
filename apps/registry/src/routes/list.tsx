@@ -6,6 +6,7 @@ import { fetchInstalled } from '../lib/extension';
 import { CAPABILITY_OPTIONS } from '../lib/webmcp';
 import { useI18n } from '../i18n';
 import { demoApps } from '../lib/demos';
+import { adapterDescription, catalogSearchText, categoryLabel } from '../lib/catalog-copy';
 import { GITHUB_URL, RELEASES_URL } from '../lib/links';
 import { AdapterIcon, BrandIcon, CapabilityBadge, HealthBadge } from './components';
 import { listRoute } from './tree';
@@ -19,7 +20,7 @@ import { listRoute } from './tree';
  * the store puts them, and because it keeps the URL-shareable state visible.
  */
 export function AdapterList() {
-  const { t, tx } = useI18n();
+  const { locale, t, tx } = useI18n();
   const search = useSearch({ from: listRoute.id });
   const navigate = useNavigate({ from: listRoute.id });
 
@@ -29,18 +30,25 @@ export function AdapterList() {
   const activeCategory = search.category ?? 'all';
   const activeCapability = search.capability ?? 'all';
 
-  const results = searchCatalog({ query: search.q ?? '', category: activeCategory, capability: activeCapability });
+  const localizedText = (entry: (typeof CATALOG)[number]) => catalogSearchText(entry, locale);
+  const results = searchCatalog(
+    { query: search.q ?? '', category: activeCategory, capability: activeCapability },
+    localizedText,
+  );
 
   const update = (patch: Record<string, string | undefined>) => {
     void navigate({ search: (prev) => ({ ...prev, ...patch }) });
   };
 
   const countFor = (patch: { category?: string; capability?: string }) =>
-    searchCatalog({
-      query: search.q ?? '',
-      category: patch.category ?? activeCategory,
-      capability: patch.capability ?? activeCapability,
-    }).length;
+    searchCatalog(
+      {
+        query: search.q ?? '',
+        category: patch.category ?? activeCategory,
+        capability: patch.capability ?? activeCapability,
+      },
+      localizedText,
+    ).length;
 
   const totalTools = CATALOG.reduce((total, entry) => total + entry.toolCount, 0);
 
@@ -79,7 +87,7 @@ export function AdapterList() {
                   aria-current={activeCategory === category}
                   onClick={() => update({ category })}
                 >
-                  {category}
+                  {categoryLabel(category, locale)}
                   <span className="sidebar__count">{countFor({ category })}</span>
                 </button>
               </li>
@@ -110,7 +118,7 @@ export function AdapterList() {
         <h1 className="store__title">{t('store.title')}</h1>
         <p className="store__sub">{t('store.sub')}</p>
 
-        <Link className="featurecard" to="/" hash="live">
+        <Link className="featurecard" to="/" hash="how">
           <p className="featurecard__kicker">{t('store.featureKicker')}</p>
           <h2>{t('store.featureHeadline', [CATALOG.length, totalTools])}</h2>
           <p>{tx('store.featureCopy', [<code key="eval">eval</code>])}</p>
@@ -145,12 +153,12 @@ export function AdapterList() {
                           {entry.adapter.name}
                         </span>
                         <span className="lockup__sub" data-field="description">
-                          {entry.adapter.description}
+                          {adapterDescription(entry.adapter, locale)}
                         </span>
                       </Link>
                       <span className="lockup__meta">
                         <span className="chip" data-field="category">
-                          {entry.adapter.category ?? 'other'}
+                          {categoryLabel(entry.adapter.category, locale)}
                         </span>
                         <span className="chip">{t('store.toolCount', [entry.toolCount])}</span>
                         {entry.capabilities.map((capability) => (
@@ -186,7 +194,7 @@ export function AdapterList() {
         <section className="shelf">
           <div className="shelf__head">
             <h2 className="shelf__title">{t('store.demoShelf')}</h2>
-            <Link className="shelf__link" to="/" hash="setup">
+            <Link className="shelf__link" to="/create">
               {t('store.demoShelfLink')} ›
             </Link>
           </div>
