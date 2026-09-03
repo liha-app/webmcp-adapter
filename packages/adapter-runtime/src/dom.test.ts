@@ -201,3 +201,39 @@ describe('clickElement and readElementText', () => {
     expect(readElementText(one('#d'))).toBe('Alice Smith');
   });
 });
+
+describe('acting only on controls a person could act on', () => {
+  /*
+   * A step that clicks an invisible button or fills a hidden input is not
+   * driving the site's interface, it is reaching past it — and the runtime's
+   * whole claim is that it does what a person would do through the controls a
+   * person can see.
+   */
+  it('refuses a hidden button', () => {
+    document.body.innerHTML = `<button id="b" style="display:none">Delete</button>`;
+    expect(() => clickElement(one('#b'))).toThrow(/not visible/);
+  });
+
+  it('refuses an aria-hidden control', () => {
+    document.body.innerHTML = `<button id="b" aria-hidden="true">Delete</button>`;
+    expect(() => clickElement(one('#b'))).toThrow(/not visible/);
+  });
+
+  it('refuses a disabled control, and one that only says it is', () => {
+    document.body.innerHTML = `<button id="a" disabled>Go</button><button id="b" aria-disabled="true">Go</button>`;
+    expect(() => clickElement(one('#a'))).toThrow(/disabled/);
+    expect(() => clickElement(one('#b'))).toThrow(/aria-disabled/);
+  });
+
+  it('refuses to fill a hidden or read-only field', () => {
+    document.body.innerHTML = `<input id="a" type="hidden"><input id="b" readonly>`;
+    expect(() => fillElement(one('#a'), 'x')).toThrow();
+    expect(() => fillElement(one('#b'), 'x')).toThrow(/read-only/);
+  });
+
+  it('still acts on an ordinary control', () => {
+    document.body.innerHTML = `<button id="b">Go</button><input id="i">`;
+    expect(() => clickElement(one('#b'))).not.toThrow();
+    expect(() => fillElement(one('#i'), 'x')).not.toThrow();
+  });
+});

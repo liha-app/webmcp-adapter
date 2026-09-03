@@ -56,7 +56,13 @@ export function createRecorder(sink: ActionSink): { start(): void; stop(): void 
     const described = describe(target);
 
     if (tag === 'select') {
-      sink({ at: Date.now(), kind: 'select', ...described, value: (target as HTMLSelectElement).value });
+      /* A <select> can be a secret as easily as an <input> can — an expiry
+       * month is `autocomplete="cc-exp-month"`, and `name="secret"` is a
+       * <select> as often as not. This branch used to keep the value whatever
+       * the field was. */
+      const chosen = (target as HTMLSelectElement).value;
+      const safe = isSensitiveField(target) ? undefined : chosen;
+      sink({ at: Date.now(), kind: 'select', ...described, ...(safe === undefined ? {} : { value: safe }) });
       return;
     }
     if (tag === 'input') {

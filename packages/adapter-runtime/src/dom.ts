@@ -12,6 +12,7 @@ export type StepErrorCode =
   | 'selector-ambiguous'
   | 'invalid-selector'
   | 'sensitive-field'
+  | 'not-actionable'
   | 'wrong-element'
   | 'timeout'
   | 'assertion-failed'
@@ -103,6 +104,7 @@ function setNativeValue(element: Element, value: string): void {
 }
 
 export function fillElement(element: Element, value: string): void {
+  assertActionable(element, 'fill');
   if (!isFillable(element)) {
     throw new StepError(`element for fill is a <${element.tagName.toLowerCase()}>, not an input`, 'wrong-element');
   }
@@ -111,6 +113,7 @@ export function fillElement(element: Element, value: string): void {
 }
 
 export function selectOption(element: Element, value: string): void {
+  assertActionable(element, 'select');
   if (element.tagName.toLowerCase() !== 'select') {
     throw new StepError(`element for select is a <${element.tagName.toLowerCase()}>, not a <select>`, 'wrong-element');
   }
@@ -130,6 +133,7 @@ export function selectOption(element: Element, value: string): void {
 }
 
 export function setChecked(element: Element, checked: boolean): void {
+  assertActionable(element, 'set');
   const input = element as HTMLInputElement;
   const type = (input.type ?? '').toLowerCase();
   if (element.tagName.toLowerCase() !== 'input' || (type !== 'checkbox' && type !== 'radio')) {
@@ -143,6 +147,7 @@ export function setChecked(element: Element, checked: boolean): void {
 }
 
 export function clickElement(element: Element): void {
+  assertActionable(element, 'click');
   if (typeof (element as HTMLElement).click !== 'function') {
     throw new StepError('element is not clickable', 'wrong-element');
   }
@@ -150,6 +155,7 @@ export function clickElement(element: Element): void {
 }
 
 export function submitForm(element: Element): void {
+  assertActionable(element, 'submit');
   const form =
     element.tagName.toLowerCase() === 'form' ? (element as HTMLFormElement) : (element as HTMLElement).closest('form');
   if (!form) throw new StepError('no <form> found for submit step', 'wrong-element');
@@ -198,17 +204,63 @@ export function isVisible(element: Element): boolean {
   const html = element as HTMLElement;
   if (html.hidden) return false;
   if (element.getAttribute('aria-hidden') === 'true') return false;
+
+  /*
+   * `checkVisibility` is the browser's own answer, and it knows about things
+   * this function never will — content-visibility, a collapsed <details>, an
+   * ancestor with `display: contents`. Its presence also tells us we are in a
+   * browser that lays out, which is what makes the zero-size test below safe:
+   * jsdom reports a zero box for everything, so applying it there would call
+   * every element hidden.
+   */
+  const canCheck = typeof (html as { checkVisibility?: unknown }).checkVisibility === 'function';
+  if (canCheck) {
+    const visible = (html as unknown as { checkVisibility: (options?: unknown) => boolean }).checkVisibility({
+      checkOpacity: true,
+      checkVisibilityCSS: true,
+      contentVisibilityAuto: true,
+    });
+    if (!visible) return false;
+    const rect = html.getBoundingClientRect();
+    // A zero-sized box occupies nothing and can be clicked by nobody. It used
+    // to pass, because the heuristic below reads a rect at the origin as "this
+    // environment does not lay out".
+    return rect.width > 0 && rect.height > 0;
+  }
+
   const view = element.ownerDocument?.defaultView;
   if (view?.getComputedStyle) {
     const style = view.getComputedStyle(html);
     if (style.display === 'none' || style.visibility === 'hidden' || style.opacity === '0') return false;
   }
-  // jsdom reports zero-sized boxes for everything, so a zero rect is only
-  // treated as hidden when the environment actually does layout.
   if (typeof html.getBoundingClientRect === 'function') {
     const rect = html.getBoundingClientRect();
     const laysOut = rect.width > 0 || rect.height > 0 || rect.top > 0 || rect.left > 0;
     if (laysOut) return rect.width > 0 && rect.height > 0;
   }
   return true;
+}
+
+/**
+ * Refuses to act on something a person could not have acted on.
+ *
+ * A step that clicks an invisible button or fills a hidden input is not
+ * driving the site's interface; it is reaching past it. The runtime's whole
+ * claim is that it does what a person would do through the controls a person
+ * can see, so the controls have to be ones a person can see.
+ */
+export function assertActionable(element: Element, action: string): void {
+  if (!isVisible(element)) {
+    throw new StepError(`refusing to ${action} an element that is not visible`, 'not-actionable');
+  }
+  const control = element as HTMLInputElement;
+  if (control.disabled === true) {
+    throw new StepError(`refusing to ${action} a disabled control`, 'not-actionable');
+  }
+  if (element.getAttribute('aria-disabled') === 'true') {
+    throw new StepError(`refusing to ${action} a control marked aria-disabled`, 'not-actionable');
+  }
+  if ((element as HTMLInputElement).readOnly === true && action !== 'click') {
+    throw new StepError(`refusing to ${action} a read-only field`, 'not-actionable');
+  }
 }
