@@ -45,7 +45,8 @@
     "e2e": "playwright test",
     "demo": "pnpm --parallel -r preview",
     "capture": "node tools/marketing/capture.mjs",
-    "record": "node tools/marketing/record.mjs"
+    "record": "node tools/marketing/record.mjs",
+    "acceptance:release": "node tools/acceptance/release.mjs"
   },
   "devDependencies": {
     "@eslint/js": "^9.17.0",

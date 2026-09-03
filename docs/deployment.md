@@ -157,7 +157,14 @@ A release build asks for the deployed origins only. `pnpm build` keeps
 work; shipping that would hand every install standing access to whatever the
 user runs on their own machine.
 
+`pnpm acceptance:release` builds the release output into a directory of its own
+and loads it in Chrome, so what it checks is the artifact rather than a
+description of one: the manifest asks for no development origin, and the
+builtin adapters the service worker actually assembles are scoped to the
+deployed hosts. Run it before packaging.
+
 ```bash
+pnpm acceptance:release                                 # the artifact, in a browser
 pnpm build                                              # tests and CI run against this
 pnpm --filter @liha/extension build:release             # then overwrite dist/
 cp -R apps/extension/dist         liha-webmcp-adapter-chrome

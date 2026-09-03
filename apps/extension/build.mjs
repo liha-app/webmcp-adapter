@@ -1,6 +1,6 @@
 import { build, context } from 'esbuild';
 import { cp, mkdir, readFile, rm, writeFile } from 'node:fs/promises';
-import { dirname, join } from 'node:path';
+import { dirname, join, relative } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const root = dirname(fileURLToPath(import.meta.url));
@@ -15,7 +15,10 @@ const target = process.argv.find((arg) => arg.startsWith('--target='))?.split('=
  * `pnpm dev` and the acceptance runners still work against the local sites.
  */
 const release = process.argv.includes('--release');
-const outdir = join(root, target === 'firefox' ? 'dist-firefox' : 'dist');
+// `--outdir` lets a check build somewhere else rather than replacing the
+// development output the other acceptance suites are about to run against.
+const requested = process.argv.find((arg) => arg.startsWith('--outdir='))?.slice('--outdir='.length);
+const outdir = requested ?? join(root, target === 'firefox' ? 'dist-firefox' : 'dist');
 
 /**
  * Separate bundles because they run in separate places:
@@ -152,5 +155,6 @@ if (watch) {
     ),
   );
   await copyStatic();
-  console.log(`[liha] extension built to apps/extension/${target === 'firefox' ? 'dist-firefox' : 'dist'}`);
+  const shown = relative(process.cwd(), outdir);
+  console.log(`[liha] extension built to ${shown && !shown.startsWith('..') ? shown : outdir}`);
 }

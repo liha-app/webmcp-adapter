@@ -4,6 +4,7 @@ import { validateAdapter } from '@liha/adapter-schema';
 import { DEFAULT_POLICY, type RuntimePolicy } from '@liha/adapter-runtime';
 import type { AdapterRecord, AdapterSource } from '@liha/shared';
 import { ext } from '../platform';
+import { scopeToManifest } from './builtins';
 
 const STORAGE_KEY = 'liha:adapters';
 
@@ -27,8 +28,11 @@ export async function readCatalogue(): Promise<AdapterRecord[]> {
   const stored = await ext.storage.local.get(STORAGE_KEY);
   const records = (stored[STORAGE_KEY] ?? {}) as Record<string, StoredRecord>;
 
+  const declared = ext.runtime.getManifest().host_permissions ?? [];
   const catalogue: AdapterRecord[] = [];
-  for (const builtin of OFFICIAL_ADAPTERS) {
+  for (const shipped of OFFICIAL_ADAPTERS) {
+    const builtin = scopeToManifest(shipped, declared);
+    if (!builtin) continue;
     const saved = records[builtin.id];
     catalogue.push({
       adapter: builtin,
