@@ -1,4 +1,5 @@
 import { OFFICIAL_ADAPTERS } from '@liha/adapters';
+import { ALL_MATCH_PATTERNS } from '@liha/config';
 import { validateAdapter } from '@liha/adapter-schema';
 import { DEFAULT_POLICY, type RuntimePolicy } from '@liha/adapter-runtime';
 import type { AdapterRecord, AdapterSource } from '@liha/shared';
@@ -55,11 +56,28 @@ export async function readCatalogue(): Promise<AdapterRecord[]> {
   return catalogue;
 }
 
+/*
+ * One writer at a time.
+ *
+ * Every mutation here is read-modify-write against one storage key, and two of
+ * them in flight — a quick pair of toggles, two installs approved together —
+ * both read the same "before" and the second one's write erases the first. The
+ * queue is a promise chain rather than a lock because a service worker has one
+ * thread and this only needs the turns kept in order.
+ */
+let writeQueue: Promise<void> = Promise.resolve();
+
 async function writeRecords(mutate: (records: Record<string, StoredRecord>) => void): Promise<void> {
-  const stored = await ext.storage.local.get(STORAGE_KEY);
-  const records = (stored[STORAGE_KEY] ?? {}) as Record<string, StoredRecord>;
-  mutate(records);
-  await ext.storage.local.set({ [STORAGE_KEY]: records });
+  const run = writeQueue.then(async () => {
+    const stored = await ext.storage.local.get(STORAGE_KEY);
+    const records = (stored[STORAGE_KEY] ?? {}) as Record<string, StoredRecord>;
+    mutate(records);
+    await ext.storage.local.set({ [STORAGE_KEY]: records });
+  });
+  // The chain must survive a failed turn, or one rejection stops every write
+  // that comes after it.
+  writeQueue = run.catch(() => undefined);
+  return run;
 }
 
 export async function setEnabled(adapterId: string, enabled: boolean): Promise<void> {
@@ -115,9 +133,34 @@ export async function installAdapter(
 }
 
 export async function removeAdapter(adapterId: string): Promise<void> {
+  const before = await readCatalogue();
+  const going = before.find((entry) => entry.adapter.id === adapterId);
   await writeRecords((records) => {
     delete records[adapterId];
   });
+
+  /*
+   * Give back the host access this adapter was the reason for.
+   *
+   * Optional permissions granted at install used to outlive the adapter, so
+   * uninstalling left the extension holding standing access to an origin
+   * nothing was using any more. Chrome's own guidance is to remove what is no
+   * longer needed — and only what is: an origin another installed adapter still
+   * declares has to stay.
+   */
+  if (!going) return;
+  const stillWanted = new Set(
+    (await readCatalogue()).flatMap((entry) => entry.adapter.origins.map((origin) => `${origin}/*`)),
+  );
+  const orphaned = going.adapter.origins
+    .map((origin) => `${origin}/*`)
+    .filter((pattern) => !stillWanted.has(pattern) && !ALL_MATCH_PATTERNS.includes(pattern));
+  if (orphaned.length === 0) return;
+  try {
+    await ext.permissions.remove({ origins: orphaned });
+  } catch (error) {
+    console.warn('[liha] could not release host access for', orphaned, error);
+  }
 }
 
 export { findAllForUrl, findEnabledForUrl } from './match';

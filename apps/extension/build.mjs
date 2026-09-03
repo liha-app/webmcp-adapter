@@ -6,6 +6,15 @@ import { fileURLToPath } from 'node:url';
 const root = dirname(fileURLToPath(import.meta.url));
 const watch = process.argv.includes('--watch');
 const target = process.argv.find((arg) => arg.startsWith('--target='))?.split('=')[1] ?? 'chrome';
+/*
+ * A release build asks for the deployed origins and nothing else.
+ *
+ * `localhost` in host_permissions is a development convenience, and shipping it
+ * means every install carries standing access to whatever the person happens to
+ * run on their own machine. `--release` drops it; the default keeps it so
+ * `pnpm dev` and the acceptance runners still work against the local sites.
+ */
+const release = process.argv.includes('--release');
 const outdir = join(root, target === 'firefox' ? 'dist-firefox' : 'dist');
 
 /**
@@ -57,7 +66,7 @@ async function writeManifest() {
   delete base.$comment;
 
   const patternsFor = (site) => [
-    ...origins.sites[site].development.map((origin) => `${origin}/*`),
+    ...(release ? [] : origins.sites[site].development.map((origin) => `${origin}/*`)),
     `${origins.sites[site].production}/*`,
   ];
   const demoSites = Object.keys(origins.sites).filter((site) => site !== 'registry');

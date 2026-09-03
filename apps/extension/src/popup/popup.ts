@@ -172,3 +172,9 @@ void loadLocale().then(() => {
   applyDocumentLanguage();
   load();
 });
+
+
+/* The badge used to read "Phase 0 PoC", which stopped being true a long time
+ * before anyone noticed. A version number cannot go stale in the same way. */
+const versionTag = document.getElementById('version');
+if (versionTag) versionTag.textContent = `v${ext.runtime.getManifest().version}`;

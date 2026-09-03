@@ -89,6 +89,44 @@ async function syncDynamicContentScripts(): Promise<void> {
   } catch (error) {
     console.warn('[liha] could not register dynamic content scripts', error);
   }
+
+  await injectBridgeIntoOpenTabs(matches);
+}
+
+/*
+ * A registration only reaches documents that load after it.
+ *
+ * Granting a new origin therefore left every tab already open on it without the
+ * bridge: READ tools still worked, because the MAIN-world runtime is injected
+ * on demand, but the confirmation channel lives in the content script — so a
+ * DESTRUCTIVE call sat there and timed out, and reloading the page fixed it.
+ * That is not a state anyone should have to discover.
+ */
+async function injectBridgeIntoOpenTabs(matches: string[]): Promise<void> {
+  if (matches.length === 0 || typeof ext.tabs?.query !== 'function') return;
+  let tabs: Array<{ id?: number }> = [];
+  try {
+    tabs = await ext.tabs.query({ url: matches });
+  } catch (error) {
+    console.warn('[liha] could not list tabs for bridge injection', error);
+    return;
+  }
+  await Promise.all(
+    tabs
+      .filter((tab): tab is { id: number } => typeof tab.id === 'number')
+      .map(async (tab) => {
+        try {
+          await ext.scripting.executeScript({
+            target: { tabId: tab.id },
+            files: ['content/bridge.js'],
+            world: 'ISOLATED',
+          });
+        } catch {
+          /* The tab may have navigated away, or be one we cannot touch. Either
+           * way the next load gets the registered script. */
+        }
+      }),
+  );
 }
 
 /* -------------------------------------------------------------------------- */
@@ -433,5 +471,42 @@ ext.runtime.onMessage.addListener((message: ExtensionMessage, sender, sendRespon
 });
 
 ext.windows.onRemoved.addListener(handleWindowClosed);
+
+/*
+ * Host access can be taken away from the extension's own settings page, and
+ * nothing here was listening. The dynamic registration has to follow it down —
+ * otherwise a revoked origin keeps its content script until the next restart —
+ * and any runtime already sitting in a page on that origin has to be told to
+ * unregister its tools rather than carrying on.
+ */
+if (ext.permissions?.onRemoved?.addListener) {
+  ext.permissions.onRemoved.addListener((removed) => {
+    void (async () => {
+      await syncDynamicContentScripts();
+      const origins = removed.origins ?? [];
+      if (origins.length === 0 || typeof ext.tabs?.query !== 'function') return;
+      const catalogue = await readCatalogue();
+      const affected = catalogue.filter((entry) =>
+        entry.adapter.origins.some((origin) => origins.includes(`${origin}/*`)),
+      );
+      let tabs: Array<{ id?: number }> = [];
+      try {
+        tabs = await ext.tabs.query({ url: origins });
+      } catch {
+        return;
+      }
+      for (const tab of tabs) {
+        if (typeof tab.id !== 'number') continue;
+        for (const entry of affected) {
+          await uninstallFromTab(tab.id, entry.adapter.id).catch(() => undefined);
+        }
+      }
+    })();
+  });
+}
+
+if (ext.permissions?.onAdded?.addListener) {
+  ext.permissions.onAdded.addListener(() => void syncDynamicContentScripts());
+}
 ext.runtime.onInstalled.addListener(() => void syncDynamicContentScripts());
 ext.runtime.onStartup.addListener(() => void syncDynamicContentScripts());
