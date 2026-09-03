@@ -12,6 +12,13 @@ import { useI18n } from '../i18n';
  * The labels underneath light up as the recording passes each call, so it is
  * clear which frame belongs to which ask. They are driven by the video's own
  * clock rather than a timer, so they cannot drift out of step with it.
+ *
+ * H.264 only. A VP9 WebM shipped here first, and it played — once. Looping it
+ * back to zero failed the decode outright (`PIPELINE_ERROR_DECODE`), leaving a
+ * dead frame on the page, and a `<video>` does not fall back to its next
+ * `<source>` after a failure mid-playback. VP8 and H.264 both loop cleanly, and
+ * of the three H.264 is also the smallest at this bitrate, so there is nothing
+ * left for a second encoding to buy.
  */
 const CALLS = [
   { name: 'choose_top', at: 0.9 },
@@ -38,7 +45,17 @@ export function DriveSequence() {
       const passed = CALLS.filter((call) => element.currentTime >= call.at).length;
       setReached(passed);
     };
+    /*
+     * A video that cannot decode is worse than one that never starts: it holds
+     * a frozen frame and says nothing. Fall back to the poster and the labels,
+     * which carry the point on their own.
+     */
+    const onError = () => {
+      setStill(true);
+      setReached(CALLS.length);
+    };
     element.addEventListener('timeupdate', onTime);
+    element.addEventListener('error', onError, true);
     // Plays only while it is on screen; a video nobody is looking at is a
     // decoder running for nothing.
     const watch = new IntersectionObserver(
@@ -51,6 +68,7 @@ export function DriveSequence() {
     watch.observe(element);
     return () => {
       element.removeEventListener('timeupdate', onTime);
+      element.removeEventListener('error', onError, true);
       watch.disconnect();
     };
   }, []);
@@ -70,7 +88,6 @@ export function DriveSequence() {
         aria-label={t('drive.alt')}
         data-still={still ? 'true' : 'false'}
       >
-        <source src="/shots/drive.webm" type="video/webm" />
         <source src="/shots/drive.mp4" type="video/mp4" />
       </video>
       <figcaption className="sequence__calls">

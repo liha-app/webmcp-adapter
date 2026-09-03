@@ -61,6 +61,9 @@ test.describe('Landing page', () => {
   });
 
   test('shows the claim happening rather than describing it', async ({ page }) => {
+    // It watches the recording round a full loop, which takes longer than the
+    // default budget allows.
+    test.slow();
     /*
      * A recording of one storefront with three real tool calls in it, made by
      * tools/marketing/record.mjs against the running extension. The labels are
@@ -73,12 +76,12 @@ test.describe('Landing page', () => {
     await expect(sequence.getByText('choose_top')).toBeVisible();
     await expect(sequence.getByText('add_to_bag')).toBeVisible();
 
-    // Both encodings and the poster are really there — a <video> with a broken
+    // The encoding and the poster are really there — a <video> with a broken
     // source shows a black box and says nothing.
     const sources = await video.locator('source').evaluateAll((nodes) =>
       nodes.map((node) => (node as HTMLSourceElement).src),
     );
-    expect(sources).toHaveLength(2);
+    expect(sources).toHaveLength(1);
     for (const src of [...sources, await video.getAttribute('poster')]) {
       const response = await page.request.get(new URL(src!, 'http://localhost:5280').toString());
       expect(response.status(), src!).toBe(200);
@@ -89,10 +92,35 @@ test.describe('Landing page', () => {
     // at is a laptop fan for nothing.
     expect(await video.evaluate((node) => (node as HTMLVideoElement).paused)).toBe(true);
     await sequence.scrollIntoViewIfNeeded();
+    await video.evaluate((node) => {
+      const element = node as HTMLVideoElement & { peak?: number; wrapped?: boolean };
+      element.peak = 0;
+      element.wrapped = false;
+      element.addEventListener('timeupdate', () => {
+        if (element.currentTime + 0.2 < (element.peak ?? 0)) element.wrapped = true;
+        element.peak = Math.max(element.peak ?? 0, element.currentTime);
+      });
+    });
     await expect
       .poll(async () => video.evaluate((node) => (node as HTMLVideoElement).currentTime), { timeout: 10_000 })
       .toBeGreaterThan(1);
     await expect(sequence.locator('span[data-current="true"]').first()).toBeVisible();
+
+    /*
+     * Watch it all the way round. Playing once and looping are different
+     * questions, and the encoding published here first answered them
+     * differently: it decoded to the last frame and then failed on the seek
+     * back to zero, holding a dead frame under a test that had stopped
+     * watching at one second. A <video> does not fall back to another source
+     * after that, so nothing recovered it.
+     */
+    await expect
+      .poll(async () => video.evaluate((node) => (node as HTMLVideoElement & { wrapped?: boolean }).wrapped === true), {
+        timeout: 30_000,
+      })
+      .toBe(true);
+    expect(await video.evaluate((node) => (node as HTMLVideoElement).error?.code ?? null)).toBeNull();
+    expect(await video.getAttribute('data-still')).toBe('false');
   });
 
   test('shows concise implementation evidence', async ({ page }) => {

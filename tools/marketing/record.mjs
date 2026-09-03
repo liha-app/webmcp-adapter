@@ -104,13 +104,22 @@ async function main() {
     /* The real rate, so the video runs at the speed the page actually moved. */
     const fps = Math.max(4, Math.min(20, Math.round(index / elapsed)));
     const input = ['-y', '-loglevel', 'error', '-framerate', String(fps), '-i', join(FRAMES, '%05d.jpg')];
+    /*
+     * H.264 and nothing else. A VP9 WebM was published alongside this and it
+     * looked fine in every check that watched it play: it decodes, it reaches
+     * the last frame. It fails on the way back — `loop` seeks to zero and the
+     * pipeline errors out (`PIPELINE_ERROR_DECODE`), on the same Chrome that
+     * plays it straight through. Re-encoding with a keyframe every second did
+     * not change it; VP8 and H.264 are both unaffected. H.264 is also a third
+     * of the size of either WebM on this footage, so the second encoding was
+     * costing bytes to ship a defect.
+     */
     execFileSync('ffmpeg', [...input, '-c:v', 'libx264', '-pix_fmt', 'yuv420p', '-crf', '24', '-movflags', '+faststart', '-an', join(OUT, 'drive.mp4')]);
-    execFileSync('ffmpeg', [...input, '-c:v', 'libvpx-vp9', '-crf', '36', '-b:v', '0', '-row-mt', '1', '-an', join(OUT, 'drive.webm')]);
     execFileSync('sips', ['-Z', '1280', '-s', 'format', 'jpeg', '-s', 'formatOptions', '86', join(FRAMES, '00000.jpg'), '--out', join(OUT, 'drive-poster.jpg')], { stdio: 'ignore' });
 
     const size = (name) => `${(Number(execFileSync('stat', ['-f', '%z', join(OUT, name)]).toString().trim()) / 1024) | 0}KB`;
     console.log(`  ${index} frames over ${elapsed.toFixed(1)}s → ${fps}fps`);
-    for (const name of ['drive.mp4', 'drive.webm', 'drive-poster.jpg']) console.log(`  ${name} ${size(name)}`);
+    for (const name of ['drive.mp4', 'drive-poster.jpg']) console.log(`  ${name} ${size(name)}`);
   } finally {
     browser.close();
   }

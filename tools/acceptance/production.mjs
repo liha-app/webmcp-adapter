@@ -177,6 +177,39 @@ async function main() {
       check(text.includes(production(id)), `it points an agent at the deployed ${id}`);
     }
 
+    /*
+     * The landing page's recording, watched all the way round.
+     *
+     * It plays on its own — nothing here calls play(), because on the page
+     * nothing does: an IntersectionObserver starts it when it comes into view.
+     * The loop is the part worth watching. The first encoding published here
+     * decoded straight through and then failed on the seek back to zero
+     * (`PIPELINE_ERROR_DECODE`), which left a dead frame on the landing page
+     * that no check watching only the first second could see. A <video> does
+     * not fall back to another <source> after that, so nothing recovered it.
+     */
+    group('The landing page recording plays, and keeps playing');
+    await page.send('Page.navigate', { url: `${production('registry')}/` });
+    await sleep(3000);
+    await page.eval(`(() => { const v = document.querySelector('[data-testid="drive-sequence"] video');
+      if (!v) return false;
+      v.dataset.peak = '0'; v.dataset.wrapped = 'false';
+      v.addEventListener('timeupdate', () => {
+        if (v.currentTime + 0.2 < Number(v.dataset.peak)) v.dataset.wrapped = 'true';
+        v.dataset.peak = String(Math.max(Number(v.dataset.peak), v.currentTime));
+      });
+      scrollTo({ top: scrollY + v.getBoundingClientRect().top - 120, behavior: 'instant' });
+      return true })()`);
+    const played = await waitFor(async () => {
+      const state = await page.eval(`(() => { const v = document.querySelector('[data-testid="drive-sequence"] video');
+        return v ? JSON.stringify({ wrapped: v.dataset.wrapped === 'true', t: v.currentTime, err: v.error && v.error.message, still: v.dataset.still }) : null })()`);
+      const seen = JSON.parse(state ?? 'null');
+      return seen?.wrapped || seen?.err ? seen : null;
+    }, 40000);
+    check(played?.err == null, 'it decodes without erroring', played?.err ?? 'no media error');
+    check(played?.wrapped === true, 'and comes back round to the start', `${played?.t?.toFixed?.(2) ?? '?'}s in`);
+    check(played?.still === 'false', 'so the still stand-in was never needed');
+
     group('An adapter drives the deployed Acme CRM, which implements nothing');
     await page.send('Page.navigate', { url: `${production('demo-crm')}/` });
     await sleep(3000);
