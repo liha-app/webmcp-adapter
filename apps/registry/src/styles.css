@@ -585,6 +585,7 @@ pre {
 .facts dd small { display: block; font-size: 12px; font-weight: 400; color: var(--store-ink-2); margin-top: 2px; }
 
 .storesection { padding: 30px 0; border-top: 1px solid var(--hairline); }
+.facts + .storesection { border-top: 0; }
 .storesection > h2 { font-size: 22px; line-height: 1.2728; font-weight: 700; letter-spacing: -0.3px; color: var(--store-ink); margin-bottom: 14px; }
 .storesection p { font-size: 15px; line-height: 1.4; color: var(--store-ink-2); max-width: 74ch; }
 .storesection p + p { margin-top: 10px; }

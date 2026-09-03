@@ -10,7 +10,8 @@ import {
   toolEffectSummary,
   verifiedDate,
 } from '../lib/catalog-copy';
-import { fetchInstalled, requestInstall } from '../lib/extension';
+import { extensionPresent, fetchInstalled, requestInstall } from '../lib/extension';
+import { RELEASES_URL } from '../lib/links';
 import { useI18n } from '../i18n';
 import { AdapterIcon, CapabilityBadge, HealthBadge } from './components';
 import { detailRoute } from './tree';
@@ -31,7 +32,16 @@ export function AdapterDetail() {
   const queryClient = useQueryClient();
   const [showSource, setShowSource] = useState(false);
 
-  const installed = useQuery({ queryKey: ['installed'], queryFn: fetchInstalled });
+  const extension = useQuery({
+    queryKey: ['extension-present'],
+    queryFn: extensionPresent,
+    retry: false,
+  });
+  const installed = useQuery({
+    queryKey: ['installed'],
+    queryFn: fetchInstalled,
+    enabled: extension.data === true,
+  });
   const live = installed.data?.installed.find((candidate) => candidate.id === adapterId);
 
   const install = useMutation({
@@ -72,21 +82,31 @@ export function AdapterDetail() {
               {adapterDescription(adapter, locale)}
             </p>
             <div className="product__actions">
-              <button
-                type="button"
-                className="getbutton getbutton--filled getbutton--large"
-                data-action="install-adapter"
-                disabled={install.isPending}
-                onClick={() => install.mutate()}
-              >
-                {install.isPending
-                  ? t('detail.installing')
-                  : live
-                    ? t('detail.reinstall')
-                    : t('detail.install')}
-              </button>
+              {extension.data === false ? (
+                <a className="getbutton getbutton--filled getbutton--large" href={RELEASES_URL}>
+                  {t('hero.install')}
+                </a>
+              ) : (
+                <button
+                  type="button"
+                  className="getbutton getbutton--filled getbutton--large"
+                  data-action="install-adapter"
+                  disabled={extension.data !== true || install.isPending}
+                  onClick={() => install.mutate()}
+                >
+                  {install.isPending
+                    ? t('detail.installing')
+                    : live
+                      ? t('detail.reinstall')
+                      : t('detail.install')}
+                </button>
+              )}
               <p className="product__hint">
-                {live ? t('detail.installedHere') : t('detail.willShowPermissions')}
+                {extension.data === false
+                  ? t('agent.noExtension')
+                  : live
+                    ? t('detail.installedHere')
+                    : t('detail.willShowPermissions')}
               </p>
             </div>
             {install.data && (

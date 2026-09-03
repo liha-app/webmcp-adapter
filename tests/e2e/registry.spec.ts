@@ -373,7 +373,30 @@ test.describe('Adapter Registry', () => {
 
   test('install without the extension reports the truth', async ({ page }) => {
     await page.goto('http://localhost:5280/adapters/demo-crm');
-    await expect(page.getByText('The extension will show you the permissions before installing.')).toBeVisible();
+    const getExtension = page.getByRole('link', { name: 'Install the extension' });
+    await expect(getExtension).toBeVisible();
+    await expect(getExtension).toHaveAttribute('href', 'https://github.com/liha-app/webmcp-adapter/releases/latest');
+    await expect(page.locator('[data-action="install-adapter"]')).toHaveCount(0);
+    await expect(page.getByText(/The extension is not in this browser/)).toBeVisible();
+  });
+
+  test('offers installation only after the extension answers', async ({ page }) => {
+    await page.addInitScript(() => {
+      document.addEventListener('liha:store-state-request', () => {
+        document.dispatchEvent(new CustomEvent('liha:store-state-response', { detail: { installed: [] } }));
+      });
+    });
+    await page.goto('http://localhost:5280/adapters/demo-crm');
+    await expect(page.locator('[data-action="install-adapter"]')).toBeEnabled();
+    await expect(page.getByRole('link', { name: 'Install the extension' })).toHaveCount(0);
+  });
+
+  test('draws one divider between the facts and the first section', async ({ page }) => {
+    await page.goto('http://localhost:5280/adapters/demo-crm');
+    const border = await page
+      .locator('.facts + .storesection')
+      .evaluate((element) => getComputedStyle(element).borderTopWidth);
+    expect(border).toBe('0px');
   });
 });
 
