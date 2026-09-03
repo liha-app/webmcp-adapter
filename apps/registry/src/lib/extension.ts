@@ -5,6 +5,7 @@ import {
   type StoreStateResponse,
 } from '@liha/shared';
 import type { AdapterDefinition } from '@liha/adapter-schema';
+import type { MessageKey } from '../i18n/en';
 
 const READY_EVENT = 'liha:extension-ready';
 const INSTALL_RESULT_EVENT = 'liha:install-result';
@@ -39,24 +40,69 @@ export function extensionPresent(): Promise<boolean> {
   });
 }
 
-export function fetchInstalled(): Promise<StoreStateResponse> {
+export interface InstalledState extends StoreStateResponse {
+  /**
+   * Whether the extension actually answered.
+   *
+   * A silent extension and an extension with nothing installed both used to
+   * arrive as an empty list, and a caller that has to tell them apart — the
+   * guided build, taking its baseline of what was already here — would have
+   * taken silence for "nothing was installed" and then counted the visitor's
+   * existing adapters as things it had just watched being built.
+   */
+  answered: boolean;
+}
+
+export function fetchInstalled(): Promise<InstalledState> {
   return new Promise((resolve) => {
     const timer = setTimeout(() => {
       document.removeEventListener(STORE_STATE_RESPONSE_EVENT, onState);
-      resolve({ installed: [] });
+      resolve({ installed: [], answered: false });
     }, 1200);
     const onState = (event: Event) => {
       clearTimeout(timer);
-      resolve((event as CustomEvent<StoreStateResponse>).detail ?? { installed: [] });
+      const detail = (event as CustomEvent<StoreStateResponse>).detail;
+      resolve({ installed: detail?.installed ?? [], answered: true });
     };
     document.addEventListener(STORE_STATE_RESPONSE_EVENT, onState, { once: true });
     document.dispatchEvent(new CustomEvent(STORE_STATE_EVENT));
   });
 }
 
+/**
+ * A failure this page worked out for itself, rather than one the extension
+ * explained.
+ *
+ * These two used to be English sentences built here and rendered straight onto
+ * a Japanese page. A library that talks to the extension has no business
+ * choosing the reader's language, so it names the condition and the view says
+ * it — `INSTALL_PROBLEM_MESSAGE` is the one place that mapping lives, so the
+ * two screens that show it cannot drift apart.
+ */
+export type InstallProblem = 'no-response' | 'no-result';
+
+export const INSTALL_PROBLEM_MESSAGE: Record<InstallProblem, MessageKey> = {
+  'no-response': 'install.noResponse',
+  'no-result': 'install.noResult',
+};
+
 export interface InstallOutcome {
   ok: boolean;
+  /** Set only where this page is the one that noticed; the extension sets none. */
+  problem?: InstallProblem;
+  /**
+   * What the extension said, verbatim.
+   *
+   * These are validation errors naming the field that failed, and they are the
+   * whole value of the answer — they are passed through untouched rather than
+   * flattened into a translated "installation failed".
+   */
   errors: string[];
+}
+
+/** What to put in front of a reader when an install did not happen. */
+export function installProblemText(outcome: InstallOutcome, t: (key: MessageKey) => string): string {
+  return outcome.problem ? t(INSTALL_PROBLEM_MESSAGE[outcome.problem]) : outcome.errors.join(' ');
 }
 
 /**
@@ -83,12 +129,12 @@ export function requestInstall(adapter: AdapterDefinition): Promise<InstallOutco
   return new Promise((resolve) => {
     const timer = setTimeout(() => {
       document.removeEventListener(INSTALL_RESULT_EVENT, onResult);
-      resolve({ ok: false, errors: ['The extension did not respond. Is it installed and enabled?'] });
+      resolve({ ok: false, problem: 'no-response', errors: [] });
     }, 180_000);
     const onResult = (event: Event) => {
       clearTimeout(timer);
       const detail = (event as CustomEvent<InstallOutcome>).detail;
-      resolve(detail ?? { ok: false, errors: ['No result from the extension.'] });
+      resolve(detail ?? { ok: false, problem: 'no-result', errors: [] });
     };
     document.addEventListener(INSTALL_RESULT_EVENT, onResult, { once: true });
     document.dispatchEvent(new CustomEvent(STORE_INSTALL_EVENT, { detail: { adapter } }));

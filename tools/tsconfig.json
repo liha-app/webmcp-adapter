@@ -2,5 +2,5 @@
   "$comment": "tools/ is not a workspace package, so `pnpm -r typecheck` never reaches it. The root typecheck script runs this too, so the TypeScript in here is held to the same rules as the rest.",
   "extends": "../tsconfig.base.json",
   "compilerOptions": { "types": ["node"] },
-  "include": ["**/*.test.ts"]
+  "include": ["**/*.test.ts", "test/**/*.ts"]
 }
