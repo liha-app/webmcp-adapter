@@ -517,7 +517,21 @@ pre {
 .shelf__title { font-size: 22px; line-height: 1.2728; font-weight: 700; letter-spacing: -0.3px; color: var(--store-ink); }
 .shelf__link { font-size: 13px; line-height: 1.3846; color: var(--store-blue); white-space: nowrap; }
 .shelf__count { font-size: 13px; line-height: 1.3846; color: var(--store-ink-2); white-space: nowrap; }
-.shelf__body { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); }
+.shelf__body { list-style: none; margin: 0; padding: 0; display: grid; }
+.shelf__body--grid { grid-template-columns: repeat(3, minmax(0, 1fr)); column-gap: 20px; }
+.shelf__body--single { grid-template-columns: minmax(0, 1fr); }
+.shelf__body--grid .lockup { min-width: 0; padding-inline: 0; }
+.shelf__body--grid .lockup__inner { align-items: start; min-height: 106px; }
+.shelf__body--grid .lockup__title,
+.shelf__body--grid .lockup__sub {
+  display: -webkit-box; overflow: hidden; white-space: normal; -webkit-box-orient: vertical;
+}
+.shelf__body--grid .lockup__title { -webkit-line-clamp: 2; }
+.shelf__body--grid .lockup__sub { -webkit-line-clamp: 2; }
+.shelf__body--grid .lockup__aux { display: none; }
+.shelf__body--grid .lockup + .lockup .lockup__inner::before { display: none; }
+@media (max-width: 1200px) { .shelf__body--grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 640px) { .shelf__body--grid { grid-template-columns: minmax(0, 1fr); } }
 
 /* The lockup: 64px squircle, title, subtitle, pill. Apple's row, exactly. */
 .demolist { list-style: none; margin: 0; padding: 0; }

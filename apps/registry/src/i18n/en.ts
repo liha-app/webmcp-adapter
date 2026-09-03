@@ -288,6 +288,7 @@ export const en = {
   'store.featureHeadline': '{0} adapters, {1} tools, and not one line of JavaScript between them.',
   'store.featureCopy':
     'The step vocabulary has no {0} and no expression language, so a community adapter is something you can read rather than something you have to trust.',
+  'store.newAdapters': 'Newly published adapters',
   'store.shelfMatching': 'Matching adapters',
   'store.count': '{0} adapters',
   'store.countOne': '1 adapter',
@@ -295,7 +296,7 @@ export const en = {
   'store.view': 'View',
   'store.open': 'Open',
   'store.noResults': 'No adapters match that search.',
-  'store.demoShelf': 'Sites you can drive right now',
+  'store.demoShelf': 'Try the demos',
   'store.demoShelfLink': 'What you need first',
   'store.noOwnWebmcp': 'no WebMCP code of its own',
   'store.extShelf': 'The extension',
