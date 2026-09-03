@@ -61,29 +61,6 @@ function toJpeg(pairs) {
   }
 }
 
-/** The same tool stream the acceptance runners watch. */
-function trackTools(session) {
-  const tools = new Map();
-  session.on((message) => {
-    if (message.method === 'WebMCP.toolsAdded') {
-      for (const tool of message.params.tools ?? []) tools.set(tool.name, tool);
-    } else if (message.method === 'WebMCP.toolsRemoved') {
-      for (const name of message.params.names ?? []) tools.delete(name);
-    }
-  });
-  return tools;
-}
-
-async function until(probe, timeoutMs = 20000) {
-  const started = Date.now();
-  while (Date.now() - started < timeoutMs) {
-    const value = await probe();
-    if (value) return value;
-    await sleep(200);
-  }
-  return null;
-}
-
 async function main() {
   if (!existsSync(join(EXT, 'manifest.json'))) throw new Error('Extension is not built. Run `pnpm build`.');
   mkdirSync(OUT, { recursive: true });
@@ -160,33 +137,9 @@ async function main() {
     png.push([await shot(page, 'studio'), 'studio', 1600]);
 
     /*
-     * The same page, three times, with a real tool call between each.
-     *
-     * The landing page cross-fades these, which says the thing a video would
-     * say — an agent asked, the store's own controls moved — without a video
-     * pipeline. CDP's screencast produces no frames in headless (it reports the
-     * page as not visible and declines), and three frames is not worth a
-     * second browser stack to work around that.
+     * The moving one is tools/marketing/record.mjs, which drives the same page
+     * with real tool calls and samples it. This file takes the stills.
      */
-    const tools = trackTools(page);
-    await page.goto(`${SITES.shop}/`);
-    const ready = await until(async () => (tools.has('choose_top') ? tools.get('choose_top') : null));
-    if (!ready) throw new Error('the shop adapter never registered — is the WebMCP flag on?');
-    const call = async (toolName, input) => {
-      const tool = tools.get(toolName);
-      if (!tool) throw new Error(`${toolName} is not registered`);
-      await page.send('WebMCP.invokeTool', { frameId: tool.frameId, toolName, input });
-      await sleep(1200);
-    };
-
-    console.log('drive');
-    png.push([await shot(page, 'drive-1'), 'drive-1', 1280]);
-    await call('choose_top', { top: 'Solid walnut' });
-    png.push([await shot(page, 'drive-2'), 'drive-2', 1280]);
-    await call('choose_base', { base: 'Adjustable + memory' });
-    await call('add_to_bag', {});
-    png.push([await shot(page, 'drive-3'), 'drive-3', 1280]);
-
     console.log('encode');
     toJpeg(png);
   } finally {

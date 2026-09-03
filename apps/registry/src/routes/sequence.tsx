@@ -2,76 +2,81 @@ import { useEffect, useRef, useState } from 'react';
 import { useI18n } from '../i18n';
 
 /**
- * The same page, three times, with a real tool call between each.
+ * A tool call moving a page, recorded from the real thing.
  *
- * The frames are screenshots taken by tools/marketing/capture.mjs: a browser
- * with the extension in it, the shop adapter registered, and the calls made
- * through the DevTools WebMCP domain. Nothing was posed — the walnut top, the
- * adjustable base and the bag are what `choose_top`, `choose_base` and
- * `add_to_bag` did to the store's own controls.
+ * tools/marketing/record.mjs drives this with the extension loaded and the
+ * calls going through the DevTools WebMCP domain, sampling the page on a fixed
+ * cadence. The walnut top, the adjustable base and the filled bag are what
+ * `choose_top`, `choose_base` and `add_to_bag` did to the store's own controls.
  *
- * It advances on a timer and stops when it is off-screen or the visitor has
- * asked for less motion, in which case it holds the last frame: the point is
- * the outcome, and a still of the finished bag still makes it.
+ * The labels underneath light up as the recording passes each call, so it is
+ * clear which frame belongs to which ask. They are driven by the video's own
+ * clock rather than a timer, so they cannot drift out of step with it.
  */
-const FRAMES = [
-  { src: '/shots/drive-1.jpg', call: 'choose_top' },
-  { src: '/shots/drive-2.jpg', call: 'choose_base' },
-  { src: '/shots/drive-3.jpg', call: 'add_to_bag' },
+const CALLS = [
+  { name: 'choose_top', at: 0.9 },
+  { name: 'choose_base', at: 2.4 },
+  { name: 'add_to_bag', at: 3.9 },
 ] as const;
-
-const HOLD_MS = 2200;
 
 export function DriveSequence() {
   const { t } = useI18n();
-  const [frame, setFrame] = useState(0);
-  const box = useRef<HTMLDivElement>(null);
+  const video = useRef<HTMLVideoElement>(null);
+  const [reached, setReached] = useState(0);
+  const [still, setStill] = useState(false);
 
   useEffect(() => {
+    const element = video.current;
+    if (!element) return;
     if (matchMedia('(prefers-reduced-motion: reduce)').matches) {
-      setFrame(FRAMES.length - 1);
+      // The poster is the first frame; the outcome is in the labels.
+      setStill(true);
+      setReached(CALLS.length);
       return;
     }
-    let timer: ReturnType<typeof setInterval> | null = null;
-    const start = () => {
-      if (timer) return;
-      timer = setInterval(() => setFrame((current) => (current + 1) % FRAMES.length), HOLD_MS);
+    const onTime = () => {
+      const passed = CALLS.filter((call) => element.currentTime >= call.at).length;
+      setReached(passed);
     };
-    const stop = () => {
-      if (!timer) return;
-      clearInterval(timer);
-      timer = null;
-    };
-    const watch = new IntersectionObserver(([entry]) => (entry?.isIntersecting ? start() : stop()), {
-      threshold: 0.25,
-    });
-    if (box.current) watch.observe(box.current);
+    element.addEventListener('timeupdate', onTime);
+    // Plays only while it is on screen; a video nobody is looking at is a
+    // decoder running for nothing.
+    const watch = new IntersectionObserver(
+      ([entry]) => {
+        if (entry?.isIntersecting) void element.play().catch(() => setStill(true));
+        else element.pause();
+      },
+      { threshold: 0.3 },
+    );
+    watch.observe(element);
     return () => {
-      stop();
+      element.removeEventListener('timeupdate', onTime);
       watch.disconnect();
     };
   }, []);
 
   return (
-    <figure className="sequence" ref={box} data-testid="drive-sequence">
-      <div className="sequence__stage">
-        {FRAMES.map((entry, index) => (
-          <img
-            key={entry.src}
-            className="sequence__frame"
-            src={entry.src}
-            width={1280}
-            height={800}
-            alt={t('drive.alt')}
-            loading="lazy"
-            data-current={index === frame ? 'true' : 'false'}
-          />
-        ))}
-      </div>
+    <figure className="sequence" data-testid="drive-sequence">
+      <video
+        ref={video}
+        className="sequence__video"
+        width={1280}
+        height={800}
+        poster="/shots/drive-poster.jpg"
+        muted
+        loop
+        playsInline
+        preload="metadata"
+        aria-label={t('drive.alt')}
+        data-still={still ? 'true' : 'false'}
+      >
+        <source src="/shots/drive.webm" type="video/webm" />
+        <source src="/shots/drive.mp4" type="video/mp4" />
+      </video>
       <figcaption className="sequence__calls">
-        {FRAMES.map((entry, index) => (
-          <span key={entry.call} data-current={index === frame ? 'true' : 'false'}>
-            {entry.call}
+        {CALLS.map((call, index) => (
+          <span key={call.name} data-current={index < reached ? 'true' : 'false'}>
+            {call.name}
           </span>
         ))}
       </figcaption>

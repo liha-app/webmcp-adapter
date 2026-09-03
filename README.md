@@ -242,6 +242,14 @@ a desk nobody sells, no logo, no text — and ship as transparent WebP at around
 35KB each. The flow stops at the review, which is where a real store would start
 asking for payment and this one never does.
 
+The moving one is `tools/marketing/record.mjs`: the same browser the acceptance
+runners use, with the extension loaded, driving `choose_top`, `choose_base` and
+`add_to_bag` through the DevTools WebMCP domain and sampling the page while it
+happens. Six seconds, 85KB of H.264 and 66KB of VP9. It samples with
+`Page.captureScreenshot` rather than `Page.startScreencast`, because headless
+Chrome emits a screencast frame only when its compositor produces one — for a
+page that is mostly still, that is one frame and then silence.
+
 ### Onboarding an agent
 
 The portal's hero carries one control that copies a single sentence:

@@ -61,15 +61,38 @@ test.describe('Landing page', () => {
   });
 
   test('shows the claim happening rather than describing it', async ({ page }) => {
-    // Three screenshots of one storefront with a real tool call between each,
-    // captured by tools/marketing/capture.mjs against the running extension.
+    /*
+     * A recording of one storefront with three real tool calls in it, made by
+     * tools/marketing/record.mjs against the running extension. The labels are
+     * driven by the video's own clock, so they cannot drift out of step.
+     */
     const sequence = page.getByTestId('drive-sequence');
     await expect(sequence).toBeVisible();
-    await expect(sequence.locator('img')).toHaveCount(3);
+    const video = sequence.locator('video');
+    await expect(video).toHaveCount(1);
     await expect(sequence.getByText('choose_top')).toBeVisible();
     await expect(sequence.getByText('add_to_bag')).toBeVisible();
-    // Exactly one frame is on top at a time.
-    await expect(sequence.locator('img[data-current="true"]')).toHaveCount(1);
+
+    // Both encodings and the poster are really there — a <video> with a broken
+    // source shows a black box and says nothing.
+    const sources = await video.locator('source').evaluateAll((nodes) =>
+      nodes.map((node) => (node as HTMLSourceElement).src),
+    );
+    expect(sources).toHaveLength(2);
+    for (const src of [...sources, await video.getAttribute('poster')]) {
+      const response = await page.request.get(new URL(src!, 'http://localhost:5280').toString());
+      expect(response.status(), src!).toBe(200);
+    }
+
+    // It plays once it is on screen, and the labels follow it. Off-screen it
+    // stays paused on purpose: a decoder running for a video nobody is looking
+    // at is a laptop fan for nothing.
+    expect(await video.evaluate((node) => (node as HTMLVideoElement).paused)).toBe(true);
+    await sequence.scrollIntoViewIfNeeded();
+    await expect
+      .poll(async () => video.evaluate((node) => (node as HTMLVideoElement).currentTime), { timeout: 10_000 })
+      .toBeGreaterThan(1);
+    await expect(sequence.locator('span[data-current="true"]').first()).toBeVisible();
   });
 
   test('shows concise implementation evidence', async ({ page }) => {
