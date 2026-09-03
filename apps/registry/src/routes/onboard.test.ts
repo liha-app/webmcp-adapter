@@ -10,8 +10,8 @@ const doc = readFileSync(join(root, 'apps/registry/public', PROMPT_PATH), 'utf8'
 describe('the sentence that goes to the clipboard', () => {
   it('points an agent at this origin, not at a hard-coded one', () => {
     expect(onboardingPrompt('http://localhost:5280')).toContain('http://localhost:5280/agent-setup/prompt.md');
-    expect(onboardingPrompt('https://webmcp-adopter.liha.dev')).toContain(
-      'https://webmcp-adopter.liha.dev/agent-setup/prompt.md',
+    expect(onboardingPrompt('https://webmcp-adapter.liha.dev')).toContain(
+      'https://webmcp-adapter.liha.dev/agent-setup/prompt.md',
     );
   });
 

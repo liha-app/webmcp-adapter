@@ -4,7 +4,7 @@
     "registry": {
       "label": "Liha WebMCP Adapter",
       "port": 5280,
-      "production": "https://webmcp-adopter.liha.dev",
+      "production": "https://webmcp-adapter.liha.dev",
       "development": ["http://localhost:5280", "http://127.0.0.1:5280"]
     },
     "demo-crm": {

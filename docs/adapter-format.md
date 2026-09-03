@@ -178,7 +178,7 @@ const result = validateAdapter(JSON.parse(text));
 ## Writing one as an agent
 
 The portal registers three tools that make this a loop rather than a guess. All
-three are ordinary WebMCP tools on `https://webmcp-adopter.liha.dev`, so any
+three are ordinary WebMCP tools on `https://webmcp-adapter.liha.dev`, so any
 agent that can reach that page can use them.
 
 ```

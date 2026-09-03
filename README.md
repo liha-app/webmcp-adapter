@@ -3,7 +3,7 @@
 [![CI](https://github.com/liha-app/webmcp-adapter/actions/workflows/ci.yml/badge.svg)](https://github.com/liha-app/webmcp-adapter/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
-**Make websites agent-ready without changing them.** → **[webmcp-adopter.liha.dev](https://webmcp-adopter.liha.dev)**
+**Make websites agent-ready without changing them.** → **[webmcp-adapter.liha.dev](https://webmcp-adapter.liha.dev)**
 
 Live demos, none of which contain a line of WebMCP code:
 [Acme CRM](https://demo-crm.liha.review) ·
@@ -158,7 +158,7 @@ builders are: the workflow as a flow down the left, one node open on the right.
 The order is a thing you can see, and only the step you are working on is a form. Selectors come from the site's own stable
 attributes; class names are never used, because they churn on every redeploy.
 
-**[Do it yourself](https://webmcp-adopter.liha.dev/create)** — a guided build that
+**[Do it yourself](https://webmcp-adapter.liha.dev/create)** — a guided build that
 watches as you go. It checks whether the flag is on and the extension is
 answering, walks you through recording and shaping the tool, notices when your
 adapter lands in the extension, and then writes you the snippet that runs it.
@@ -248,7 +248,7 @@ The portal's hero carries one control that copies a single sentence:
 
 ```
 Fetch and execute the appropriate instructions to set me up for Liha WebMCP
-Adapter from https://webmcp-adopter.liha.dev/agent-setup/prompt.md
+Adapter from https://webmcp-adapter.liha.dev/agent-setup/prompt.md
 ```
 
 Paste it into an agent and it fetches

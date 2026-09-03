@@ -9,7 +9,7 @@ the portal's demo links all derive from it.
 
 ```json
 {
-  "registry":     { "port": 5280, "production": "https://webmcp-adopter.liha.dev" },
+  "registry":     { "port": 5280, "production": "https://webmcp-adapter.liha.dev" },
   "demo-crm":     { "port": 5273, "production": "https://demo-crm.liha.review" },
   "demo-shop":    { "port": 5274, "production": "https://demo-shop.liha.review" },
   "demo-project": { "port": 5275, "production": "https://demo-project.liha.review" }
@@ -76,7 +76,7 @@ served is exactly what `pnpm build` produced locally and what CI tested.
 
 | Project | Directory | Domain |
 |---|---|---|
-| `webmcp-adopter` | `apps/registry/dist` | `webmcp-adopter.liha.dev` |
+| `webmcp-adapter` | `apps/registry/dist` | `webmcp-adapter.liha.dev` |
 | `webmcp-demo-crm` | `apps/demo-crm/dist` | `demo-crm.liha.review` |
 | `webmcp-demo-shop` | `apps/demo-shop/dist` | `demo-shop.liha.review` |
 | `webmcp-demo-project` | `apps/demo-project/dist` | `demo-project.liha.review` |
@@ -84,7 +84,7 @@ served is exactly what `pnpm build` produced locally and what CI tested.
 ```bash
 pnpm build
 export CLOUDFLARE_ACCOUNT_ID=<the Liha account id>
-wrangler pages deploy apps/registry/dist     --project-name=webmcp-adopter      --branch=main
+wrangler pages deploy apps/registry/dist     --project-name=webmcp-adapter      --branch=main
 wrangler pages deploy apps/demo-crm/dist     --project-name=webmcp-demo-crm     --branch=main
 wrangler pages deploy apps/demo-shop/dist    --project-name=webmcp-demo-shop    --branch=main
 wrangler pages deploy apps/demo-project/dist --project-name=webmcp-demo-project --branch=main
@@ -94,7 +94,7 @@ Each hostname needs a proxied `CNAME` to its project's `*.pages.dev` name:
 
 | Zone | Name | Target |
 |---|---|---|
-| liha.dev | `webmcp-adopter` | `webmcp-adopter.pages.dev` |
+| liha.dev | `webmcp-adapter` | `webmcp-adapter.pages.dev` |
 | liha.review | `demo-crm` | `webmcp-demo-crm.pages.dev` |
 | liha.review | `demo-shop` | `webmcp-demo-shop.pages.dev` |
 | liha.review | `demo-project` | `webmcp-demo-project.pages.dev` |
