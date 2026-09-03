@@ -8,6 +8,7 @@ import { GITHUB_URL, RELEASES_URL } from '../lib/links';
 import { REGISTRY_TOOLS } from '../lib/webmcp';
 import { useI18n, type MessageKey } from '../i18n';
 import { AdapterIcon, CapabilityBadge } from './components';
+import { ParticleField } from './particlefield';
 import { Flow } from './diagram';
 import { LiveTools } from './live';
 
@@ -57,7 +58,8 @@ export function Landing() {
   return (
     <>
       {/* ─────────────────────────────────────────────────────────── hero ── */}
-      <section className="hero">
+      <section className="hero hero--field">
+        <ParticleField />
         <div className="section-content">
           <p className="t-eyebrow-super">{t('hero.eyebrow')}</p>
           <h1 className="t-headline-super">{t('hero.headline')}</h1>

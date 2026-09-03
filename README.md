@@ -212,6 +212,15 @@ things, not approximated:
 | Acme CRM | [Attio](https://attio.com) | `#266df0`, 4/6/8 radii, initials chips, and a base weight of **500** at 16/22, which is why their tables read firm rather than airy |
 | Kite Project Manager | [Linear](https://linear.app) | `#08090a` over `#1c1c1f`, `#5e6ad2`, Inter at their variable **510** "medium", 44px rows on hairlines, no cards |
 
+The portal's hero carries a particle field after the one on
+[Gemini's about page](https://gemini.google/about/): a drift of coloured dots
+that a sweeping band lights up on a timer, and a pocket around the cursor where
+they part, brighten and shift hue. Theirs is WebGL2 across a black full-bleed
+page; this is a 2D canvas over one section of a page that is white half the
+time, so the numbers are ours — five colours in two palettes so a 2px dot reads
+on `#ffffff` and on `#000000` alike, four thousand dots at 60fps, and one static
+frame when the visitor has asked for reduced motion.
+
 [packages/demo-ui](packages/demo-ui/styles.css) keeps only what is genuinely
 shared: the reset, the appearance switch, and two accessibility helpers. It
 draws itself from whichever app's tokens it lands in.

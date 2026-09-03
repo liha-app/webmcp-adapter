@@ -257,6 +257,22 @@ code, pre { font-family: var(--mono); }
 
 /* ══════════════════════════════════════════════════════════════ hero ════ */
 .hero { text-align: center; padding: 76px 0 60px; }
+
+/*
+ * The hero's particle field.
+ *
+ * Behind the words, never in front of a click, and masked so it fades out at
+ * the edges — a field that stops at a hard rectangle reads as an image dropped
+ * on the page rather than as the page's own ground.
+ */
+.hero--field { position: relative; isolation: isolate; }
+.hero--field > .section-content { position: relative; z-index: 1; }
+.field {
+  position: absolute; inset: -40px 0 -10px; width: 100%; height: calc(100% + 50px);
+  display: block; z-index: 0; pointer-events: none;
+  -webkit-mask-image: radial-gradient(120% 92% at 50% 42%, #000 38%, transparent 78%);
+  mask-image: radial-gradient(120% 92% at 50% 42%, #000 38%, transparent 78%);
+}
 .hero h1 { margin: 4px auto 0; max-width: 13ch; }
 .hero__copy { margin: 20px auto 0; max-width: 25em; }
 .hero__cta { margin-top: 34px; display: flex; justify-content: center; flex-wrap: wrap; gap: 12px 24px; align-items: center; }
