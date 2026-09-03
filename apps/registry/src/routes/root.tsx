@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link, Outlet, useRouterState } from '@tanstack/react-router';
-import { GITHUB_URL } from '../lib/links';
+import { ADAPTER_REGISTRY_URL, GITHUB_URL } from '../lib/links';
 import { registerRegistryTools, type WebMcpStatus } from '../lib/webmcp';
 import { useI18n } from '../i18n';
 import { BrandMark, VendorMark } from './components';
@@ -89,6 +89,10 @@ export function Root() {
               |
             </span>
             <a href={`${GITHUB_URL}/blob/main/docs/adapter-format.md`}>{t('footer.format')}</a>
+            <span className="globalfooter__sep" aria-hidden="true">
+              |
+            </span>
+            <a href={ADAPTER_REGISTRY_URL}>{t('footer.registry')}</a>
             <span className="globalfooter__sep" aria-hidden="true">
               |
             </span>

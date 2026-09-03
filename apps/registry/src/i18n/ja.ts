@@ -6,8 +6,8 @@ import type { MessageKey } from './en';
  * `Record<MessageKey, string>` として型付けしてあるので、英語側にキーを足して
  * こちらを忘れると型エラーになる。翻訳漏れが本番に出ることはない。
  *
- * Adapter が持っている文字列（名前・説明・ツールの説明）は翻訳しない。あれは
- * 公開された定義そのもので、ストアの掲載文と同じく書いた人の言語のまま出す。
+ * 第三者Adapterの文章は作者の言語を保つ。公式AdapterだけはStore表示用の
+ * 翻訳を別に持ち、エージェントが読む定義そのものは変更しない。
  */
 export const ja: Record<MessageKey, string> = {
   'meta.title': 'Liha WebMCP Adapter — サイトを変えずにエージェント対応へ',
@@ -15,7 +15,7 @@ export const ja: Record<MessageKey, string> = {
     'WebMCPを実装していないWebサイトに、監査可能なWebMCPツールを追加します。宣言的・オリジン限定・オープンソース。',
 
   /* ------------------------------------------------------------- chrome -- */
-  'nav.adapters': 'Adapter',
+  'nav.adapters': 'Store',
   'nav.how': '仕組み',
   'nav.trust': '信頼モデル',
   'nav.github': 'GitHub',
@@ -26,7 +26,7 @@ export const ja: Record<MessageKey, string> = {
   'nav.language': '言語',
 
   'status.checking': 'WebMCPを確認しています…',
-  'status.supported': 'WebMCP準備完了 — このレジストリはエージェントに{0}個のツールを公開しています。',
+  'status.supported': 'WebMCP準備完了 — Liha Adapter Storeはエージェントに{0}個のツールを公開しています。',
   'status.unsupported':
     'このブラウザではWebMCPを利用できません。chrome://flags/#enable-webmcp-testing を有効にすると、エージェントがこのページを直接操作できます。',
 
@@ -38,6 +38,7 @@ export const ja: Record<MessageKey, string> = {
   'footer.source': 'ソース',
   'footer.security': 'セキュリティ',
   'footer.format': 'Adapterフォーマット',
+  'footer.registry': 'Adapter Registry',
   'footer.apiNotes': 'WebMCP API調査メモ',
   'footer.disclaimer':
     'Apple Inc. およびApp Storeとは一切関係がなく、承認も受けていません。レイアウトはAppleが公開しているデザイン上の慣習に倣っていますが、名称・図版・文章はすべて本プロジェクト独自のものです。',
@@ -269,9 +270,9 @@ export const ja: Record<MessageKey, string> = {
     'オープンソース（MIT） — 拡張機能、ランタイム、DSL、レジストリ、Recorder、デモアプリ、テストのすべて。',
 
   /* --------------------------------------------------------------- store -- */
-  'store.title': 'Adapter',
+  'store.title': 'Liha Adapter Store',
   'store.sub':
-    'どれも宣言的なJSONで、完全一致のオリジンに限定されています。すべてのstepと権限を、インストール前に確認できます。',
+    '公式とコミュニティのAdapterを探せます。どれも宣言的なJSONで、完全一致のオリジンに限定され、すべてのstepと権限をインストール前に確認できます。',
   'store.search': '検索',
   'store.searchLabel': 'Adapterを検索',
   'store.category': 'カテゴリ',
@@ -300,10 +301,18 @@ export const ja: Record<MessageKey, string> = {
   'store.extFirefox': 'Firefox版も同梱',
   'store.get': '入手',
   'store.installed': 'インストール済み',
+  'store.badgeOfficial': 'Official',
+  'store.badgeVerified': 'Verified',
+  'store.badgeCommunity': 'Community',
+  'store.publishTitle': 'Storeに公開する',
+  'store.publishCopy':
+    '宣言的なJSONをGitHubのPull Requestで投稿できます。OfficialはLihaが保守、Verifiedはそのバージョンを実サイトで検証済み、採用された一般投稿はCommunityとして表示します。',
+  'store.publishCta': 'Adapterを投稿',
+  'store.publishRepo': 'Registryを見る',
 
   /* -------------------------------------------------------------- detail -- */
   'detail.notFound': 'そのidのAdapterはありません。',
-  'detail.back': 'レジストリに戻る',
+  'detail.back': 'Storeに戻る',
   'detail.install': 'インストール',
   'detail.reinstall': '再インストール',
   'detail.installing': '確認を待っています…',

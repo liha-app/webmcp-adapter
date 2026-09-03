@@ -22,6 +22,7 @@ const INTENTIONALLY_IDENTICAL = new Set([
   // The Studio's own name, which is what it is called in the extension too.
   'create.eyebrow',
   'nav.github',
+  'nav.adapters',
   'flow.registerTool',
   'how.stepAdapterJson',
   'how.stepMainWorld',
@@ -31,6 +32,11 @@ const INTENTIONALLY_IDENTICAL = new Set([
   'adapter.noteStepsLabel',
   'adapter.notePlaceholdersLabel',
   'store.extName',
+  'store.title',
+  'store.badgeOfficial',
+  'store.badgeVerified',
+  'store.badgeCommunity',
+  'footer.registry',
   'setup.download',
   'demos.adapter',
 ]);

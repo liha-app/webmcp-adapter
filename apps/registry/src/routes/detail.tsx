@@ -1,8 +1,17 @@
 import { useState } from 'react';
 import { Link, useParams } from '@tanstack/react-router';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { findEntry, toolEffectSummary } from '../lib/catalog';
-import { fetchInstalled, requestInstall } from '../lib/extension';
+import { findEntry } from '../lib/catalog';
+import {
+  adapterDescription,
+  categoryLabel,
+  localizedInputSchema,
+  toolDescription,
+  toolEffectSummary,
+  verifiedDate,
+} from '../lib/catalog-copy';
+import { extensionPresent, fetchInstalled, requestInstall } from '../lib/extension';
+import { RELEASES_URL } from '../lib/links';
 import { useI18n } from '../i18n';
 import { AdapterIcon, CapabilityBadge, HealthBadge } from './components';
 import { detailRoute } from './tree';
@@ -17,13 +26,22 @@ import { detailRoute } from './tree';
  * file size.
  */
 export function AdapterDetail() {
-  const { t, tx } = useI18n();
+  const { locale, t, tx } = useI18n();
   const { adapterId } = useParams({ from: detailRoute.id });
   const entry = findEntry(adapterId);
   const queryClient = useQueryClient();
   const [showSource, setShowSource] = useState(false);
 
-  const installed = useQuery({ queryKey: ['installed'], queryFn: fetchInstalled });
+  const extension = useQuery({
+    queryKey: ['extension-present'],
+    queryFn: extensionPresent,
+    retry: false,
+  });
+  const installed = useQuery({
+    queryKey: ['installed'],
+    queryFn: fetchInstalled,
+    enabled: extension.data === true,
+  });
   const live = installed.data?.installed.find((candidate) => candidate.id === adapterId);
 
   const install = useMutation({
@@ -51,7 +69,7 @@ export function AdapterDetail() {
       <article className="product__inner" data-adapter-id={adapter.id}>
         <p className="crumbs">
           <Link to="/adapters">{t('store.title')}</Link> <span aria-hidden="true">›</span>{' '}
-          {adapter.category ?? 'other'}
+          {categoryLabel(adapter.category, locale)}
         </p>
 
         <header className="product__head">
@@ -61,24 +79,40 @@ export function AdapterDetail() {
               {adapter.name}
             </h1>
             <p className="product__sub" data-field="description">
-              {adapter.description}
+              {adapterDescription(adapter, locale)}
+            </p>
+            <p className="product__badges">
+              <span className={`chip chip--${entry.status}`}>
+                {t(`store.badge${entry.status === 'official' ? 'Official' : 'Community'}`)}
+              </span>
+              {entry.verified && <span className="chip chip--verified">{t('store.badgeVerified')}</span>}
             </p>
             <div className="product__actions">
-              <button
-                type="button"
-                className="getbutton getbutton--filled getbutton--large"
-                data-action="install-adapter"
-                disabled={install.isPending}
-                onClick={() => install.mutate()}
-              >
-                {install.isPending
-                  ? t('detail.installing')
-                  : live
-                    ? t('detail.reinstall')
-                    : t('detail.install')}
-              </button>
+              {extension.data === false ? (
+                <a className="getbutton getbutton--filled getbutton--large" href={RELEASES_URL}>
+                  {t('hero.install')}
+                </a>
+              ) : (
+                <button
+                  type="button"
+                  className="getbutton getbutton--filled getbutton--large"
+                  data-action="install-adapter"
+                  disabled={extension.data !== true || install.isPending}
+                  onClick={() => install.mutate()}
+                >
+                  {install.isPending
+                    ? t('detail.installing')
+                    : live
+                      ? t('detail.reinstall')
+                      : t('detail.install')}
+                </button>
+              )}
               <p className="product__hint">
-                {live ? t('detail.installedHere') : t('detail.willShowPermissions')}
+                {extension.data === false
+                  ? t('agent.noExtension')
+                  : live
+                    ? t('detail.installedHere')
+                    : t('detail.willShowPermissions')}
               </p>
             </div>
             {install.data && (
@@ -112,7 +146,7 @@ export function AdapterDetail() {
           <div>
             <dt>{t('detail.factVerified')}</dt>
             <dd>
-              {adapter.verifiedAt ?? t('detail.notVerified')}
+              {verifiedDate(adapter.verifiedAt, locale, t('detail.notVerified'))}
               {live?.health && <small>{t('detail.healthInBrowser', [live.health.status])}</small>}
             </dd>
           </div>
@@ -149,11 +183,13 @@ export function AdapterDetail() {
                   <CapabilityBadge capability={tool.capability} />
                   {health && <HealthBadge status={health.status} />}
                 </div>
-                <p className="tool__desc">{tool.description}</p>
-                <p>{t('detail.does', [toolEffectSummary(adapter, tool.name), tool.steps.length])}</p>
+                <p className="tool__desc">
+                  {toolDescription(adapter.id, tool.name, tool.description, locale)}
+                </p>
+                <p>{t('detail.does', [toolEffectSummary(adapter, tool.name, locale), tool.steps.length])}</p>
                 <details>
                   <summary>{t('detail.inputSchema')}</summary>
-                  <pre>{JSON.stringify(tool.inputSchema, null, 2)}</pre>
+                  <pre>{JSON.stringify(localizedInputSchema(adapter.id, tool.name, tool.inputSchema, locale), null, 2)}</pre>
                 </details>
               </div>
             );
@@ -162,7 +198,13 @@ export function AdapterDetail() {
 
         <section className="storesection">
           <h2>{t('detail.sourceTitle')}</h2>
-          <p>{tx('detail.sourceCopy', [<code key="path">{entry.sourcePath}</code>])}</p>
+          <p>
+            {tx('detail.sourceCopy', [
+              <a key="path" href={entry.sourceUrl}>
+                <code>{entry.sourcePath}</code>
+              </a>,
+            ])}
+          </p>
           <p style={{ marginTop: 14 }}>
             <button type="button" className="getbutton" onClick={() => setShowSource((value) => !value)}>
               {showSource ? t('detail.hideSource') : t('detail.showSource')}

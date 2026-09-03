@@ -30,12 +30,12 @@ export function extensionPresent(): Promise<boolean> {
       resolve(value);
     };
     const onReady = () => done(true);
+    const onState = () => done(true);
     document.addEventListener(READY_EVENT, onReady);
+    document.addEventListener(STORE_STATE_RESPONSE_EVENT, onState, { once: true });
     // The content script announces itself on load; asking for state is a second
     // chance to detect it if this page rendered after that announcement.
     document.dispatchEvent(new CustomEvent(STORE_STATE_EVENT));
-    const onState = () => done(true);
-    document.addEventListener(STORE_STATE_RESPONSE_EVENT, onState, { once: true });
     setTimeout(() => {
       document.removeEventListener(STORE_STATE_RESPONSE_EVENT, onState);
       done(false);

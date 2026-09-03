@@ -563,6 +563,7 @@ pre {
 .product__head { display: grid; grid-template-columns: 128px minmax(0, 1fr); gap: 24px; align-items: start; }
 .product__title { font-size: 31px; line-height: 1.1613; font-weight: 700; letter-spacing: -0.4px; color: var(--store-ink); }
 .product__sub { margin-top: 6px; font-size: 19px; line-height: 1.2632; color: var(--store-ink-2); max-width: 46em; }
+.product__badges { display: flex; align-items: center; gap: 6px; margin-top: 12px; }
 .product__actions { margin-top: 18px; display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
 .product__hint { font-size: 13px; line-height: 1.3846; color: var(--store-ink-2); }
 @media (max-width: 734px) {
@@ -585,6 +586,7 @@ pre {
 .facts dd small { display: block; font-size: 12px; font-weight: 400; color: var(--store-ink-2); margin-top: 2px; }
 
 .storesection { padding: 30px 0; border-top: 1px solid var(--hairline); }
+.facts + .storesection { border-top: 0; }
 .storesection > h2 { font-size: 22px; line-height: 1.2728; font-weight: 700; letter-spacing: -0.3px; color: var(--store-ink); margin-bottom: 14px; }
 .storesection p { font-size: 15px; line-height: 1.4; color: var(--store-ink-2); max-width: 74ch; }
 .storesection p + p { margin-top: 10px; }
@@ -613,6 +615,18 @@ details pre { margin-top: 10px; }
 .health--degraded { color: var(--warn); background: var(--warn-wash); }
 .health--broken { color: var(--err); background: var(--err-wash); }
 .chip--on { color: var(--ok); background: var(--ok-wash); }
+.chip--official { color: var(--store-blue); background: var(--store-blue-wash); }
+.chip--verified { color: var(--ok); background: var(--ok-wash); }
+.chip--community { color: var(--store-ink-2); background: var(--store-hover); }
+
+.publishcard {
+  display: flex; align-items: center; justify-content: space-between; gap: 24px;
+  padding: 20px 22px; border: 1px solid var(--hairline); border-radius: 12px; background: var(--tile);
+}
+.publishcard > div { min-width: 0; }
+.publishcard p { max-width: 70ch; color: var(--store-ink-2); font-size: 14px; line-height: 1.5; }
+.publishcard__badges { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 12px; }
+@media (max-width: 640px) { .publishcard { align-items: flex-start; flex-direction: column; } }
 
 .warn { color: var(--warn); font-size: 15px; margin-top: 14px; }
 .ok { color: var(--ok); font-size: 13px; margin-top: 10px; }
