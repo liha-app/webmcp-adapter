@@ -3,6 +3,7 @@ import { createRoot } from 'react-dom/client';
 import { summarizeEffects, validateAdapter, type Capability } from '@liha/adapter-schema';
 import type { RecordingState } from '@liha/shared';
 import { ext } from '../platform';
+import { explainProblems, type ProblemField } from './problems';
 import {
   READ_STEPS,
   STEP_KINDS,
@@ -249,6 +250,21 @@ function Studio() {
   const selectedStep = draft?.steps.find((step) => step.id === selected);
   const effects = validation?.adapter?.tools[0] ? summarizeEffects(validation.adapter.tools[0]) : null;
   const doubled = draft ? duplicateSubmits(draft) : [];
+  /*
+   * The schema's errors, said in the language of this screen and pointed at the
+   * field that has to change. `tools.0.name: String must contain at least 1
+   * character(s)` is correct and unusable: it names an array index the reader
+   * never sees, about a form field that is right in front of them.
+   */
+  const problems = validation && !validation.ok ? explainProblems(validation.errors) : [];
+  const under = (field: ProblemField) =>
+    problems
+      .filter((problem) => problem.field === field)
+      .map((problem) => (
+        <p key={problem.key} className="problem problem--field">
+          {t(problem.key, problem.params)}
+        </p>
+      ));
 
   /*
    * Only the steps this page can be expected to have.
@@ -514,21 +530,28 @@ function Studio() {
               )}
             </div>
             <div className="panel__body">
+              {/*
+                * No placeholders here any more. A grey `create_customer` looks
+                * exactly like a filled-in field, and under it sat "the tool
+                * name is empty" — the reader could see the answer and the
+                * complaint at the same time. The draft opens with a real
+                * suggestion instead, which they can correct.
+                */}
               <Field label={t('studio.toolName')}>
                 <input
                   value={draft.toolName}
-                  placeholder="create_customer"
                   onChange={(event) =>
                     setDraft({ ...draft, toolName: event.target.value.replace(/[^a-z0-9_]/g, '') })
                   }
                 />
+                {under('toolName')}
               </Field>
               <Field label={t('studio.toolDescription')}>
                 <textarea
                   value={draft.toolDescription}
-                  placeholder="Create a customer by filling in the Add Customer form."
                   onChange={(event) => setDraft({ ...draft, toolDescription: event.target.value })}
                 />
+                {under('toolDescription')}
               </Field>
               <div className="two">
                 <Field label={t('studio.capability')}>
@@ -603,7 +626,7 @@ function Studio() {
             </>
           )}
 
-          {(doubled.length > 0 || (validation && !validation.ok)) && (
+          {(doubled.length > 0 || problems.some((problem) => !problem.field)) && (
             <div className="inspector__problems">
               {/*
                * The pair the recorder no longer produces, but a hand-edited or
@@ -618,11 +641,12 @@ function Studio() {
                   ])}
                 </p>
               ))}
-              {validation &&
-                !validation.ok &&
-                validation.errors.map((error) => (
-                  <p key={error} className="problem">
-                    {error}
+              {/* What is left once the field-scoped ones are under their field. */}
+              {problems
+                .filter((problem) => !problem.field)
+                .map((problem, index) => (
+                  <p key={`${problem.key}-${index}`} className="problem">
+                    {t(problem.key, problem.params)}
                   </p>
                 ))}
             </div>

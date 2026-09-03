@@ -262,14 +262,31 @@ async function main() {
     );
     check(parameterised >= 2, 'typed values are proposed as tool input, not baked in as literals', String(parameterised));
 
+    /*
+     * A recording is a valid adapter the moment it is taken.
+     *
+     * The name and the description used to be placeholders — grey text that
+     * looks exactly like a filled-in field — with "the tool name is empty"
+     * underneath, so the reader could see the answer and the complaint at the
+     * same time. They are real suggested values now, derived from what was
+     * recorded, and the author edits them.
+     */
+    const suggested = await studio.eval(`document.querySelector('.panel__body input').value`);
+    check(suggested === 'add_customer', 'the draft opens with a tool name taken from the workflow', suggested);
     check(
-      (await studio.eval('document.body.innerText')).includes('not valid yet'),
-      'the draft is not valid until the author names and describes the tool',
+      ((await studio.eval(`document.querySelector('.panel__body textarea').value`)) ?? '').includes('Add customer'),
+      'and with a description of what was recorded, not an example of one',
+    );
+    check(
+      !(await studio.eval('document.body.innerText')).includes('not valid yet'),
+      'so it is valid without the author having to retype the suggestion',
     );
 
-    await studio.eval(typeInto('input[placeholder="create_customer"]', 'create_customer'));
+    // Renaming it is still the author's call, and this is the name the rest of
+    // the group is written against.
+    await studio.eval(typeInto('.panel__body input', 'create_customer'));
     await sleep(200);
-    await studio.eval(typeInto('textarea', 'Create a customer by filling in the Add Customer form.'));
+    await studio.eval(typeInto('.panel__body textarea', 'Create a customer by filling in the Add Customer form.'));
     await sleep(400);
 
     const json = await studio.eval(`document.querySelector('pre').textContent`);

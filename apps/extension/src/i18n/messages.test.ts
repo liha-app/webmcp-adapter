@@ -27,6 +27,10 @@ const INTENTIONALLY_IDENTICAL = new Set([
   'studio.capability',
   'studio.adapterJson',
   'diag.scriptingApi',
+  // Not a message: the slot a schema error's own words are dropped into when
+  // the Studio has no better sentence for that path. Translating the wrapper
+  // would put a language around text that is in another one.
+  'studio.problemRaw',
 ]);
 
 describe('the extension’s messages', () => {

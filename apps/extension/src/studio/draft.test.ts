@@ -155,3 +155,32 @@ describe('a click and a submit of the same form', () => {
     expect(duplicateSubmits(draft([click, submit]))).toEqual([]);
   });
 });
+
+describe('a draft made from a recording', () => {
+  it('opens with a name and a description, not with examples of them', () => {
+    // These were placeholders, which look exactly like filled-in fields and are
+    // not: the Studio showed `create_customer` in grey and, under it, "tool
+    // name is empty".
+    const made = draftFromRecording(recording, 'https://crm.example.com');
+    expect(made.toolName).toBe('add_customer');
+    expect(made.toolDescription).toContain('Add customer');
+    expect(made.toolDescription).toContain('crm.example.com');
+  });
+
+  it('is valid the moment it is taken', () => {
+    const made = draftFromRecording(recording, 'https://crm.example.com');
+    const result = validateAdapter(draftToAdapter(made, {}));
+    expect(result.errors).toEqual([]);
+    expect(result.ok).toBe(true);
+  });
+
+  it('falls back to something usable when nothing was labelled', () => {
+    const unlabelled: RecordedAction[] = [
+      { at: 1, kind: 'fill', selector: "input[name='q']", candidates: [], value: 'x' },
+      { at: 2, kind: 'submit', selector: 'form', candidates: [] },
+    ];
+    const made = draftFromRecording(unlabelled, 'https://example.com');
+    expect(made.toolName).toBe('submit_form');
+    expect(validateAdapter(draftToAdapter(made, {})).ok).toBe(true);
+  });
+});

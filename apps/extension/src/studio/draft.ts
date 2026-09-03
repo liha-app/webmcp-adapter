@@ -71,6 +71,51 @@ function suggestParameterName(action: RecordedAction, index: number): string {
   return label && label.length <= 24 ? label : `value_${index + 1}`;
 }
 
+const slug = (text: string, max = 40) =>
+  text
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '_')
+    .replace(/^_+|_+$/g, '')
+    .slice(0, max)
+    .replace(/_+$/, '');
+
+/**
+ * A name and a description the draft opens with, rather than greyed-out
+ * examples of one.
+ *
+ * These used to be placeholders, which look exactly like filled-in fields and
+ * are not: the Studio showed `create_customer` and a sentence describing the
+ * workflow, and under them three errors saying the name was empty, was not
+ * snake_case, and the description was empty. A suggestion the author can
+ * correct is more useful than an example they have to retype, and it means a
+ * recording is a valid adapter the moment it is taken.
+ */
+export function suggestToolName(actions: readonly RecordedAction[]): string {
+  const opener = actions.find((action) => action.kind === 'click' && (action.label ?? '').trim());
+  const named = slug(opener?.label ?? '', 48);
+  if (named && /^[a-z]/.test(named)) return named;
+  const ends = actions[actions.length - 1]?.kind;
+  return ends === 'submit' ? 'submit_form' : 'run_workflow';
+}
+
+export function suggestToolDescription(actions: readonly RecordedAction[], origin: string): string {
+  const opener = (actions.find((action) => action.kind === 'click')?.label ?? '').trim();
+  const fields = actions
+    .filter((action) => action.kind === 'fill' || action.kind === 'select')
+    .map((action, index) => suggestParameterName(action, index));
+  const host = (() => {
+    try {
+      return new URL(origin).hostname;
+    } catch {
+      return origin;
+    }
+  })();
+  const what = opener ? `the "${opener}" workflow` : 'a recorded workflow';
+  const filling = fields.length > 0 ? `, filling in ${fields.join(', ')}` : '';
+  const ending = actions[actions.length - 1]?.kind === 'submit' ? ', and submits the form' : '';
+  return `Runs ${what} on ${host}${filling}${ending}. Recorded from the site's own controls; edit this to say when an agent should use it.`;
+}
+
 /**
  * Turns a recording into an editable draft.
  *
@@ -112,9 +157,9 @@ export function draftFromRecording(actions: readonly RecordedAction[], origin: s
     version: '0.1.0',
     description: '',
     origin,
-    toolName: '',
+    toolName: suggestToolName(actions),
     toolTitle: '',
-    toolDescription: '',
+    toolDescription: suggestToolDescription(actions, origin),
     capability: 'WRITE',
     steps,
   };

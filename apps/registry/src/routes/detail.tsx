@@ -43,6 +43,9 @@ export function AdapterDetail() {
     enabled: extension.data === true,
   });
   const live = installed.data?.installed.find((candidate) => candidate.id === adapterId);
+  // A newer version in the Store than the one on this machine is the one case
+  // where there is still something to press.
+  const upgrade = Boolean(live && live.version !== entry?.adapter.version);
 
   const install = useMutation({
     mutationFn: () => requestInstall(entry!.adapter),
@@ -93,19 +96,48 @@ export function AdapterDetail() {
                   {t('hero.install')}
                 </a>
               ) : (
-                <button
-                  type="button"
-                  className="getbutton getbutton--filled getbutton--large"
-                  data-action="install-adapter"
-                  disabled={extension.data !== true || install.isPending}
-                  onClick={() => install.mutate()}
-                >
-                  {install.isPending
-                    ? t('detail.installing')
-                    : live
-                      ? t('detail.reinstall')
-                      : t('detail.install')}
-                </button>
+                /*
+                 * What is already done is not an action.
+                 *
+                 * Straight after a successful install the main button read
+                 * "Reinstall", which to a first-time reader says the install
+                 * did not take. Installed is a state, so it is shown as one.
+                 * The only thing left worth pressing is an update, and only
+                 * where there is a newer version to move to.
+                 *
+                 * Putting an adapter back is a repair — for a community adapter
+                 * whose site moved under it — so it stays reachable, as the
+                 * quiet second control rather than as the thing that looks like
+                 * the next step.
+                 */
+                <>
+                  <button
+                    type="button"
+                    className="getbutton getbutton--filled getbutton--large"
+                    data-action={live && !upgrade ? undefined : 'install-adapter'}
+                    disabled={extension.data !== true || install.isPending || (Boolean(live) && !upgrade)}
+                    onClick={() => install.mutate()}
+                  >
+                    {install.isPending
+                      ? t('detail.installing')
+                      : upgrade
+                        ? t('detail.update', [entry.adapter.version])
+                        : live
+                          ? t('detail.installedNow')
+                          : t('detail.install')}
+                  </button>
+                  {live && !upgrade && (
+                    <button
+                      type="button"
+                      className="getbutton getbutton--large"
+                      data-action="install-adapter"
+                      disabled={extension.data !== true || install.isPending}
+                      onClick={() => install.mutate()}
+                    >
+                      {t('detail.reinstall')}
+                    </button>
+                  )}
+                </>
               )}
               <p className="product__hint">
                 {extension.data === false
@@ -118,6 +150,23 @@ export function AdapterDetail() {
             {install.data && (
               <p className={install.data.ok ? 'ok' : 'problem'} data-testid="install-result">
                 {install.data.ok ? t('detail.installOk') : install.data.errors.join('; ')}
+              </p>
+            )}
+            {/*
+              * Where to go next. An install that ends in a confirmation and
+              * nothing else leaves the reader on the page they were already on,
+              * with no idea whether anything happened. The extension's own
+              * pages cannot be linked to from here — a chrome-extension:// URL
+              * does not open from a web page — so that half is said rather
+              * than linked.
+              */}
+            {install.data?.ok && entry.adapter.origins[0] && (
+              <p className="product__hint" data-testid="install-next">
+                <a href={entry.adapter.origins[0]} target="_blank" rel="noreferrer">
+                  {t('detail.nextOpen', [new URL(entry.adapter.origins[0]).hostname])}
+                </a>
+                {' · '}
+                {t('detail.nextManage')}
               </p>
             )}
           </div>
