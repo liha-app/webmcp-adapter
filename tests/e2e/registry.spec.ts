@@ -1,10 +1,22 @@
-import { expect, test } from '@playwright/test';
+import { expect, test, type Page } from '@playwright/test';
 import { PROOF } from '../../apps/registry/src/lib/proof';
 import { en } from '../../apps/registry/src/i18n/en';
 import { ja } from '../../apps/registry/src/i18n/ja';
 
+/*
+ * The Store reads its catalogue from the public registry at page load, which
+ * means an assertion about "three adapters" is really an assertion about what
+ * another repository holds this minute. Tests that are about this app pin the
+ * fallback; the one test that is about the remote path stubs a response of its
+ * own.
+ */
+async function useBundledCatalogue(page: Page) {
+  await page.route('**/adapter-registry/**', (route) => route.abort());
+}
+
 test.describe('Landing page', () => {
   test.beforeEach(async ({ page }) => {
+    await useBundledCatalogue(page);
     await page.goto('http://localhost:5280/');
   });
 
@@ -48,9 +60,16 @@ test.describe('Landing page', () => {
     await expect(page.getByTestId('live-tools')).toHaveCount(0);
   });
 
-  test('explains the problem it exists to solve', async ({ page }) => {
-    await expect(page.getByText(en['problem.headline'])).toBeVisible();
-    await expect(page.getByText('registerTool()').first()).toBeVisible();
+  test('shows the claim happening rather than describing it', async ({ page }) => {
+    // Three screenshots of one storefront with a real tool call between each,
+    // captured by tools/marketing/capture.mjs against the running extension.
+    const sequence = page.getByTestId('drive-sequence');
+    await expect(sequence).toBeVisible();
+    await expect(sequence.locator('img')).toHaveCount(3);
+    await expect(sequence.getByText('choose_top')).toBeVisible();
+    await expect(sequence.getByText('add_to_bag')).toBeVisible();
+    // Exactly one frame is on top at a time.
+    await expect(sequence.locator('img[data-current="true"]')).toHaveCount(1);
   });
 
   test('shows concise implementation evidence', async ({ page }) => {
@@ -66,15 +85,17 @@ test.describe('Landing page', () => {
     await expect(page.getByRole('button', { name: 'Show full definition' })).toBeVisible();
   });
 
-  test('links to all three demos with their tools and capabilities', async ({ page }) => {
-    const demos = page.locator('[data-testid="demo-list"] li');
+  test('shows the three demos as pictures, and links to each', async ({ page }) => {
+    const demos = page.locator('.gallery li');
     await expect(demos).toHaveCount(3);
-    await expect(page.getByRole('link', { name: 'Open Acme CRM' })).toHaveAttribute('href', /5273|crm\./);
-    await expect(page.getByRole('link', { name: 'Open Nimbus Supply' })).toHaveAttribute('href', /5274|shop\./);
-    await expect(page.getByRole('link', { name: 'Open Kite Project Manager' })).toHaveAttribute('href', /5275|project\./);
-    await expect(demos.filter({ hasText: 'Kite' }).getByText('DESTRUCTIVE confirmation')).toBeVisible();
-    // Every lockup carries its own icon, which is the store layout's unit.
-    await expect(demos.locator('.appicon svg')).toHaveCount(3);
+    await expect(demos.locator('img')).toHaveCount(3);
+    await expect(page.getByRole('link', { name: /Acme CRM/ })).toHaveAttribute('href', /5273|crm\./);
+    await expect(page.getByRole('link', { name: /Nimbus Supply/ })).toHaveAttribute('href', /5274|shop\./);
+    await expect(page.getByRole('link', { name: /Kite Project Manager/ })).toHaveAttribute('href', /5275|project\./);
+    // Every picture is a real file rather than a broken reference.
+    for (const src of await demos.locator('img').evaluateAll((nodes) => nodes.map((n) => (n as HTMLImageElement).src))) {
+      expect((await page.request.get(src)).status(), src).toBe(200);
+    }
   });
 
   test('moves setup instructions to the guided build', async ({ page }) => {
@@ -84,16 +105,18 @@ test.describe('Landing page', () => {
     await expect(page.getByText('chrome://flags/#enable-webmcp-testing').first()).toBeVisible();
   });
 
-  test('describes the recorder as a human workflow, not AI guesswork', async ({ page }) => {
-    await expect(page.getByText('Teach an agent by using the website yourself.')).toBeVisible();
-    await expect(page.getByText(en['recorder.copy'])).toBeVisible();
-    await expect(page.locator('#create .flow__node')).toHaveCount(3);
+  test('shows the Studio rather than explaining it', async ({ page }) => {
+    const studio = page.locator('#create img');
+    await expect(studio).toHaveCount(1);
+    expect((await page.request.get(await studio.getAttribute('src') ?? '')).status()).toBe(200);
+    await expect(page.locator('#create').getByRole('link', { name: 'Build one' })).toBeVisible();
   });
 
   // "Safe" would be a claim this project cannot make; the limitation has to be
   // on the page, not only in the repository.
   test('is honest about the MAIN-world limitation', async ({ page }) => {
     await expect(page.getByText('Auditable, origin-scoped and permission-aware.')).toBeVisible();
+    // Trimming the page down must not trim this away: it is a promise, not copy.
     await expect(page.getByText(/runtime must live in the page’s JavaScript world/)).toBeVisible();
     await expect(page.getByRole('link', { name: 'Read the full threat model' })).toHaveAttribute(
       'href',
@@ -117,6 +140,7 @@ test.describe('Landing page', () => {
 
 test.describe('Appearance and language', () => {
   test.beforeEach(async ({ page }) => {
+    await useBundledCatalogue(page);
     await page.goto('http://localhost:5280/');
   });
 
@@ -286,6 +310,10 @@ test.describe('The guided build', () => {
 });
 
 test.describe('Adapter Registry', () => {
+  test.beforeEach(async ({ page }) => {
+    await useBundledCatalogue(page);
+  });
+
   // The store layout: sidebar counts, a feature card, and shelves of lockups.
   test('presents the catalogue as a store with a filter sidebar', async ({ page }) => {
     await page.goto('http://localhost:5280/adapters');

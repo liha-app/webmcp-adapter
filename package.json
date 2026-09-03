@@ -43,7 +43,8 @@
     "acceptance:csp": "node tools/acceptance/csp.mjs",
     "demo:studio": "node tools/demo/studio.mjs",
     "e2e": "playwright test",
-    "demo": "pnpm --parallel -r preview"
+    "demo": "pnpm --parallel -r preview",
+    "capture": "node tools/marketing/capture.mjs"
   },
   "devDependencies": {
     "@eslint/js": "^9.17.0",

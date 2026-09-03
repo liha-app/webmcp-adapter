@@ -79,6 +79,17 @@ export const ja: Record<MessageKey, string> = {
   'agent.notJson': 'JSONとして読めません：',
   'agent.effects': '全ツール合計でクリック{0}回、入力{1}回、読み取り{2}回。',
 
+  'hero.alt': 'WebMCPを持たない普通のWebアプリ、Acme CRMのデモ',
+  'drive.headline': 'エージェントが頼む。サイトが動く。',
+  'drive.copy':
+    '1つのストアの3枚のスクリーンショット。あいだに実際のツール呼び出しが入っています。この店にWebMCPはありません。',
+  'drive.alt': 'Adapterのツール呼び出しで動くNimbus Supplyのストア',
+  'demos.lede': '普通のReactアプリが3つ。そこにあるツールはすべてAdapter由来です。',
+  'demos.toolCount': 'ツール{0}個',
+  'studio.headline': '書くのはJSONだけ。',
+  'studio.copy': 'エージェントに頼むか、自分の操作を記録するか。打ちながら検証されます。',
+  'studio.alt': '下書きのAdapterを検証しているAdapter Studio',
+
   /* --------------------------------------------------------------- hero -- */
   'onboard.chip': 'エージェントに Liha WebMCP Adapter を教える',
   'onboard.agentsTitle': 'URLを取得できるエージェントなら何でも',

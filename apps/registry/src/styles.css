@@ -856,3 +856,83 @@ details pre { margin-top: 10px; }
 @media (prefers-reduced-motion: reduce) {
   .lamp__dot, .agentflow__hint, .problems li, .toolcards li { animation: none !important; }
 }
+
+/* ═══════════════════════════════════════════════════ product pictures ═══ */
+/*
+ * The landing page argues with screenshots rather than paragraphs, which means
+ * the pictures carry the layout: full-bleed inside the section, a soft edge so
+ * they sit on the page rather than on top of it, and nothing on them.
+ */
+.section--shot { padding-top: 84px; padding-bottom: 84px; }
+.section-lede { margin: 12px auto 0; max-width: 34em; color: var(--ink-2); text-align: center; }
+.section--shot .section-headline { text-align: center; }
+.section-more { display: block; margin-top: 26px; text-align: center; }
+
+.shot { margin: 40px 0 0; }
+.shot img {
+  display: block; width: 100%; height: auto; border-radius: 18px;
+  border: 1px solid var(--hairline);
+  box-shadow: 0 26px 60px light-dark(rgba(0, 0, 0, 0.1), rgba(0, 0, 0, 0.5));
+}
+.section--openshot { padding: 0 0 30px; }
+.shot--hero { margin: 0 auto; max-width: 1024px; }
+
+/* Three frames of one page, cross-faded where they sit. */
+.sequence { margin: 40px 0 0; }
+.sequence__stage { position: relative; aspect-ratio: 1280 / 800; }
+.sequence__frame {
+  position: absolute; inset: 0; width: 100%; height: 100%;
+  border-radius: 18px; border: 1px solid var(--hairline);
+  box-shadow: 0 26px 60px light-dark(rgba(0, 0, 0, 0.1), rgba(0, 0, 0, 0.5));
+  opacity: 0; transition: opacity 700ms ease;
+}
+.sequence__frame[data-current='true'] { opacity: 1; }
+.sequence__calls {
+  display: flex; justify-content: center; gap: 10px; margin-top: 22px;
+  font: 400 13px/1.4 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+}
+.sequence__calls span {
+  padding: 5px 12px; border-radius: 980px; color: var(--ink-2);
+  background: var(--sunken); transition: background-color 300ms ease, color 300ms ease;
+}
+.sequence__calls span[data-current='true'] { background: var(--blue); color: #fff; }
+
+/* The three demos, as three pictures. */
+.gallery { list-style: none; margin: 40px 0 0; padding: 0; display: grid; gap: 26px; }
+@media (min-width: 900px) { .gallery { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+.gallery a { display: block; text-decoration: none; color: inherit; }
+.gallery img {
+  display: block; width: 100%; height: auto; border-radius: 14px;
+  border: 1px solid var(--hairline);
+  box-shadow: 0 14px 34px light-dark(rgba(0, 0, 0, 0.08), rgba(0, 0, 0, 0.45));
+  transition: transform 260ms ease, box-shadow 260ms ease;
+}
+.gallery a:hover img {
+  transform: translateY(-4px);
+  box-shadow: 0 22px 46px light-dark(rgba(0, 0, 0, 0.12), rgba(0, 0, 0, 0.55));
+}
+.gallery__name { display: block; margin-top: 14px; font-size: 17px; font-weight: 600; }
+.gallery__meta { display: block; margin-top: 2px; font-size: 13px; color: var(--ink-2); }
+
+@media (prefers-reduced-motion: reduce) {
+  .sequence__frame, .gallery img { transition: none !important; }
+}
+
+/* The four things that are true about an adapter, and the numbers behind them. */
+.safety { list-style: none; margin: 34px 0 0; padding: 0; display: grid; gap: 14px; }
+@media (min-width: 820px) { .safety { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px 34px; } }
+.safety li {
+  position: relative; padding-left: 26px; font-size: 17px; line-height: 1.4706; color: var(--ink-2);
+}
+.safety li::before {
+  content: ''; position: absolute; left: 2px; top: 9px; width: 11px; height: 6px;
+  border-left: 2px solid var(--ok); border-bottom: 2px solid var(--ok); transform: rotate(-45deg);
+}
+.proof { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 26px; margin: 46px 0 0; }
+@media (min-width: 820px) { .proof { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+.proof div { text-align: center; }
+.proof dt { font-size: 13px; color: var(--ink-2); }
+.proof dd {
+  margin: 6px 0 0; font-size: 40px; line-height: 1.1; font-weight: 600;
+  font-variant-numeric: tabular-nums; letter-spacing: -0.01em;
+}

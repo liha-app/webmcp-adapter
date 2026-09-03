@@ -74,6 +74,17 @@ export const en = {
   'agent.notJson': 'That is not JSON:',
   'agent.effects': '{0} click(s), {1} input(s), {2} read(s) across all tools.',
 
+  'hero.alt': 'The Acme CRM demo, an ordinary web app with no WebMCP of its own',
+  'drive.headline': 'An agent asks. The site moves.',
+  'drive.copy':
+    'Three screenshots of one storefront, with a real tool call between each. The store has no WebMCP of its own.',
+  'drive.alt': 'The Nimbus Supply storefront, driven by adapter tool calls',
+  'demos.lede': 'Three ordinary React apps. Every tool on them comes from an adapter.',
+  'demos.toolCount': '{0} tools',
+  'studio.headline': 'What you write is JSON.',
+  'studio.copy': 'Ask an agent for it, or record yourself using the site. It is checked as you type.',
+  'studio.alt': 'The Adapter Studio, validating a draft adapter',
+
   /* --------------------------------------------------------------- hero -- */
   'onboard.chip': 'Onboard your agent to Liha WebMCP Adapter',
   'onboard.agentsTitle': 'Any agent that can fetch a URL',

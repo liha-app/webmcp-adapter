@@ -10,12 +10,12 @@ import type { MessageKey } from '../i18n/en';
  * Update alongside the test suite — CONTRIBUTING points here.
  */
 export const PROOF = {
-  unitAndIntegrationTests: 214,
-  e2eTests: 44,
+  unitAndIntegrationTests: 523,
+  e2eTests: 85,
   acceptance: [
     { nameKey: 'verified.runPhase0', whatKey: 'verified.runPhase0What', result: '10/10' },
-    { nameKey: 'verified.runFull', whatKey: 'verified.runFullWhat', result: '43/43' },
-    { nameKey: 'verified.runRecorder', whatKey: 'verified.runRecorderWhat', result: '25/25' },
+    { nameKey: 'verified.runFull', whatKey: 'verified.runFullWhat', result: '68/68' },
+    { nameKey: 'verified.runRecorder', whatKey: 'verified.runRecorderWhat', result: '37/37' },
   ],
   factKeys: [
     'verified.fact1',
