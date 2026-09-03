@@ -77,7 +77,6 @@ export const en = {
   'agent.noExtension':
     'The extension is not in this browser. Install it first, then come back — or download the JSON and load it from the extension.',
   'agent.notJson': 'That is not JSON:',
-  'agent.rejected': 'Not valid yet:',
   'agent.effects': '{0} click(s), {1} input(s), {2} read(s) across all tools.',
 
   /* --------------------------------------------------------------- hero -- */

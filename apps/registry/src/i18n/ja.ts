@@ -82,7 +82,6 @@ export const ja: Record<MessageKey, string> = {
   'agent.noExtension':
     'このブラウザに拡張機能が入っていません。先に入れてから戻ってきてください。JSONをダウンロードして拡張機能から読み込むこともできます。',
   'agent.notJson': 'JSONとして読めません：',
-  'agent.rejected': 'まだ通りません：',
   'agent.effects': '全ツール合計でクリック{0}回、入力{1}回、読み取り{2}回。',
 
   /* --------------------------------------------------------------- hero -- */
