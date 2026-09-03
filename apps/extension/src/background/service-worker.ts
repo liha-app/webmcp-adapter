@@ -222,6 +222,26 @@ async function buildStoreState(): Promise<StoreStateResponse> {
     if (!origin || !catalogue.some((entry) => entry.adapter.origins.includes(origin))) continue;
     for (const health of await readHealth(tab.id)) healthByAdapter.set(health.adapterId, health);
   }
+  /*
+   * What the Store page is allowed to know about the adapters on this machine.
+   *
+   * It used to get every installed adapter's origins and full tool list. That
+   * is an inventory of which private services someone has adapters for, handed
+   * to an ordinary web page — and the Store only needs it for two things: to
+   * mark its own catalogue entries as installed, and to write the call snippet
+   * for the adapter you just built in the Studio.
+   *
+   * So: names and state for everything, details only where the page already
+   * knows them (the adapters this extension ships, which are public) or just
+   * made them (the newest Studio build, which is what the guided build shows).
+   */
+  const newestStudio = catalogue
+    .filter((record) => record.source === 'studio')
+    .sort((a, b) => a.installedAt - b.installedAt)
+    .at(-1);
+  const mayDetail = (record: (typeof catalogue)[number]) =>
+    record.source === 'builtin' || record.adapter.id === newestStudio?.adapter.id;
+
   return {
     installed: catalogue.map((record) => ({
       id: record.adapter.id,
@@ -229,12 +249,16 @@ async function buildStoreState(): Promise<StoreStateResponse> {
       version: record.adapter.version,
       enabled: record.enabled,
       source: record.source,
-      origins: record.adapter.origins,
-      tools: record.adapter.tools.map((tool) => ({
-        name: tool.name,
-        capability: tool.capability,
-        required: tool.inputSchema.required ?? [],
-      })),
+      ...(mayDetail(record)
+        ? {
+            origins: record.adapter.origins,
+            tools: record.adapter.tools.map((tool) => ({
+              name: tool.name,
+              capability: tool.capability,
+              required: tool.inputSchema.required ?? [],
+            })),
+          }
+        : {}),
       health: healthByAdapter.get(record.adapter.id) ?? null,
     })),
   };
@@ -245,21 +269,37 @@ async function buildStoreState(): Promise<StoreStateResponse> {
 /* -------------------------------------------------------------------------- */
 
 async function setRecording(active: boolean): Promise<void> {
-  const [tab] = await ext.tabs.query({ active: true, currentWindow: true });
-  if (tab?.id === undefined || !tab.url) return;
-  const origin = originOf(tab.url);
-  if (!origin) return;
-
   if (active) {
+    const [tab] = await ext.tabs.query({ active: true, currentWindow: true });
+    if (tab?.id === undefined || !tab.url) return;
+    const origin = originOf(tab.url);
+    if (!origin) return;
     startRecording(tab.id, origin);
     keepTake(null);
-  } else {
-    keepTake(stopRecording());
+    try {
+      await ext.tabs.sendMessage(tab.id, { type: 'liha/recorder-mode', active: true });
+    } catch {
+      // The content script is not present on this page; recording stays empty.
+    }
+    return;
   }
-  try {
-    await ext.tabs.sendMessage(tab.id, { type: 'liha/recorder-mode', active });
-  } catch {
-    // The content script is not present on this page; recording simply stays empty.
+
+  /*
+   * Stop the tab that is recording, not the tab you happen to be looking at.
+   *
+   * Both branches used to read the active tab, so starting on one tab and
+   * pressing Stop from another ended the session in the worker while leaving
+   * the first tab's recorder running — still listening to everything the person
+   * did there, with nothing in the UI to say so.
+   */
+  const recording = getRecording();
+  keepTake(stopRecording());
+  if (recording?.tabId !== undefined) {
+    try {
+      await ext.tabs.sendMessage(recording.tabId, { type: 'liha/recorder-mode', active: false });
+    } catch {
+      // The tab is gone, which stops it just as well.
+    }
   }
   if (!active) {
     await ext.tabs.create({ url: ext.runtime.getURL('studio/studio.html') });

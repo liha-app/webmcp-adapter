@@ -227,14 +227,23 @@ export interface StoreStateResponse {
     version: string;
     enabled: boolean;
     source: AdapterSource;
-    /** The exact origins this adapter may touch. */
-    origins: string[];
+    /*
+     * The exact origins this adapter may touch, and the tools on it — sent only
+     * where the page already knows them.
+     *
+     * A web page does not need an inventory of which private services someone
+     * has adapters for. The extension sends these for the adapters it ships,
+     * which are public, and for the newest Studio build, which is what the
+     * guided walkthrough is showing the person who just made it. Everything
+     * else arrives as a name and a state.
+     */
+    origins?: string[];
     /**
      * Enough of each tool to say what it is and how to call it. The guided
      * walkthrough on the portal reads this to hand someone a snippet that
      * runs the tool they just built, rather than one they have to fill in.
      */
-    tools: Array<{ name: string; capability: Capability; required: string[] }>;
+    tools?: Array<{ name: string; capability: Capability; required: string[] }>;
     health: AdapterHealth | null;
   }>;
 }

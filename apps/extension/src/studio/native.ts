@@ -84,12 +84,40 @@ export function outputBindings(tool: ToolDefinition): string[] {
  * so a tool that trusts its input is a tool that will one day be called with
  * `{}`.
  */
+/*
+ * A property name is JSON, and JavaScript identifiers are not.
+ *
+ * `default`, `class`, `1name` and `a-b` are all valid keys in an inputSchema
+ * and none of them can be a `const`. This produced code that would not parse,
+ * from a Studio button whose whole promise is that the output runs.
+ */
+const RESERVED = new Set(
+  ('await break case catch class const continue debugger default delete do else enum export extends false finally ' +
+   'for function if implements import in instanceof interface let new null package private protected public return ' +
+   'static super switch this throw true try typeof var void while with yield arguments eval input')
+    .split(' '),
+);
+
+export function localName(key: string, taken: Set<string>): string {
+  let base = key.replace(/[^A-Za-z0-9_$]/g, '_');
+  if (!/^[A-Za-z_$]/.test(base)) base = `_${base}`;
+  if (RESERVED.has(base)) base = `${base}_`;
+  let name = base;
+  let n = 2;
+  while (taken.has(name)) name = `${base}${n++}`;
+  taken.add(name);
+  return name;
+}
+
 function validationLines(schema: ToolInputSchema): string[] {
   const required = new Set(schema.required ?? []);
   const lines: string[] = [];
-  for (const [name, property] of Object.entries(schema.properties)) {
-    const read = `const ${name} = input?.${name};`;
-    const isRequired = required.has(name);
+  const taken = new Set<string>();
+  for (const [key, property] of Object.entries(schema.properties)) {
+    const name = localName(key, taken);
+    const read = `const ${name} = input?.[${quote(key)}];`;
+    // Required lists the property, not the local we renamed it to.
+    const isRequired = required.has(key);
     const expected =
       property.type === 'integer'
         ? `typeof ${name} !== 'number' || !Number.isInteger(${name})`
@@ -97,20 +125,20 @@ function validationLines(schema: ToolInputSchema): string[] {
 
     lines.push(read);
     if (isRequired) {
-      lines.push(`if (${expected}) return failed(${quote(`${name} is required and must be a ${property.type}`)});`);
+      lines.push(`if (${expected}) return failed(${quote(`${key} is required and must be a ${property.type}`)});`);
       if (property.type === 'string') {
-        lines.push(`if (${name}.trim() === '') return failed(${quote(`${name} must not be empty`)});`);
+        lines.push(`if (${name}.trim() === '') return failed(${quote(`${key} must not be empty`)});`);
       }
     } else {
       lines.push(
-        `if (${name} !== undefined && (${expected})) return failed(${quote(`${name} must be a ${property.type}`)});`,
+        `if (${name} !== undefined && (${expected})) return failed(${quote(`${key} must be a ${property.type}`)});`,
       );
     }
     if (property.enum) {
       const options = JSON.stringify(property.enum);
       const guard = isRequired ? '' : `${name} !== undefined && `;
       lines.push(
-        `if (${guard}!${options}.includes(${name})) return failed(${quote(`${name} must be one of: ${property.enum.join(', ')}`)});`,
+        `if (${guard}!${options}.includes(${name})) return failed(${quote(`${key} must be one of: ${property.enum.join(', ')}`)});`,
       );
     }
   }

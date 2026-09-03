@@ -49,7 +49,7 @@ describe.each(shipped)('the native snippet for $name', (adapter) => {
   it('validates its own input, because the browser will not', () => {
     for (const tool of adapter.tools) {
       for (const name of tool.inputSchema.required ?? []) {
-        expect(source).toContain(`const ${name} = input?.${name};`);
+        expect(source).toContain(`const ${name} = input?.["${name}"];`);
         expect(source).toContain(`return failed(${JSON.stringify(`${name} is required and must be a string`)})`);
       }
     }
@@ -111,5 +111,45 @@ describe('hostile input', () => {
     const source = nativeWebMcpSource(adapter);
     expect(parses(source)).toBe(true);
     expect(source).not.toContain('*/ eval(1)');
+  });
+});
+
+describe('property names that are not identifiers', () => {
+  const withParams = (properties: Record<string, { type: 'string'; description?: string }>, required?: string[]) => ({
+    id: 'x-site',
+    name: 'X',
+    version: '1.0.0',
+    origins: ['https://x.test'],
+    tools: [
+      {
+        name: 'do_it',
+        description: 'Does it.',
+        capability: 'WRITE' as const,
+        inputSchema: { type: 'object' as const, properties, ...(required ? { required } : {}) },
+        steps: [{ type: 'click' as const, selector: '#go' }],
+      },
+    ],
+  });
+
+  it('generates code that parses when a parameter is a reserved word', () => {
+    // `const default = input?.default` is not JavaScript, and this button's
+    // whole promise is that what comes out of it runs.
+    const source = nativeWebMcpSource(withParams({ default: { type: 'string' }, class: { type: 'string' } }, ['default']));
+    expect(() => parses(source)).not.toThrow();
+    expect(source).not.toMatch(/const default\b/);
+    expect(source).toContain('input?.["default"]');
+  });
+
+  it('handles names that cannot start an identifier, or repeat once cleaned', () => {
+    const source = nativeWebMcpSource(withParams({ '1name': { type: 'string' }, 'a-b': { type: 'string' }, a_b: { type: 'string' } }));
+    expect(() => parses(source)).not.toThrow();
+    // Two different keys must not collapse onto one local.
+    const locals = [...source.matchAll(/const (\w+) = input\?\./g)].map((match) => match[1]);
+    expect(new Set(locals).size).toBe(locals.length);
+  });
+
+  it('still names the property the caller knows in every message', () => {
+    const source = nativeWebMcpSource(withParams({ default: { type: 'string' } }, ['default']));
+    expect(source).toContain('default is required');
   });
 });
