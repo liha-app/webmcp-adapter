@@ -117,13 +117,14 @@ Toggle back on, reload, repeat step 4.
 
 ### The other two demo apps
 
-**Nimbus Supply** (5274): ask for *"search for lighting products"*, then
-*"add the Aurora Desk Lamp to my cart"*, then *"apply coupon SAVE10"*. Ask for
+**Nimbus Supply** (5274): ask for *"put the desk in walnut"*, then *"make it
+180 by 80"*, then *"add it to my bag"*, then *"apply coupon NIMBUS10"*. Ask for
 *"what's in my bag"* — `view_bag` navigates to `/bag` client-side and reads it
 back, without the tool call dying mid-navigation.
 
-Then ask to add *"lighting"* to the cart. Two products match, so the tool fails
-closed rather than picking one. The cart is unchanged.
+Then ask for a size the store does not sell, say *"make it 200 by 90"*. The
+`<select>` has no such option, so the tool fails closed and answers with the
+sizes there are. Nothing on the page changed.
 
 **Kite Project Manager** (5275): create a task, reassign it, change its status.
 

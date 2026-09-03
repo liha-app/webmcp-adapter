@@ -45,7 +45,7 @@ function serveWithHeaders(dir, port) {
 let failures = 0;
 const SITES = [
   ['demo-crm', 5273, ['/']],
-  ['demo-shop', 5274, ['/', '/cart']],
+  ['demo-shop', 5274, ['/', '/bag']],
   ['demo-project', 5275, ['/']],
   ['registry', 5280, ['/', '/create', '/adapters', '/adapters/demo-crm']],
 ];

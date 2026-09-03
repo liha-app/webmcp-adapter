@@ -1,82 +1,106 @@
 import { useEffect, useMemo, useState } from "react";
 import { ThemeControl } from "@liha/demo-ui/theme";
-import type { BagLine, Coupon, Option, Step, StepId } from "./types";
+import type { BagLine, Coupon, Option, Shot, Step, StepId } from "./types";
 
-const BASE = 1999;
+const BASE = 899;
+
+/** Four views of the one desk, the way a buy page shows a product. */
+const SHOTS: Shot[] = [
+  {
+    src: "/product/desk-1.webp",
+    alt: "The Nimbus Desk seen from the front left: an oak top on a slim black steel frame.",
+    caption: "Three-quarter view",
+  },
+  {
+    src: "/product/desk-2.webp",
+    alt: "The Nimbus Desk straight on, showing the frame and its cross-brace.",
+    caption: "Front",
+  },
+  {
+    src: "/product/desk-3.webp",
+    alt: "A close view of one corner, where the eased oak edge meets the black steel leg.",
+    caption: "Edge and leg",
+  },
+  {
+    src: "/product/desk-4.webp",
+    alt: "The Nimbus Desk in use, with a closed laptop and a ceramic cup on the top.",
+    caption: "In use",
+  },
+];
 
 const STEPS: Step[] = [
   {
-    id: "chip",
-    title: "Chip.",
-    lead: "Start with the engine.",
+    id: "top",
+    title: "Top.",
+    lead: "The part you touch.",
     options: [
       {
-        id: "n3",
-        label: "Nimbus 3",
-        blurb: "10-core CPU, 16-core GPU. Enough for most days.",
+        id: "oak",
+        label: "Solid oak",
+        blurb: "Warm, open grain, eased edge. Ages well.",
         extra: 0,
       },
       {
-        id: "n3-pro",
-        label: "Nimbus 3 Pro",
-        blurb: "14-core CPU, 24-core GPU. For long renders.",
-        extra: 600,
+        id: "walnut",
+        label: "Solid walnut",
+        blurb: "Darker, tighter grain. The same edge.",
+        extra: 260,
       },
       {
-        id: "n3-max",
-        label: "Nimbus 3 Max",
-        blurb: "18-core CPU, 40-core GPU. For the heaviest work.",
-        extra: 1400,
+        id: "charcoal",
+        label: "Charcoal laminate",
+        blurb: "Matte, fingerprint-resistant, hard-wearing.",
+        extra: -80,
       },
     ],
   },
   {
-    id: "memory",
-    title: "Memory.",
-    lead: "How much you keep open at once.",
+    id: "size",
+    title: "Size.",
+    lead: "How much room you need.",
     options: [
       {
-        id: "32gb",
-        label: "32GB",
-        blurb: "Unified memory. The comfortable default.",
+        id: "120",
+        label: "120 × 70 cm",
+        blurb: "A laptop, a lamp, a notebook.",
         extra: 0,
       },
       {
-        id: "64gb",
-        label: "64GB",
-        blurb: "For large projects and many of them.",
-        extra: 400,
+        id: "140",
+        label: "140 × 70 cm",
+        blurb: "A monitor and somewhere to write.",
+        extra: 120,
       },
       {
-        id: "128gb",
-        label: "128GB",
-        blurb: "For work that does not fit anywhere else.",
-        extra: 1000,
+        id: "180",
+        label: "180 × 80 cm",
+        blurb: "Two monitors, or one and a lot of paper.",
+        extra: 320,
       },
     ],
   },
   {
-    id: "storage",
-    title: "Storage.",
-    lead: "How much you keep.",
+    id: "base",
+    title: "Base.",
+    lead: "How it stands.",
     options: [
       {
-        id: "512gb",
-        label: "512GB SSD",
-        blurb: "Fast, and enough to start.",
+        id: "fixed",
+        label: "Fixed frame",
+        blurb: "Powder-coated steel, 73cm, cross-braced.",
         extra: 0,
       },
       {
-        id: "1tb",
-        label: "1TB SSD",
-        blurb: "Room for a year of footage.",
-        extra: 200,
+        id: "adjustable",
+        label: "Height-adjustable",
+        blurb: "Electric, 68–118cm, one motor per leg.",
+        extra: 420,
       },
       {
-        id: "2tb",
-        label: "2TB SSD",
-        blurb: "Room for the archive too.",
-        extra: 600,
+        id: "memory",
+        label: "Adjustable + memory",
+        blurb: "The same, with four saved heights.",
+        extra: 560,
       },
     ],
   },
@@ -113,18 +137,20 @@ function usePath(): [string, (next: string) => void] {
 export function App() {
   const [path, go] = usePath();
   const [chosen, setChosen] = useState<Record<StepId, string>>({
-    chip: "n3",
-    memory: "32gb",
-    storage: "512gb",
+    top: "oak",
+    size: "120",
+    base: "fixed",
   });
+  const [shot, setShot] = useState(0);
   const [bag, setBag] = useState<BagLine[]>([]);
   const [couponInput, setCouponInput] = useState("");
   const [coupon, setCoupon] = useState<Coupon | null>(null);
   const [couponStatus, setCouponStatus] = useState("");
-  /* The bag page has three states, and the last one is a receipt. Nothing in
-   * any of them asks for a card: the demo stops where a real store would start
-   * collecting payment, which is the line this project does not cross. */
+  /* The bag has two states, and the second is a review. Nothing in either asks
+   * for a card: the store stops where a real one would start collecting
+   * payment, which is the line this project does not cross. */
   const [stage, setStage] = useState<"bag" | "review">("bag");
+
   /*
    * Apple's buy page grows a fixed bar carrying the product and its running
    * price once you scroll past the hero — the price has to stay reachable while
@@ -140,19 +166,20 @@ export function App() {
 
   const picked = useMemo(
     () => ({
-      chip: optionOf("chip", chosen.chip),
-      memory: optionOf("memory", chosen.memory),
-      storage: optionOf("storage", chosen.storage),
+      top: optionOf("top", chosen.top),
+      size: optionOf("size", chosen.size),
+      base: optionOf("base", chosen.base),
     }),
     [chosen],
   );
   const configured =
-    BASE + picked.chip.extra + picked.memory.extra + picked.storage.extra;
+    BASE + picked.top.extra + picked.size.extra + picked.base.extra;
   const subtotal = bag.reduce((total, line) => total + line.price, 0);
   const total = coupon
     ? Math.round(subtotal * (1 - coupon.discount))
     : subtotal;
   const onBag = path.startsWith("/bag");
+  const current = SHOTS[shot] as Shot;
 
   function choose(step: StepId, optionId: string) {
     setChosen((prev) => ({ ...prev, [step]: optionId }));
@@ -163,9 +190,9 @@ export function App() {
       ...prev,
       {
         id: `line-${prev.length + 1}`,
-        chip: picked.chip,
-        memory: picked.memory,
-        storage: picked.storage,
+        top: picked.top,
+        size: picked.size,
+        base: picked.base,
         price: configured,
       },
     ]);
@@ -222,7 +249,7 @@ export function App() {
           aria-hidden={!scrolled}
         >
           <div className="pricebar__inner">
-            <span className="pricebar__name">Nimbus Studio</span>
+            <span className="pricebar__name">Nimbus Desk</span>
             <span className="pricebar__price">${configured}</span>
           </div>
         </div>
@@ -231,7 +258,7 @@ export function App() {
       <main className="app">
         <div className="pagehead">
           <p className="eyebrow">{onBag ? "Your bag" : "New"}</p>
-          <h1>{onBag ? "Review your bag." : "Build your Nimbus Studio."}</h1>
+          <h1>{onBag ? "Review your bag." : "Build your Nimbus Desk."}</h1>
           <p className="app__subtitle">
             An ordinary storefront. Nothing in here knows what an agent is.
           </p>
@@ -239,32 +266,70 @@ export function App() {
 
         {!onBag && (
           <section className="buy" data-testid="configure-panel">
+            {/*
+             * The gallery sticks while the options scroll past it, which is
+             * how the buy page is built: a wide sticky column on the left, a
+             * tall static one on the right.
+             */}
             <div className="gallerycol">
-              {/*
-               * The gallery, which is most of what a buy page is: the thing
-               * you are configuring, large, on its own ground. Two renders
-               * rather than one, because the product is photographed against
-               * the page and the page has two.
-               */}
-              <figure className="gallery">
-                <img
-                  className="gallery__light"
-                  src="/product/studio-light.webp"
-                  width={1100}
-                  height={825}
-                  alt="The Nimbus Studio: a compact aluminium desktop computer, seen from above and to one side."
-                />
-                <img
-                  className="gallery__dark"
-                  src="/product/studio-dark.webp"
-                  width={1100}
-                  height={825}
-                  alt=""
-                  aria-hidden="true"
-                />
+              <figure className="gallery" data-testid="gallery">
+                <div className="gallery__frame">
+                  <img
+                    key={current.src}
+                    className="gallery__image"
+                    src={current.src}
+                    width={1000}
+                    height={681}
+                    alt={current.alt}
+                    data-testid="gallery-image"
+                  />
+                  <button
+                    type="button"
+                    className="gallery__arrow gallery__arrow--prev"
+                    data-action="gallery-prev"
+                    aria-label="Previous image"
+                    onClick={() =>
+                      setShot(
+                        (index) => (index - 1 + SHOTS.length) % SHOTS.length,
+                      )
+                    }
+                  >
+                    ‹
+                  </button>
+                  <button
+                    type="button"
+                    className="gallery__arrow gallery__arrow--next"
+                    data-action="gallery-next"
+                    aria-label="Next image"
+                    onClick={() =>
+                      setShot((index) => (index + 1) % SHOTS.length)
+                    }
+                  >
+                    ›
+                  </button>
+                </div>
+                <div
+                  className="gallery__dots"
+                  role="tablist"
+                  aria-label="Product images"
+                >
+                  {SHOTS.map((candidate, index) => (
+                    <button
+                      key={candidate.src}
+                      type="button"
+                      role="tab"
+                      className="gallery__dot"
+                      data-action="gallery-select"
+                      aria-selected={index === shot}
+                      aria-label={candidate.caption}
+                      onClick={() => setShot(index)}
+                    />
+                  ))}
+                </div>
                 <figcaption>
-                  Nimbus Studio ·{" "}
-                  <span data-field="configured-chip">{picked.chip.label}</span>
+                  <span data-testid="gallery-caption">{current.caption}</span> ·
+                  Nimbus Desk in{" "}
+                  <span data-field="configured-top">{picked.top.label}</span>
                 </figcaption>
               </figure>
             </div>
@@ -294,7 +359,9 @@ export function App() {
                           <span className="list__price" data-field="price">
                             {option.extra === 0
                               ? "Included"
-                              : `+$${option.extra}`}
+                              : option.extra > 0
+                                ? `+$${option.extra}`
+                                : `−$${Math.abs(option.extra)}`}
                           </span>
                           <button
                             type="button"
@@ -312,9 +379,10 @@ export function App() {
                 </section>
               ))}
 
+              {/* The summary is the last block in the column, not a panel. */}
               <aside className="summary" data-testid="config-summary">
                 <h2 className="step__head">
-                  Your Nimbus Studio. <span>Check it over.</span>
+                  Your Nimbus Desk. <span>Check it over.</span>
                 </h2>
                 <p className="summary__price" data-testid="config-total">
                   ${configured}
@@ -357,24 +425,6 @@ export function App() {
 
         {onBag && (
           <section className="buy" data-testid="bag-panel">
-            <aside className="stage stage--summary">
-              <p className="stage__kicker">Order summary</p>
-              <p className="stage__total" data-testid="bag-total">
-                Total ${total}
-              </p>
-              <p className="stage__line list__muted">Subtotal ${subtotal}</p>
-              {stage === "bag" && bag.length > 0 && (
-                <button
-                  type="button"
-                  className="btn btn--primary btn--wide"
-                  data-action="review-order"
-                  onClick={() => setStage("review")}
-                >
-                  Review order
-                </button>
-              )}
-            </aside>
-
             <div className="options">
               <h2 className="step__head">
                 Your bag.{" "}
@@ -392,27 +442,18 @@ export function App() {
                     data-bag-item-id={line.id}
                   >
                     <img
-                      className="thumb thumb--light"
-                      src="/product/studio-thumb.webp"
-                      width={180}
-                      height={180}
-                      alt=""
-                      aria-hidden="true"
-                    />
-                    <img
-                      className="thumb thumb--dark"
-                      src="/product/studio-thumb-dark.webp"
-                      width={180}
-                      height={180}
+                      className="thumb"
+                      src="/product/desk-thumb.webp"
+                      width={200}
+                      height={136}
                       alt=""
                       aria-hidden="true"
                     />
                     <span className="list__name" data-field="name">
-                      Nimbus Studio
+                      Nimbus Desk
                     </span>
                     <span className="list__blurb" data-field="spec">
-                      {line.chip.label} · {line.memory.label} ·{" "}
-                      {line.storage.label}
+                      {line.top.label} · {line.size.label} · {line.base.label}
                     </span>
                     <span className="list__price" data-field="price">
                       ${line.price}
@@ -460,12 +501,6 @@ export function App() {
                   <h2 className="step__head">
                     Review order. <span>Confirm what you are ordering.</span>
                   </h2>
-                  {/*
-                   * A review, and then a receipt. No card, no address, no
-                   * account — the demo stops exactly where a real store would
-                   * begin collecting them, and the runtime refuses those
-                   * fields anyway.
-                   */}
                   <p className="review__line">
                     {bag.length} item(s) ·{" "}
                     <strong data-testid="review-total">${total}</strong>
@@ -478,6 +513,24 @@ export function App() {
                 </section>
               )}
             </div>
+
+            <aside className="stage stage--summary">
+              <p className="stage__kicker">Order summary</p>
+              <p className="stage__total" data-testid="bag-total">
+                Total ${total}
+              </p>
+              <p className="stage__line list__muted">Subtotal ${subtotal}</p>
+              {stage === "bag" && bag.length > 0 && (
+                <button
+                  type="button"
+                  className="btn btn--primary btn--wide"
+                  data-action="review-order"
+                  onClick={() => setStage("review")}
+                >
+                  Review order
+                </button>
+              )}
+            </aside>
           </section>
         )}
       </main>

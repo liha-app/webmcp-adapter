@@ -80,7 +80,23 @@ async function invoke(page, watch, toolName, input = {}) {
   );
   if (!responded) throw new Error(`${toolName} never responded`);
   const last = [...watch.events].reverse().find((event) => event.method === 'WebMCP.toolResponded');
-  return last?.params?.output ?? null;
+  return toolOutput(last?.params?.output);
+}
+
+/*
+ * Chrome hands this event's `output` back sometimes as the result object and
+ * sometimes as that object already serialised — `read_configuration` arrives
+ * as a string where `view_configure` arrives as an object, with nothing on our
+ * side choosing between them. Normalise here, or a working tool reads as a
+ * blank answer.
+ */
+function toolOutput(output) {
+  if (typeof output !== 'string') return output ?? null;
+  try {
+    return JSON.parse(output);
+  } catch {
+    return { content: [{ type: 'text', text: output }] };
+  }
 }
 
 function outputText(output) {
@@ -201,7 +217,7 @@ async function main() {
     group('Demo Shop adapter (configure, bag, coupon, same-origin navigation)');
     watch.tools.clear();
     await page.goto('http://localhost:5274/');
-    const shopTools = ['view_configure', 'read_configuration', 'choose_chip', 'choose_memory', 'choose_storage', 'add_to_bag', 'view_bag', 'apply_coupon', 'review_order'];
+    const shopTools = ['view_configure', 'read_configuration', 'next_photo', 'choose_top', 'choose_size', 'choose_base', 'add_to_bag', 'view_bag', 'apply_coupon', 'review_order'];
     must(
       await waitFor(async () => shopTools.every((name) => watch.tools.has(name))),
       `all ${shopTools.length} shop tools are announced to the agent`,
@@ -209,7 +225,7 @@ async function main() {
     );
 
     const before = await invoke(page, watch, 'read_configuration', {});
-    check(outputText(before).includes('1999'), 'read_configuration reports the base machine', outputText(before));
+    check(outputText(before).includes('899'), 'read_configuration reports the base desk', outputText(before));
 
     /*
      * The configurator's choices are <select>s, so the argument reaches the
@@ -218,14 +234,20 @@ async function main() {
      * argument — and it is why a wrong value comes back as the store's own
      * list of what it does offer.
      */
-    const chip = await invoke(page, watch, 'choose_chip', { chip: 'Nimbus 3 Max' });
-    check(outputText(chip).includes('3399'), 'choose_chip set the chip and the price followed', outputText(chip));
-    const wrong = await invoke(page, watch, 'choose_memory', { memory: '512GB' });
+    const top = await invoke(page, watch, 'choose_top', { top: 'Solid walnut' });
+    check(outputText(top).includes('1159'), 'choose_top set the top and the price followed', outputText(top));
+    const wrong = await invoke(page, watch, 'choose_size', { size: '200 x 90 cm' });
+    const sizeAfter = await page.eval(`document.querySelector('[data-testid="config-size"]').value`);
     check(
-      (outputText(wrong).includes('32GB') || wrong?.isError === true) && !outputText(wrong).includes('512GB SSD'),
+      wrong?.isError === true && outputText(wrong).includes('120') && sizeAfter === '120',
       'an option the store does not offer is refused, with the ones it does',
-      outputText(wrong),
+      `${outputText(wrong)} | size is still ${sizeAfter}`,
     );
+
+    // The gallery is one of the store's own controls, so an agent pages it the
+    // same way it sets a size.
+    const photo = await invoke(page, watch, 'next_photo', {});
+    check(outputText(photo).includes('Front'), 'next_photo paged the gallery and named the view', outputText(photo));
 
     await invoke(page, watch, 'add_to_bag', {});
     check(
@@ -242,7 +264,7 @@ async function main() {
     // The flow ends at the review. There is no tool past it, and no field on
     // the page that could hold a card.
     const review = await invoke(page, watch, 'review_order', {});
-    check(outputText(review).includes('3059'), 'review_order reports what would be ordered', outputText(review));
+    check(outputText(review).includes('1043'), 'review_order reports what would be ordered', outputText(review));
     check(
       (await page.eval(`Boolean(document.querySelector('[data-action="place-order"], input[type="password"], [autocomplete^="cc-"]'))`)) === false,
       'and the store asks for nothing to pay with',
@@ -399,21 +421,21 @@ async function main() {
       id: 'agent-authored-shop',
       name: 'Nimbus configurator',
       version: '1.0.0',
-      description: 'Set the memory on the Nimbus configurator and read the price back.',
+      description: 'Set the base on the Nimbus configurator and read the price back.',
       origins: ['http://localhost:5274'],
       tools: [
         {
-          name: 'pick_memory',
-          description: 'Choose how much memory the machine is configured with, and report the new price.',
+          name: 'pick_base',
+          description: 'Choose which base the desk stands on, and report the new price.',
           capability: 'WRITE',
           inputSchema: {
             type: 'object',
-            properties: { memory: { type: 'string', description: 'How much memory to fit' } },
-            required: ['memory'],
+            properties: { base: { type: 'string', description: 'Which base to fit' } },
+            required: ['base'],
           },
           steps: [
-            { type: 'waitFor', selector: "[data-testid='config-memory']" },
-            { type: 'select', selector: "[data-testid='config-memory']", value: '{{memory}}' },
+            { type: 'waitFor', selector: "[data-testid='config-base']" },
+            { type: 'select', selector: "[data-testid='config-base']", value: '{{base}}' },
             { type: 'readText', selector: "[data-testid='config-total']", as: 'price' },
           ],
         },
@@ -453,11 +475,11 @@ async function main() {
     watch.tools.clear();
     await shopTab.close?.();
     await page.goto('http://localhost:5274/');
-    const authoredTool = await waitFor(async () => watch.tools.get('pick_memory'), 20000);
+    const authoredTool = await waitFor(async () => watch.tools.get('pick_base'), 20000);
     must(Boolean(authoredTool), 'reloading the site registers the tool the agent wrote, with no recording involved');
-    const answer = await invoke(page, watch, 'pick_memory', { memory: '128GB' });
+    const answer = await invoke(page, watch, 'pick_base', { base: 'Adjustable + memory' });
     check(
-      outputText(answer).includes('2999'),
+      outputText(answer).includes('1459'),
       'and calling it drives the site — the store recomputed the price',
       outputText(answer).slice(0, 160),
     );

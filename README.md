@@ -218,13 +218,14 @@ draws itself from whichever app's tokens it lands in.
 
 **Acme CRM**, **Nimbus Supply** and **Kite Project Manager** are ordinary React
 apps. They exist to prove the runtime is general rather than a hack aimed at one
-page — 19 tools across three apps, all from adapters.
+page — 20 tools across three apps, all from adapters.
 
-Nimbus Supply is a configurator: choose a chip, memory and storage, watch the
-price move, bag it, apply a coupon, review the order. Its product renders are
-generated and original — no logo, no text, nobody's actual product — and ship in
-light and dark at 25KB each. The flow stops at the review, which is where a real
-store would start asking for payment and this one never does.
+Nimbus Supply is a configurator: choose a top, a size and a base, page through
+the product photos, watch the price move, bag it, apply a coupon, review the
+order. Its four product renders are generated and original — a desk nobody
+sells, no logo, no text — and ship as transparent WebP at around 35KB each. The
+flow stops at the review, which is where a real store would start asking for
+payment and this one never does.
 
 ### The Adapter Registry
 

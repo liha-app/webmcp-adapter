@@ -1,4 +1,4 @@
-export type StepId = 'chip' | 'memory' | 'storage';
+export type StepId = 'top' | 'size' | 'base';
 
 export interface Option {
   id: string;
@@ -11,7 +11,7 @@ export interface Option {
 
 export interface Step {
   id: StepId;
-  /** "Chip." — Apple's statement heading, the word before the period. */
+  /** "Top." — Apple's statement heading: the word before the period. */
   title: string;
   lead: string;
   options: Option[];
@@ -19,9 +19,9 @@ export interface Step {
 
 export interface BagLine {
   id: string;
-  chip: Option;
-  memory: Option;
-  storage: Option;
+  top: Option;
+  size: Option;
+  base: Option;
   price: number;
 }
 
@@ -29,4 +29,10 @@ export interface Coupon {
   code: string;
   label: string;
   discount: number;
+}
+
+export interface Shot {
+  src: string;
+  alt: string;
+  caption: string;
 }

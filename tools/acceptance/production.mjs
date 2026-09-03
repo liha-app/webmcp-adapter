@@ -86,7 +86,23 @@ async function invoke(page, watch, toolName, input = {}) {
     30000,
   );
   const last = [...watch.events].reverse().find((event) => event.method === 'WebMCP.toolResponded');
-  return (last?.params?.output?.content ?? []).map((part) => part.text ?? '').join('\n');
+  return (toolOutput(last?.params?.output)?.content ?? []).map((part) => part.text ?? '').join('\n');
+}
+
+/*
+ * Chrome hands this event's `output` back sometimes as the result object and
+ * sometimes as that object already serialised — `read_configuration` arrives
+ * as a string where `view_configure` arrives as an object, with nothing on our
+ * side choosing between them. Normalise here, or a working tool reads as a
+ * blank answer.
+ */
+function toolOutput(output) {
+  if (typeof output !== 'string') return output ?? null;
+  try {
+    return JSON.parse(output);
+  } catch {
+    return { content: [{ type: 'text', text: output }] };
+  }
 }
 
 async function main() {

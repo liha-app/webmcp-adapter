@@ -1,8 +1,8 @@
 {
   "id": "demo-shop",
   "name": "Nimbus Supply",
-  "version": "2.0.0",
-  "description": "Configure a Nimbus Studio, put it in the bag, apply a coupon and review the order \u2014 by driving the store's own controls. The site itself implements no WebMCP.",
+  "version": "2.1.0",
+  "description": "Configure a Nimbus Desk, page through its photos, put it in the bag, apply a coupon and review the order — by driving the store's own controls. The site itself implements no WebMCP.",
   "category": "commerce",
   "author": "Liha WebMCP Adapter",
   "verifiedAt": "2026-09-03",
@@ -15,7 +15,7 @@
     {
       "name": "view_configure",
       "title": "Open the configurator",
-      "description": "Open the page where the machine is configured, and report what is currently selected.",
+      "description": "Open the page where the desk is configured, and report what is currently selected.",
       "capability": "INTERACT",
       "inputSchema": {
         "type": "object",
@@ -40,7 +40,7 @@
     {
       "name": "read_configuration",
       "title": "Read the configuration",
-      "description": "Return the Nimbus Studio currently configured \u2014 chip, memory, storage \u2014 and what it costs. Reads the configure page as it stands; open it first with view_configure.",
+      "description": "Return the Nimbus Desk currently configured — top, size, base — and what it costs. Reads the configure page as it stands; open it first with view_configure.",
       "capability": "READ",
       "inputSchema": {
         "type": "object",
@@ -53,66 +53,18 @@
         },
         {
           "type": "readText",
-          "selector": "[data-testid='config-chip']",
-          "as": "chip"
+          "selector": "[data-testid='config-top']",
+          "as": "top"
         },
         {
           "type": "readText",
-          "selector": "[data-testid='config-memory']",
-          "as": "memory"
+          "selector": "[data-testid='config-size']",
+          "as": "size"
         },
         {
           "type": "readText",
-          "selector": "[data-testid='config-storage']",
-          "as": "storage"
-        },
-        {
-          "type": "readText",
-          "selector": "[data-testid='config-total']",
-          "as": "price"
-        }
-      ]
-    },
-    {
-      "name": "choose_chip",
-      "title": "Choose the chip",
-      "description": "Pick which chip the machine is built around. The price updates as soon as it is set.",
-      "capability": "WRITE",
-      "inputSchema": {
-        "type": "object",
-        "properties": {
-          "chip": {
-            "type": "string",
-            "description": "Which chip to fit",
-            "enum": [
-              "Nimbus 3",
-              "Nimbus 3 Pro",
-              "Nimbus 3 Max"
-            ]
-          }
-        },
-        "required": [
-          "chip"
-        ]
-      },
-      "steps": [
-        {
-          "type": "navigate",
-          "path": "/"
-        },
-        {
-          "type": "waitFor",
-          "selector": "[data-testid='config-chip']"
-        },
-        {
-          "type": "select",
-          "selector": "[data-testid='config-chip']",
-          "value": "{{chip}}"
-        },
-        {
-          "type": "readText",
-          "selector": "[data-testid='config-chip']",
-          "as": "chip"
+          "selector": "[data-testid='config-base']",
+          "as": "base"
         },
         {
           "type": "readText",
@@ -122,25 +74,58 @@
       ]
     },
     {
-      "name": "choose_memory",
-      "title": "Choose the memory",
-      "description": "Pick how much unified memory the machine is built with.",
+      "name": "next_photo",
+      "title": "Show the next photo",
+      "description": "Page the product gallery on to the next photo and report which view is now showing.",
+      "capability": "INTERACT",
+      "inputSchema": {
+        "type": "object",
+        "properties": {}
+      },
+      "steps": [
+        {
+          "type": "navigate",
+          "path": "/"
+        },
+        {
+          "type": "waitFor",
+          "selector": "[data-action='gallery-next']"
+        },
+        {
+          "type": "click",
+          "selector": "[data-action='gallery-next']"
+        },
+        {
+          "type": "waitFor",
+          "selector": "[data-testid='gallery-caption']"
+        },
+        {
+          "type": "readText",
+          "selector": "[data-testid='gallery-caption']",
+          "as": "view"
+        }
+      ]
+    },
+    {
+      "name": "choose_top",
+      "title": "Choose the top",
+      "description": "Pick the material the desk top is made from. The price updates as soon as it is set.",
       "capability": "WRITE",
       "inputSchema": {
         "type": "object",
         "properties": {
-          "memory": {
+          "top": {
             "type": "string",
-            "description": "How much memory to fit",
+            "description": "Which top to fit",
             "enum": [
-              "32GB",
-              "64GB",
-              "128GB"
+              "Solid oak",
+              "Solid walnut",
+              "Charcoal laminate"
             ]
           }
         },
         "required": [
-          "memory"
+          "top"
         ]
       },
       "steps": [
@@ -150,17 +135,17 @@
         },
         {
           "type": "waitFor",
-          "selector": "[data-testid='config-memory']"
+          "selector": "[data-testid='config-top']"
         },
         {
           "type": "select",
-          "selector": "[data-testid='config-memory']",
-          "value": "{{memory}}"
+          "selector": "[data-testid='config-top']",
+          "value": "{{top}}"
         },
         {
           "type": "readText",
-          "selector": "[data-testid='config-memory']",
-          "as": "memory"
+          "selector": "[data-testid='config-top']",
+          "as": "top"
         },
         {
           "type": "readText",
@@ -170,25 +155,25 @@
       ]
     },
     {
-      "name": "choose_storage",
-      "title": "Choose the storage",
-      "description": "Pick how much storage the machine is built with.",
+      "name": "choose_size",
+      "title": "Choose the size",
+      "description": "Pick how big the desk top is.",
       "capability": "WRITE",
       "inputSchema": {
         "type": "object",
         "properties": {
-          "storage": {
+          "size": {
             "type": "string",
-            "description": "How much storage to fit",
+            "description": "Which size to fit",
             "enum": [
-              "512GB SSD",
-              "1TB SSD",
-              "2TB SSD"
+              "120 × 70 cm",
+              "140 × 70 cm",
+              "180 × 80 cm"
             ]
           }
         },
         "required": [
-          "storage"
+          "size"
         ]
       },
       "steps": [
@@ -198,17 +183,65 @@
         },
         {
           "type": "waitFor",
-          "selector": "[data-testid='config-storage']"
+          "selector": "[data-testid='config-size']"
         },
         {
           "type": "select",
-          "selector": "[data-testid='config-storage']",
-          "value": "{{storage}}"
+          "selector": "[data-testid='config-size']",
+          "value": "{{size}}"
         },
         {
           "type": "readText",
-          "selector": "[data-testid='config-storage']",
-          "as": "storage"
+          "selector": "[data-testid='config-size']",
+          "as": "size"
+        },
+        {
+          "type": "readText",
+          "selector": "[data-testid='config-total']",
+          "as": "price"
+        }
+      ]
+    },
+    {
+      "name": "choose_base",
+      "title": "Choose the base",
+      "description": "Pick the frame the desk stands on.",
+      "capability": "WRITE",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "base": {
+            "type": "string",
+            "description": "Which base to fit",
+            "enum": [
+              "Fixed frame",
+              "Height-adjustable",
+              "Adjustable + memory"
+            ]
+          }
+        },
+        "required": [
+          "base"
+        ]
+      },
+      "steps": [
+        {
+          "type": "navigate",
+          "path": "/"
+        },
+        {
+          "type": "waitFor",
+          "selector": "[data-testid='config-base']"
+        },
+        {
+          "type": "select",
+          "selector": "[data-testid='config-base']",
+          "value": "{{base}}"
+        },
+        {
+          "type": "readText",
+          "selector": "[data-testid='config-base']",
+          "as": "base"
         },
         {
           "type": "readText",
@@ -220,7 +253,7 @@
     {
       "name": "add_to_bag",
       "title": "Add the configuration to the bag",
-      "description": "Put the machine as currently configured into the bag, then report what the bag holds.",
+      "description": "Put the desk as currently configured into the bag, then report what the bag holds.",
       "capability": "WRITE",
       "inputSchema": {
         "type": "object",

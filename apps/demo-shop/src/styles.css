@@ -58,20 +58,33 @@ h1 { margin: 0; font-size: 48px; line-height: 1.146; font-weight: 600; }
  * summary is not a card: no background, no radius, no padding. The running
  * price lives in a bar that appears once you scroll past the hero.
  */
-.gallerycol { position: sticky; top: 76px; }
+/* 96 = the price bar's 44px offset plus its 52px height. */
+.gallerycol { position: sticky; top: 96px; }
 
-.gallery { margin: 0; background: var(--stage); border-radius: 18px; padding: 24px 24px 18px; text-align: center; }
-.gallery img { display: block; width: 100%; height: auto; border-radius: 10px; }
-/* Qualified by `.gallery img`, which is what sets display in the first place —
- * a bare class here loses to it on specificity and both renders show. */
-.gallery img.gallery__dark { display: none; }
-.gallery figcaption { margin-top: 14px; font-size: 14px; color: var(--muted); }
-:root[data-theme='dark'] .gallery img.gallery__light { display: none; }
-:root[data-theme='dark'] .gallery img.gallery__dark { display: block; }
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme='light']) .gallery img.gallery__light { display: none; }
-  :root:not([data-theme='light']) .gallery img.gallery__dark { display: block; }
+.gallery { margin: 0; background: var(--stage); border-radius: 18px; padding: 20px 20px 16px; text-align: center; }
+.gallery__frame { position: relative; }
+.gallery__image { display: block; width: 100%; height: auto; border-radius: 10px; animation: shot 280ms ease; }
+@keyframes shot { from { opacity: 0; } to { opacity: 1; } }
+/* Arrows over the image, dots under it: the buy page's inline gallery. */
+.gallery__arrow {
+  position: absolute; top: 50%; transform: translateY(-50%);
+  width: 36px; height: 36px; padding: 0; border: 0; border-radius: 50%;
+  display: grid; place-items: center; cursor: pointer;
+  font-size: 22px; line-height: 1; color: var(--ink);
+  background: light-dark(rgba(255,255,255,.72), rgba(72,72,76,.72));
+  backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+  transition: background 160ms ease;
 }
+.gallery__arrow:hover { background: light-dark(#ffffff, #55555a); }
+.gallery__arrow--prev { left: 4px; }
+.gallery__arrow--next { right: 4px; }
+.gallery__dots { display: flex; justify-content: center; gap: 8px; margin-top: 14px; }
+.gallery__dot {
+  width: 8px; height: 8px; padding: 0; border: 0; border-radius: 50%; cursor: pointer;
+  background: light-dark(#d2d2d7, #55555a); transition: background 160ms ease;
+}
+.gallery__dot[aria-selected='true'] { background: light-dark(#86868b, #a1a1a6); }
+.gallery figcaption { margin-top: 12px; font-size: 14px; color: var(--muted); }
 
 .pricebar {
   position: sticky; top: 44px; z-index: 15;
@@ -93,19 +106,7 @@ h1 { margin: 0; font-size: 48px; line-height: 1.146; font-weight: 600; }
 .summary { display: flex; flex-direction: column; gap: 14px; padding-top: 8px; }
 .summary__price { margin: 0; font-size: 32px; line-height: 1.125; font-weight: 600; font-variant-numeric: tabular-nums; }
 
-.thumb { width: 44px; height: 44px; border-radius: 8px; background: var(--stage); }
-.list__row .thumb--dark { display: none; }
-:root[data-theme='dark'] .list__row .thumb--light { display: none; }
-:root[data-theme='dark'] .list__row .thumb--dark { display: block; }
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme='light']) .list__row .thumb--light { display: none; }
-  :root:not([data-theme='light']) .list__row .thumb--dark { display: block; }
-}
-.list__row--withthumb { grid-template-columns: 44px 1fr auto; column-gap: 14px; align-items: center; }
-.list__row--withthumb .thumb { grid-row: 1 / span 2; grid-column: 1; }
-.list__row--withthumb .list__name { grid-column: 2; }
-.list__row--withthumb [data-field='spec'] { grid-column: 2; }
-.list__row--withthumb [data-field='price'] { grid-column: 3; grid-row: 1 / span 2; align-self: center; }
+.thumb { width: 64px; height: auto; border-radius: 8px; background: var(--stage); }
 
 /* Only the bag uses a panel: it is a summary of an order, not a step. */
 .stage {
@@ -146,6 +147,14 @@ h1 { margin: 0; font-size: 48px; line-height: 1.146; font-weight: 600; }
 }
 .btn--small { grid-column: 1 / -1; justify-self: start; margin-top: 12px; font-size: 13px; padding: 6px 13px; }
 .list__row--on .btn--small { background: transparent; border-color: var(--edge); color: var(--muted); }
+
+/* The bag's row, which carries a thumbnail. It has to sit after `.list__row`:
+ * same specificity, so the later rule is the one the grid actually uses. */
+.list__row--withthumb { grid-template-columns: 64px 1fr auto; column-gap: 14px; align-items: center; }
+.list__row--withthumb .thumb { grid-row: 1 / span 2; grid-column: 1; }
+.list__row--withthumb .list__name { grid-column: 2; }
+.list__row--withthumb [data-field='spec'] { grid-column: 2; }
+.list__row--withthumb [data-field='price'] { grid-column: 3; grid-row: 1 / span 2; align-self: center; }
 
 .empty { margin: 0; padding: 40px 15px; text-align: center; color: var(--muted); font-size: 17px; }
 

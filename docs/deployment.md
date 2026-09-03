@@ -63,7 +63,7 @@ does not, and the tools will silently not register there.
 | Nimbus Supply | 5274 | `demo-shop.liha.review` | `pnpm --filter @liha/demo-shop build` |
 | Kite Project Manager | 5275 | `demo-project.liha.review` | `pnpm --filter @liha/demo-project build` |
 
-Nimbus Supply has a `/cart` route, so it needs the same SPA fallback as the
+Nimbus Supply has a `/bag` route, so it needs the same SPA fallback as the
 portal. The other two are single-route but the fallback does no harm.
 
 `pnpm demo` serves all four locally from their production builds.

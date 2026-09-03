@@ -272,26 +272,25 @@ export const REGISTRY_TOOLS: RegistryTool[] = [
       name: 'install_adapter',
       example: {
         adapter: JSON.stringify({
-          id: 'nimbus-search',
-          name: 'Nimbus Supply search',
+          id: 'nimbus-base',
+          name: 'Nimbus Supply base',
           version: '1.0.0',
-          description: 'Search the Nimbus Supply demo catalogue by keyword.',
+          description: 'Set the base on the Nimbus Supply desk configurator.',
           origins: ['https://demo-shop.liha.review'],
           tools: [
             {
-              name: 'find_products',
-              description: 'Search the catalogue by keyword and return the matching product names.',
-              capability: 'READ',
+              name: 'set_base',
+              description: 'Choose which base the desk stands on, and report the price that results.',
+              capability: 'WRITE',
               inputSchema: {
                 type: 'object',
-                properties: { keyword: { type: 'string', description: 'Search text' } },
-                required: ['keyword'],
+                properties: { base: { type: 'string', description: 'Which base to fit' } },
+                required: ['base'],
               },
               steps: [
-                { type: 'click', selector: "[data-action='view-products']" },
-                { type: 'fill', selector: "[data-testid='product-search']", value: '{{keyword}}' },
-                { type: 'waitFor', selector: "[data-testid='product-list']" },
-                { type: 'readList', selector: "[data-testid='product-list'] [data-field='name']", as: 'products' },
+                { type: 'waitFor', selector: "[data-testid='config-base']" },
+                { type: 'select', selector: "[data-testid='config-base']", value: '{{base}}' },
+                { type: 'readText', selector: "[data-testid='config-total']", as: 'price' },
               ],
             },
           ],
