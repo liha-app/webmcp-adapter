@@ -5,6 +5,9 @@ import {
   type AdapterDefinition,
   type Capability,
 } from '@liha/adapter-schema';
+import { ADAPTER_REGISTRY_URL } from './links';
+
+export type AdapterStatus = 'official' | 'community';
 
 export interface CatalogEntry {
   adapter: AdapterDefinition;
@@ -12,8 +15,11 @@ export interface CatalogEntry {
   maxCapability: Capability;
   capabilities: Capability[];
   toolCount: number;
+  status: AdapterStatus;
+  verified: boolean;
   /** Where a reader can audit the definition themselves. */
   sourcePath: string;
+  sourceUrl: string;
 }
 
 export const CATALOG: CatalogEntry[] = OFFICIAL_ADAPTERS.map((adapter) => {
@@ -23,7 +29,10 @@ export const CATALOG: CatalogEntry[] = OFFICIAL_ADAPTERS.map((adapter) => {
     capabilities,
     maxCapability: highestCapability(capabilities),
     toolCount: adapter.tools.length,
+    status: 'official',
+    verified: Boolean(adapter.verifiedAt),
     sourcePath: `adapters/${adapter.id}.json`,
+    sourceUrl: `${ADAPTER_REGISTRY_URL}/blob/main/adapters/${adapter.id}.json`,
   };
 });
 

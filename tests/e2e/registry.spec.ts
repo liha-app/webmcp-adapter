@@ -200,6 +200,11 @@ test.describe('Appearance and language', () => {
     await expect(page.getByTestId('category-filter')).toContainText('仕事効率化');
     await expect(page.getByTestId('adapter-list')).toContainText('Acme CRMの実際の画面を操作して');
     await expect(page.getByTestId('adapter-list')).not.toContainText('Search, create and update customers');
+    await expect(page.getByRole('heading', { name: ja['store.publishTitle'] })).toBeVisible();
+    await expect(page.getByRole('link', { name: ja['store.publishCta'] })).toHaveAttribute(
+      'href',
+      'https://github.com/liha-app/adapter-registry/blob/main/CONTRIBUTING.md',
+    );
 
     await page.getByTestId('adapter-search').fill('顧客');
     await expect(page.getByTestId('adapter-list').locator('li')).toHaveCount(1);
@@ -210,6 +215,8 @@ test.describe('Appearance and language', () => {
     await expect(page.getByRole('heading', { level: 1 })).toHaveText('Acme CRM');
     await expect(page.locator('.crumbs')).toContainText('顧客管理');
     await expect(page.locator('.product__sub')).toContainText('Acme CRMの実際の画面を操作して');
+    await expect(page.locator('.product__badges')).toContainText('Official');
+    await expect(page.locator('.product__badges')).toContainText('Verified');
     await expect(page.locator('[data-tool-name="search_customers"]')).toContainText(
       '名前またはメールアドレスで顧客一覧を検索し',
     );
@@ -282,6 +289,8 @@ test.describe('Adapter Registry', () => {
     await expect(page.locator('.featurecard')).toContainText('3 adapters');
     await expect(page.locator('.featurecard')).toHaveAttribute('href', '/#how');
     await expect(page.locator('[data-testid="adapter-list"] .appicon svg')).toHaveCount(3);
+    await expect(page.getByTestId('adapter-list').locator('.chip--official')).toHaveCount(3);
+    await expect(page.getByTestId('adapter-list').locator('.chip--verified')).toHaveCount(3);
     // The demo shelf links straight at the running demo apps.
     await expect(page.getByRole('link', { name: 'Open' }).first()).toHaveAttribute('href', /5273|crm\./);
     await expect(page.getByRole('link', { name: /What you need first/ })).toHaveAttribute('href', '/create');
@@ -332,6 +341,10 @@ test.describe('Adapter Registry', () => {
     await expect(page.getByText('https://demo-project.liha.review')).toBeVisible();
     await expect(page.locator('[data-tool-name="delete_task"]')).toContainText('DESTRUCTIVE');
     await expect(page.getByText(/destructive tool/i)).toBeVisible();
+    await expect(page.getByRole('link', { name: 'adapters/demo-project.json' })).toHaveAttribute(
+      'href',
+      'https://github.com/liha-app/adapter-registry/blob/main/adapters/demo-project.json',
+    );
 
     await page.getByRole('button', { name: 'Show full definition' }).click();
     const source = page.getByTestId('adapter-source');

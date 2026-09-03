@@ -81,6 +81,12 @@ export function AdapterDetail() {
             <p className="product__sub" data-field="description">
               {adapterDescription(adapter, locale)}
             </p>
+            <p className="product__badges">
+              <span className={`chip chip--${entry.status}`}>
+                {t(`store.badge${entry.status === 'official' ? 'Official' : 'Community'}`)}
+              </span>
+              {entry.verified && <span className="chip chip--verified">{t('store.badgeVerified')}</span>}
+            </p>
             <div className="product__actions">
               {extension.data === false ? (
                 <a className="getbutton getbutton--filled getbutton--large" href={RELEASES_URL}>
@@ -192,7 +198,13 @@ export function AdapterDetail() {
 
         <section className="storesection">
           <h2>{t('detail.sourceTitle')}</h2>
-          <p>{tx('detail.sourceCopy', [<code key="path">{entry.sourcePath}</code>])}</p>
+          <p>
+            {tx('detail.sourceCopy', [
+              <a key="path" href={entry.sourceUrl}>
+                <code>{entry.sourcePath}</code>
+              </a>,
+            ])}
+          </p>
           <p style={{ marginTop: 14 }}>
             <button type="button" className="getbutton" onClick={() => setShowSource((value) => !value)}>
               {showSource ? t('detail.hideSource') : t('detail.showSource')}

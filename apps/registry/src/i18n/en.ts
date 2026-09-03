@@ -10,7 +10,7 @@ export const en = {
     'Add auditable WebMCP tools to websites that never implemented WebMCP. Declarative, origin-scoped, open source.',
 
   /* ------------------------------------------------------------- chrome -- */
-  'nav.adapters': 'Adapters',
+  'nav.adapters': 'Store',
   'nav.how': 'How it works',
   'nav.trust': 'Trust model',
   'nav.github': 'GitHub',
@@ -21,7 +21,7 @@ export const en = {
   'nav.language': 'Language',
 
   'status.checking': 'Checking for WebMCP…',
-  'status.supported': 'WebMCP ready — this registry exposes {0} tools to the agent.',
+  'status.supported': 'WebMCP ready — Liha Adapter Store exposes {0} tools to the agent.',
   'status.unsupported':
     'WebMCP is not available in this browser. Enable chrome://flags/#enable-webmcp-testing to let an agent use this page directly.',
 
@@ -33,6 +33,7 @@ export const en = {
   'footer.source': 'Source',
   'footer.security': 'Security',
   'footer.format': 'Adapter format',
+  'footer.registry': 'Adapter Registry',
   'footer.apiNotes': 'WebMCP API notes',
   'footer.disclaimer':
     'Not affiliated with, endorsed by or connected to Apple Inc. or the App Store. The layout follows Apple’s public design conventions; all names, artwork and copy here are this project’s own.',
@@ -263,9 +264,9 @@ export const en = {
     'Open source, MIT licensed — extension, runtime, DSL, registry, recorder, demo apps and tests.',
 
   /* --------------------------------------------------------------- store -- */
-  'store.title': 'Adapters',
+  'store.title': 'Liha Adapter Store',
   'store.sub':
-    'Each one is declarative JSON, scoped to exact origins, with every step and permission open to inspection before you install it.',
+    'Discover official and community adapters. Each one is declarative JSON, scoped to exact origins, with every step and permission open to inspection before you install it.',
   'store.search': 'Search',
   'store.searchLabel': 'Search adapters',
   'store.category': 'Category',
@@ -294,10 +295,18 @@ export const en = {
   'store.extFirefox': 'Firefox build included',
   'store.get': 'Get',
   'store.installed': 'installed',
+  'store.badgeOfficial': 'Official',
+  'store.badgeVerified': 'Verified',
+  'store.badgeCommunity': 'Community',
+  'store.publishTitle': 'Publish to the Store',
+  'store.publishCopy':
+    'Submit declarative JSON through a GitHub pull request. Official is maintained by Liha; Verified means maintainers checked that exact version against the live site; accepted submissions appear as Community.',
+  'store.publishCta': 'Publish an Adapter',
+  'store.publishRepo': 'View registry',
 
   /* -------------------------------------------------------------- detail -- */
   'detail.notFound': 'No adapter with that id.',
-  'detail.back': 'Back to the registry',
+  'detail.back': 'Back to the Store',
   'detail.install': 'Install',
   'detail.reinstall': 'Reinstall',
   'detail.installing': 'Waiting for confirmation…',

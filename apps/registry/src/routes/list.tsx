@@ -7,7 +7,7 @@ import { CAPABILITY_OPTIONS } from '../lib/webmcp';
 import { useI18n } from '../i18n';
 import { demoApps } from '../lib/demos';
 import { adapterDescription, catalogSearchText, categoryLabel } from '../lib/catalog-copy';
-import { GITHUB_URL, RELEASES_URL } from '../lib/links';
+import { ADAPTER_REGISTRY_URL, GITHUB_URL, PUBLISH_ADAPTER_URL, RELEASES_URL } from '../lib/links';
 import { AdapterIcon, BrandIcon, CapabilityBadge, HealthBadge } from './components';
 import { listRoute } from './tree';
 
@@ -157,6 +157,10 @@ export function AdapterList() {
                         </span>
                       </Link>
                       <span className="lockup__meta">
+                        <span className={`chip chip--${entry.status}`}>
+                          {t(`store.badge${entry.status === 'official' ? 'Official' : 'Community'}`)}
+                        </span>
+                        {entry.verified && <span className="chip chip--verified">{t('store.badgeVerified')}</span>}
                         <span className="chip" data-field="category">
                           {categoryLabel(entry.adapter.category, locale)}
                         </span>
@@ -189,6 +193,28 @@ export function AdapterList() {
               {t('store.noResults')}
             </p>
           )}
+        </section>
+
+        <section className="shelf">
+          <div className="shelf__head">
+            <h2 className="shelf__title">{t('store.publishTitle')}</h2>
+            <a className="shelf__link" href={ADAPTER_REGISTRY_URL}>
+              {t('store.publishRepo')} ›
+            </a>
+          </div>
+          <div className="publishcard">
+            <div>
+              <p>{t('store.publishCopy')}</p>
+              <p className="publishcard__badges">
+                <span className="chip chip--official">{t('store.badgeOfficial')}</span>
+                <span className="chip chip--verified">{t('store.badgeVerified')}</span>
+                <span className="chip chip--community">{t('store.badgeCommunity')}</span>
+              </p>
+            </div>
+            <a className="getbutton getbutton--filled" href={PUBLISH_ADAPTER_URL}>
+              {t('store.publishCta')}
+            </a>
+          </div>
         </section>
 
         <section className="shelf">
