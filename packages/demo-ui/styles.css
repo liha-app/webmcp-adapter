@@ -1,269 +1,25 @@
 /*
- * The look the three demo apps share.
+ * What the three demo sites share — which is the plumbing, and nothing about
+ * how they look.
  *
- * They are meant to read as ordinary, competently built websites, because the
- * whole argument rests on it: an adapter drives a site's real interface, and a
- * site that looks like a test fixture makes that claim about test fixtures.
+ * They used to share a single stylesheet, and three products in three different
+ * categories came out identical. Real sites do not look like that, and the
+ * argument these demos exist to make is about real sites: an adapter drives a
+ * CRM that looks like a CRM, a storefront that looks like a storefront, and a
+ * tracker that looks like a tracker. So each app now brings its own system —
+ * Apple's Store, Attio, Linear — and what stays here is the reset, the
+ * appearance switch, and the two accessibility helpers.
  *
- * The system is Apple's, measured off apple.com/app-store rather than
- * approximated — the 980px column, the 18px card radius, the #0071e3 pill and
- * its 980px radius, the #f5f5f7 ground, the 17/25 body, the "Get" button's
- * 13px/700 on a 6%-blue fill. The portal already uses it, so the demos and the
- * site that catalogues them now belong to one family.
- *
- * Every hook the adapters and the tests use — data-testid, data-action,
- * data-field, name — lives in the markup and none of it is styling. Nothing in
- * this file can move one.
+ * The switch is drawn from each app's own tokens (--ink, --muted, --hairline,
+ * --raised), so it belongs to whichever design it lands in.
  */
-
-:root {
-  color-scheme: light dark;
-
-  --ground: light-dark(#f5f5f7, #000000);
-  --panel: light-dark(#ffffff, #1d1d1f);
-  --raised: light-dark(#f5f5f7, #2a2a2c);
-  --ink: light-dark(#1d1d1f, #f5f5f7);
-  --ink-secondary: light-dark(#6e6e73, #86868b);
-  --hairline: light-dark(rgba(0, 0, 0, 0.1), rgba(255, 255, 255, 0.14));
-  --blue: light-dark(#0071e3, #2997ff);
-  --blue-soft: light-dark(rgba(0, 113, 227, 0.06), rgba(41, 151, 255, 0.14));
-  --red: light-dark(#d70015, #ff6961);
-  --shadow: light-dark(0 1px 2px rgba(0, 0, 0, 0.04), 0 10px 30px rgba(0, 0, 0, 0.06)),
-    light-dark(0 0 0 0.5px rgba(0, 0, 0, 0.04), 0 0 0 0.5px rgba(255, 255, 255, 0.06));
-
-  --column: 980px;
-  --radius-card: 18px;
-  --radius-control: 12px;
-}
 
 * { box-sizing: border-box; }
-
 html { -webkit-text-size-adjust: 100%; }
+body { margin: 0; -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; }
 
-body {
-  margin: 0;
-  background: var(--ground);
-  color: var(--ink);
-  font: 400 17px/1.47059 -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Helvetica Neue', Helvetica, Arial,
-    'Hiragino Sans', 'Noto Sans JP', sans-serif;
-  letter-spacing: -0.022em;
-  -webkit-font-smoothing: antialiased;
-}
-
-/* --------------------------------------------------------------- chrome --- */
-/*
- * Apple's global bar: 48px, translucent, blurred, one hairline. It stays put
- * because the primary action lives in it, and in an app that is a thing you
- * reach for rather than scroll back to.
- */
-.topbar {
-  position: sticky;
-  top: 0;
-  z-index: 20;
-  height: 48px;
-  display: flex;
-  align-items: center;
-  gap: 18px;
-  padding: 0 22px;
-  background: light-dark(rgba(255, 255, 255, 0.72), rgba(29, 29, 31, 0.72));
-  backdrop-filter: saturate(180%) blur(20px);
-  -webkit-backdrop-filter: saturate(180%) blur(20px);
-  border-bottom: 1px solid var(--hairline);
-}
-.topbar__inner {
-  width: var(--column);
-  max-width: 100%;
-  margin: 0 auto;
-  display: flex;
-  align-items: center;
-  gap: 16px;
-}
-.topbar__brand { font-size: 15px; font-weight: 600; letter-spacing: -0.01em; margin-right: auto; }
-.topbar__actions { display: flex; align-items: center; gap: 10px; }
-
-.app {
-  width: var(--column);
-  max-width: calc(100% - 44px);
-  margin: 0 auto;
-  padding: 56px 0 96px;
-}
-
-.pagehead { margin-bottom: 34px; }
-h1 { margin: 0; font-size: 40px; line-height: 1.1; font-weight: 600; letter-spacing: -0.015em; }
-.app__subtitle { margin: 10px 0 0; color: var(--ink-secondary); font-size: 17px; line-height: 1.47059; }
-
-/* ---------------------------------------------------------------- cards --- */
-.panel {
-  background: var(--panel);
-  border-radius: var(--radius-card);
-  box-shadow: var(--shadow);
-  overflow: hidden;
-  margin-bottom: 22px;
-}
-.panel__head {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 20px 24px;
-  border-bottom: 1px solid var(--hairline);
-}
-h2 { margin: 0; font-size: 21px; line-height: 1.19; font-weight: 600; letter-spacing: -0.012em; }
-
-.badge {
-  min-width: 22px;
-  padding: 2px 9px;
-  border-radius: 980px;
-  background: var(--raised);
-  color: var(--ink-secondary);
-  font-size: 13px;
-  font-weight: 500;
-  text-align: center;
-  letter-spacing: 0;
-}
-
-/* --------------------------------------------------------------- fields --- */
-input, select, textarea {
-  font: inherit;
-  font-size: 17px;
-  letter-spacing: inherit;
-  color: var(--ink);
-  background: var(--raised);
-  border: 1px solid transparent;
-  border-radius: var(--radius-control);
-  padding: 11px 14px;
-  width: 100%;
-}
-input::placeholder { color: var(--ink-secondary); }
-input:focus-visible, select:focus-visible, textarea:focus-visible {
-  outline: none;
-  border-color: var(--blue);
-  box-shadow: 0 0 0 4px light-dark(rgba(0, 113, 227, 0.22), rgba(41, 151, 255, 0.28));
-}
-/*
- * The chevron is drawn rather than left to the platform, because appearance:
- * none takes the native one away and a select that looks like a text field is
- * a select nobody opens. Inline SVG as a data URI, which the demos' CSP allows
- * under img-src.
- */
-select {
-  appearance: none;
-  cursor: pointer;
-  padding-right: 34px;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='%236e6e73' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
-  background-repeat: no-repeat;
-  background-position: right 13px center;
-}
-@media (prefers-color-scheme: dark) {
-  select {
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='%2386868b' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
-  }
-}
-
-.search { margin-left: auto; max-width: 260px; font-size: 15px; padding: 9px 13px; }
-
-/* -------------------------------------------------------------- buttons --- */
-/*
- * Two shapes, both Apple's. The filled pill is the call to action; the soft one
- * is the App Store's "Get" — 13px/700 on a 6% blue, which is how a row of
- * repeated actions stays quiet enough to read past.
- */
-.btn {
-  appearance: none;
-  border: 0;
-  border-radius: 980px;
-  background: var(--raised);
-  color: var(--ink);
-  font: inherit;
-  font-size: 15px;
-  font-weight: 500;
-  letter-spacing: -0.01em;
-  padding: 10px 18px;
-  cursor: pointer;
-  transition: background-color 120ms ease, opacity 120ms ease;
-}
-.btn:hover { background: light-dark(rgba(0, 0, 0, 0.08), rgba(255, 255, 255, 0.12)); }
-.btn:focus-visible { outline: 3px solid var(--blue); outline-offset: 2px; }
-.btn--primary { background: var(--blue); color: #fff; }
-.btn--primary:hover { background: light-dark(#0077ed, #47a9ff); }
-.btn--small {
-  font-size: 13px;
-  font-weight: 700;
-  letter-spacing: 0;
-  padding: 7px 16px;
-  color: var(--blue);
-  background: var(--blue-soft);
-}
-.btn--small:hover { background: light-dark(rgba(0, 113, 227, 0.12), rgba(41, 151, 255, 0.22)); }
-.btn--danger { color: var(--red); background: light-dark(rgba(215, 0, 21, 0.06), rgba(255, 105, 97, 0.14)); }
-.btn--danger:hover { background: light-dark(rgba(215, 0, 21, 0.12), rgba(255, 105, 97, 0.22)); }
-
-/* ---------------------------------------------------------------- lists --- */
-.list { list-style: none; margin: 0; padding: 0; }
-.list__row {
-  display: grid;
-  align-items: center;
-  gap: 16px;
-  padding: 18px 24px;
-  border-bottom: 1px solid var(--hairline);
-}
-.list__row:last-child { border-bottom: 0; }
-.list__name { font-size: 17px; font-weight: 500; letter-spacing: -0.022em; }
-.list__muted, .list__email, .list__date {
-  color: var(--ink-secondary);
-  font-size: 15px;
-  letter-spacing: -0.016em;
-}
-.empty { margin: 0; padding: 44px 24px; text-align: center; color: var(--ink-secondary); font-size: 15px; }
-
-/* --------------------------------------------------------------- dialog --- */
-.overlay {
-  position: fixed;
-  inset: 0;
-  z-index: 40;
-  display: grid;
-  place-items: center;
-  padding: 24px;
-  background: light-dark(rgba(0, 0, 0, 0.36), rgba(0, 0, 0, 0.6));
-  backdrop-filter: blur(4px);
-  -webkit-backdrop-filter: blur(4px);
-}
-.modal {
-  width: min(460px, 100%);
-  background: var(--panel);
-  border-radius: var(--radius-card);
-  padding: 28px;
-  box-shadow: 0 24px 68px rgba(0, 0, 0, 0.28);
-}
-.modal h2 { margin-bottom: 22px; }
-.modal__actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 24px; }
-
-.field { display: block; margin-bottom: 18px; }
-.field span {
-  display: block;
-  margin-bottom: 7px;
-  font-size: 13px;
-  font-weight: 500;
-  color: var(--ink-secondary);
-  letter-spacing: -0.01em;
-}
-.error { margin: 0 0 14px; color: var(--red); font-size: 15px; }
-
-/* --------------------------------------------------------------- narrow --- */
-@media (max-width: 734px) {
-  .app { padding: 36px 0 64px; }
-  h1 { font-size: 32px; }
-  .panel__head { flex-wrap: wrap; }
-  .search { margin-left: 0; max-width: none; width: 100%; }
-  .list__row { grid-template-columns: 1fr auto !important; row-gap: 6px; }
-  .list__row > *:not(.list__name):not(.btn) { grid-column: 1; }
-}
-
-/* ---------------------------------------------------------- appearance --- */
-/*
- * The switch itself: pinning `color-scheme` is the whole mechanism. There is no
- * second palette — `light-dark()` above reads whichever one is in force — so
- * there is nothing here that can fall out of step with the light styles.
- */
+/* Pinning color-scheme is the whole switch: one palette, declared once per app
+ * with light-dark(), and no second set of colours to keep in step. */
 :root[data-theme='light'] { color-scheme: light; }
 :root[data-theme='dark'] { color-scheme: dark; }
 
@@ -274,7 +30,7 @@ select {
   flex: none;
   padding: 2px;
   border-radius: 8px;
-  background: light-dark(rgba(0, 0, 0, 0.05), rgba(255, 255, 255, 0.09));
+  background: var(--raised);
 }
 .segmented button {
   appearance: none;
@@ -284,16 +40,31 @@ select {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  color: var(--ink);
+  color: var(--muted);
   border-radius: 6px;
   padding: 4px 8px;
   min-width: 26px;
   height: 22px;
-  transition: background-color 0.12s ease;
+  transition: background-color 0.12s ease, color 0.12s ease;
 }
-.segmented button:hover { background: light-dark(rgba(0, 0, 0, 0.05), rgba(255, 255, 255, 0.08)); }
+.segmented button:hover { color: var(--ink); }
 .segmented button[aria-checked='true'] {
-  background: light-dark(#ffffff, #5a5a5e);
+  background: light-dark(#ffffff, rgba(255, 255, 255, 0.14));
+  color: var(--ink);
   box-shadow: 0 1px 2px light-dark(rgba(0, 0, 0, 0.14), rgba(0, 0, 0, 0.4));
 }
 .segmented svg { width: 13px; height: 13px; display: block; }
+
+/* Present to a screen reader, absent to everyone else. */
+.hidden-field {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * { transition-duration: 0.01ms !important; animation-duration: 0.01ms !important; }
+}

@@ -10,6 +10,14 @@ const SEED: Customer[] = [
 
 let nextId = 1004;
 
+/** The two-letter chip Attio shows in front of a record's name. */
+function initials(name: string): string {
+  const parts = name.trim().split(/\s+/);
+  const first = parts[0]?.[0] ?? '';
+  const last = parts.length > 1 ? (parts[parts.length - 1]?.[0] ?? '') : '';
+  return (first + last).toUpperCase();
+}
+
 type Dialog = { mode: 'create' } | { mode: 'edit'; customer: Customer } | null;
 
 export function App() {
@@ -118,11 +126,29 @@ export function App() {
               onChange={(event) => setQuery(event.target.value)}
             />
           </div>
+          {/* Outside the list, so nothing counts the header as a record. */}
+          <div className="columns" aria-hidden="true">
+            <span>Name</span>
+            <span>Email</span>
+            <span>Created</span>
+            <span />
+          </div>
           <ul className="list" data-testid="customer-list">
             {visible.map((customer) => (
               <li key={customer.id} className="list__row" data-customer-id={customer.id}>
-                <span className="list__name" data-field="name">
-                  {customer.name}
+                {/*
+                  * The chip is a sibling of the name, not a child of it. Inside,
+                  * its initials become part of what data-field="name" reads —
+                  * the adapter's readText returned "ASAlice Smith" — and the
+                  * cell an agent reads has to hold the value and nothing else.
+                  */}
+                <span className="list__cell">
+                  <span className="avatar" aria-hidden="true">
+                    {initials(customer.name)}
+                  </span>
+                  <span className="list__name" data-field="name">
+                    {customer.name}
+                  </span>
                 </span>
                 <span className="list__email" data-field="email">
                   {customer.email}

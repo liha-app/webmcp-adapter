@@ -1,3 +1,124 @@
-/* Acme CRM, on top of the shared demo system. Only what is this app's shape. */
-.list__row { grid-template-columns: 1.1fr 1.5fr auto auto; }
-.list__date { font-variant-numeric: tabular-nums; }
+/*
+ * Acme CRM — Attio.
+ *
+ * Their tokens, read off attio.com: #ffffff over #f3f4f6, hairlines at #e4e7ec
+ * and borders at #cad0d9, ink #1c1d1f with #6f7988 for everything secondary,
+ * #266df0 for actions, and radii of 4/6/8 — small, because a CRM is a grid and
+ * a grid with 18px corners is a toy. The tell is the type: Attio sets its base
+ * weight to 500, not 400, at 16/22 with -0.01em. That is why their tables read
+ * as dense and firm rather than airy.
+ */
+:root {
+  color-scheme: light dark;
+
+  --page: light-dark(#ffffff, #17181a);
+  --raised: light-dark(#f3f4f6, #202124);
+  --raised-2: light-dark(#e9ebef, #26282b);
+  --ink: light-dark(#1c1d1f, #f4f5f6);
+  --ink-2: light-dark(#2e3238, #d3d6da);
+  --muted: light-dark(#6f7988, #8b94a1);
+  --hairline: light-dark(#e4e7ec, #2a2c30);
+  --border: light-dark(#cad0d9, #3a3d42);
+  --blue: light-dark(#266df0, #5b91f5);
+  --blue-hover: light-dark(#245bc2, #7aa6f7);
+  --danger: light-dark(#c8332a, #ff6f66);
+  --font: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Hiragino Sans', 'Noto Sans JP', sans-serif;
+}
+
+body { background: var(--page); color: var(--ink); font: 500 15px/1.4667 var(--font); letter-spacing: -0.01em; }
+
+.topbar {
+  position: sticky; top: 0; z-index: 20; height: 48px;
+  display: flex; align-items: center; background: var(--page);
+  border-bottom: 1px solid var(--hairline);
+}
+.topbar__inner { width: 1080px; max-width: calc(100% - 40px); margin: 0 auto; display: flex; align-items: center; gap: 14px; }
+.topbar__brand { font-size: 15px; font-weight: 600; letter-spacing: -0.014em; margin-right: auto; }
+.topbar__actions { display: flex; align-items: center; gap: 8px; }
+
+.app { width: 1080px; max-width: calc(100% - 40px); margin: 0 auto; padding: 36px 0 88px; }
+.pagehead { margin-bottom: 24px; }
+h1 { margin: 0; font-size: 30px; line-height: 1.13; font-weight: 600; letter-spacing: -0.02em; }
+.app__subtitle { margin: 7px 0 0; font-size: 15px; color: var(--muted); letter-spacing: -0.008em; }
+
+h2 { margin: 0; font-size: 14px; font-weight: 600; letter-spacing: -0.012em; }
+
+/* The record table: a bordered surface, a column header, dense rows. */
+.panel { border: 1px solid var(--hairline); border-radius: 8px; background: var(--page); overflow: hidden; }
+.panel__head { display: flex; align-items: center; gap: 10px; padding: 12px 16px; border-bottom: 1px solid var(--hairline); }
+.badge {
+  min-width: 20px; padding: 1px 7px; border-radius: 5px; background: var(--raised); color: var(--muted);
+  font-size: 12px; font-weight: 500; letter-spacing: 0; text-align: center;
+}
+.search {
+  margin-left: auto; width: 240px; max-width: 100%;
+  font: inherit; font-size: 13.5px; font-weight: 400; color: var(--ink); background: var(--page);
+  border: 1px solid var(--border); border-radius: 6px; padding: 6px 10px;
+}
+.search::placeholder { color: var(--muted); font-weight: 400; }
+.search:focus-visible { outline: none; border-color: var(--blue); box-shadow: 0 0 0 3px light-dark(rgba(38,109,240,.16), rgba(91,145,245,.24)); }
+
+.columns {
+  display: grid; grid-template-columns: 1.15fr 1.45fr auto auto; gap: 16px; align-items: center;
+  padding: 7px 16px; background: var(--raised); border-bottom: 1px solid var(--hairline);
+  font-size: 11px; font-weight: 500; letter-spacing: 0.03em; text-transform: uppercase; color: var(--muted);
+}
+.columns span:last-child { justify-self: end; }
+
+.list { list-style: none; margin: 0; padding: 0; }
+.list__row {
+  display: grid; grid-template-columns: 1.15fr 1.45fr auto auto; gap: 16px; align-items: center;
+  padding: 0 16px; height: 46px; border-bottom: 1px solid var(--hairline);
+  transition: background-color 80ms ease;
+}
+.list__row:last-child { border-bottom: 0; }
+.list__row:hover { background: var(--raised); }
+
+/* The initials chip Attio puts in front of every record name. */
+.list__cell { display: flex; align-items: center; gap: 9px; min-width: 0; }
+.list__name { font-size: 14px; font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.avatar {
+  flex: none; width: 22px; height: 22px; border-radius: 5px;
+  display: grid; place-items: center;
+  background: var(--raised-2); color: var(--muted);
+  font-size: 10.5px; font-weight: 600; letter-spacing: 0.01em;
+}
+.list__email { font-size: 14px; font-weight: 400; color: var(--ink-2); }
+.list__date { font-size: 13px; font-weight: 400; color: var(--muted); font-variant-numeric: tabular-nums; }
+.empty { margin: 0; padding: 44px 16px; text-align: center; color: var(--muted); font-size: 14px; font-weight: 400; }
+
+/* Dialogs sit on a scrim, small radius, tight. */
+.overlay { position: fixed; inset: 0; z-index: 40; display: grid; place-items: center; padding: 24px; background: light-dark(rgba(28,29,31,.35), rgba(0,0,0,.6)); }
+.modal { width: min(440px, 100%); background: var(--page); border: 1px solid var(--hairline); border-radius: 10px; padding: 22px; box-shadow: 0 16px 48px light-dark(rgba(28,29,31,.16), rgba(0,0,0,.55)); }
+.modal h2 { font-size: 17px; margin-bottom: 18px; }
+.modal__actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 20px; }
+
+.field { display: block; margin-bottom: 14px; }
+.field span { display: block; margin-bottom: 5px; font-size: 12px; font-weight: 500; color: var(--muted); }
+.field input {
+  width: 100%; font: inherit; font-size: 14px; font-weight: 400; color: var(--ink); background: var(--page);
+  border: 1px solid var(--border); border-radius: 6px; padding: 8px 11px;
+}
+.field input:focus-visible { outline: none; border-color: var(--blue); box-shadow: 0 0 0 3px light-dark(rgba(38,109,240,.16), rgba(91,145,245,.24)); }
+.error { margin: 0 0 12px; color: var(--danger); font-size: 13.5px; font-weight: 400; }
+
+.btn {
+  appearance: none; border: 1px solid var(--border); background: var(--page); color: var(--ink-2);
+  border-radius: 6px; padding: 6px 12px; font: inherit; font-size: 13.5px; font-weight: 500;
+  cursor: pointer; height: 32px; transition: background-color 80ms ease, border-color 80ms ease;
+}
+.btn:hover { background: var(--raised); border-color: light-dark(#6f7988, #4a4d53); }
+.btn:focus-visible { outline: 2px solid var(--blue); outline-offset: 1px; }
+.btn--primary { background: var(--blue); border-color: var(--blue); color: #fff; }
+.btn--primary:hover { background: var(--blue-hover); border-color: var(--blue-hover); }
+.btn--small { height: 26px; padding: 2px 10px; font-size: 12.5px; border-color: transparent; background: transparent; color: var(--muted); }
+.btn--small:hover { background: var(--raised-2); border-color: transparent; color: var(--ink); }
+
+@media (max-width: 760px) {
+  h1 { font-size: 24px; }
+  .columns { display: none; }
+  .list__row { grid-template-columns: 1fr auto; height: auto; padding: 12px 16px; row-gap: 4px; }
+  .list__date { display: none; }
+  .panel__head { flex-wrap: wrap; }
+  .search { margin-left: 0; width: 100%; }
+}

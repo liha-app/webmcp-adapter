@@ -55,6 +55,7 @@ pnpm acceptance:full       65/65 checks — three demo adapters, the portal's
 pnpm acceptance:recorder   37/37 checks — record a workflow, get a valid adapter,
                            and an exported native implementation that really
                            registers WebMCP tools with no adapter involved
+pnpm acceptance:csp        4/4 sites load under the policy they ship
 pnpm acceptance:icons      6/6 checks — Chrome parses the extension's icons and
                            can resolve every path it was given
 pnpm verify                457 unit + integration tests, typecheck, lint, build
@@ -200,13 +201,20 @@ checks. See [docs/adapter-format.md](docs/adapter-format.md).
 
 ### Three demo apps, zero WebMCP
 
-They share [packages/demo-ui](packages/demo-ui/styles.css) — Apple's App Store
-system, the same one the portal uses, measured rather than approximated: the
-980px column, the 18px card, the `#0071e3` pill on its 980px radius, `#f5f5f7`
-ground, 17/25 body, and the "Get" button's 13/700 on a 6% blue for the repeated
-row actions. That is not decoration. The claim is that an adapter drives a real
-site's real interface, and a demo that looks like a test fixture makes the claim
-about test fixtures.
+Each one looks like the product it is pretending to be, because the claim is
+that an adapter drives a real site's real interface — and three identical demos
+make that claim about a template. Their systems are measured off the real
+things, not approximated:
+
+| Demo | After | Tells |
+|---|---|---|
+| Nimbus Supply | [Apple Store](https://www.apple.com/jp/shop/buy-mac/mac-mini) | white ground, SF Pro 17/23, 12px option cards on a 1px `#86868b` border, and the buy button that is an 8px rounded rect — not the marketing pill |
+| Acme CRM | [Attio](https://attio.com) | `#266df0`, 4/6/8 radii, initials chips, and a base weight of **500** at 16/22, which is why their tables read firm rather than airy |
+| Kite Project Manager | [Linear](https://linear.app) | `#08090a` over `#1c1c1f`, `#5e6ad2`, Inter at their variable **510** "medium", 44px rows on hairlines, no cards |
+
+[packages/demo-ui](packages/demo-ui/styles.css) keeps only what is genuinely
+shared: the reset, the appearance switch, and two accessibility helpers. It
+draws itself from whichever app's tokens it lands in.
 
 **Acme CRM**, **Nimbus Supply** and **Kite Project Manager** are ordinary React
 apps. They exist to prove the runtime is general rather than a hack aimed at one

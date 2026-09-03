@@ -1,15 +1,125 @@
-/* Kite Project Manager, on top of the shared demo system. */
-.list__row { grid-template-columns: 1.5fr auto auto auto auto; }
-.list__row select { width: auto; min-width: 128px; font-size: 15px; padding: 8px 12px; }
-.flag {
-  display: inline-flex;
-  align-items: center;
-  gap: 7px;
-  font-size: 15px;
-  color: var(--ink-secondary);
-  letter-spacing: -0.016em;
-  cursor: pointer;
+/*
+ * Kite Project Manager — Linear.
+ *
+ * Their tokens, read off linear.app rather than eyeballed: #08090a ground,
+ * #1c1c1f raised, #23252a borders, #f7f8f8 / #8a8f98 text, #5e6ad2 brand, and
+ * Inter at the variable weight 510 they use for "medium" — a hair heavier than
+ * 500, which is why Linear's headings look firmer than everyone else's at the
+ * same size. Small radii (4/6/8), a dense list, no cards.
+ */
+:root {
+  color-scheme: dark light;
+
+  --page: light-dark(#ffffff, #08090a);
+  --raised: light-dark(#f4f5f8, #1c1c1f);
+  --raised-2: light-dark(#eceef2, #232326);
+  --ink: light-dark(#08090a, #f7f8f8);
+  --ink-2: light-dark(#3c4149, #d0d6e0);
+  --muted: light-dark(#6b6f76, #8a8f98);
+  --hairline: light-dark(#e6e6e8, #23252a);
+  --brand: #5e6ad2;
+  --brand-hover: #6a75d8;
+  --danger: light-dark(#c92a2a, #ff6369);
+  --font: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Hiragino Sans', 'Noto Sans JP', sans-serif;
+  --medium: 510;
 }
-.flag input { width: 16px; height: 16px; accent-color: var(--blue); padding: 0; }
-.taskform { padding: 22px 24px; border-bottom: 1px solid var(--hairline); }
-.hidden-field { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
+body { background: var(--page); color: var(--ink); font: 400 14px/1.5 var(--font); letter-spacing: -0.01em; }
+
+.topbar {
+  position: sticky; top: 0; z-index: 20; height: 56px;
+  display: flex; align-items: center;
+  background: light-dark(rgba(255,255,255,.8), rgba(8,9,10,.8));
+  backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+  border-bottom: 1px solid var(--hairline);
+}
+.topbar__inner { width: 1024px; max-width: calc(100% - 40px); margin: 0 auto; display: flex; align-items: center; gap: 14px; }
+.topbar__brand { font-size: 14px; font-weight: var(--medium); letter-spacing: -0.012em; margin-right: auto; }
+.topbar__actions { display: flex; align-items: center; gap: 8px; }
+
+.app { width: 1024px; max-width: calc(100% - 40px); margin: 0 auto; padding: 40px 0 96px; }
+.pagehead { margin-bottom: 26px; }
+h1 { margin: 0; font-size: 32px; line-height: 1.125; font-weight: var(--medium); letter-spacing: -0.022em; }
+.app__subtitle { margin: 8px 0 0; font-size: 14px; color: var(--muted); letter-spacing: -0.008em; }
+
+h2 { margin: 0; font-size: 13px; font-weight: var(--medium); letter-spacing: -0.006em; color: var(--ink-2); }
+
+/* A flat list on hairlines. Linear does not put issues in cards. */
+.panel { border: 1px solid var(--hairline); border-radius: 8px; overflow: hidden; background: var(--page); margin-bottom: 16px; }
+.panel__head { display: flex; align-items: center; gap: 10px; padding: 10px 14px; background: var(--raised); border-bottom: 1px solid var(--hairline); }
+.badge {
+  min-width: 20px; padding: 1px 7px; border-radius: 999px; background: var(--raised-2); color: var(--muted);
+  font-size: 11px; font-weight: var(--medium); letter-spacing: 0; text-align: center;
+}
+.search {
+  margin-left: auto; width: 220px; max-width: 100%;
+  font: inherit; font-size: 13px; color: var(--ink); background: var(--page);
+  border: 1px solid var(--hairline); border-radius: 6px; padding: 5px 9px;
+}
+.search::placeholder { color: var(--muted); }
+.search:focus-visible { outline: none; border-color: var(--brand); box-shadow: 0 0 0 3px rgba(94, 106, 210, 0.24); }
+
+.list { list-style: none; margin: 0; padding: 0; }
+.list__row {
+  display: grid; grid-template-columns: 1fr auto auto auto auto; align-items: center; gap: 12px;
+  padding: 0 14px; height: 44px; border-bottom: 1px solid var(--hairline);
+  transition: background-color 80ms ease;
+}
+.list__row:last-child { border-bottom: 0; }
+.list__row:hover { background: var(--raised); }
+/* The status dot, drawn rather than shipped as an asset. */
+.list__name { position: relative; padding-left: 20px; font-size: 14px; font-weight: 400; letter-spacing: -0.011em; }
+.list__name::before {
+  content: ''; position: absolute; left: 0; top: 50%; width: 11px; height: 11px; margin-top: -5.5px;
+  border-radius: 50%; border: 2px solid var(--muted);
+}
+.list__row[data-status='in_progress'] .list__name::before { border-color: #f2c94c; background: linear-gradient(to right, #f2c94c 50%, transparent 50%); }
+.list__row[data-status='blocked'] .list__name::before { border-color: var(--danger); }
+.list__row[data-status='done'] .list__name::before { border-color: var(--brand); background: var(--brand); }
+
+.list__row select {
+  appearance: none; width: auto; min-width: 116px;
+  font: inherit; font-size: 12.5px; color: var(--ink-2); background: var(--raised);
+  border: 1px solid transparent; border-radius: 6px; padding: 4px 24px 4px 9px; cursor: pointer;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='9' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='%238a8f98' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat; background-position: right 8px center;
+}
+.list__row select:hover { border-color: var(--hairline); }
+.list__row select:focus-visible { outline: none; border-color: var(--brand); }
+
+.flag { display: inline-flex; align-items: center; gap: 6px; font-size: 12.5px; color: var(--muted); cursor: pointer; }
+.flag input { width: 14px; height: 14px; accent-color: var(--brand); }
+
+.empty { margin: 0; padding: 40px 14px; text-align: center; color: var(--muted); font-size: 13px; }
+
+.taskform { padding: 16px 14px; border-bottom: 1px solid var(--hairline); }
+.field { display: block; margin-bottom: 14px; }
+.field span { display: block; margin-bottom: 5px; font-size: 12px; font-weight: var(--medium); color: var(--muted); }
+.field input, .taskform select {
+  width: 100%; font: inherit; font-size: 13.5px; color: var(--ink); background: var(--page);
+  border: 1px solid var(--hairline); border-radius: 6px; padding: 7px 10px;
+}
+.field input:focus-visible, .taskform select:focus-visible { outline: none; border-color: var(--brand); box-shadow: 0 0 0 3px rgba(94,106,210,.24); }
+.error { margin: 0 0 12px; color: var(--danger); font-size: 13px; }
+.modal__actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 16px; }
+
+.btn {
+  appearance: none; border: 1px solid var(--hairline); background: var(--raised); color: var(--ink);
+  border-radius: 6px; padding: 6px 12px; font: inherit; font-size: 13px; font-weight: var(--medium);
+  letter-spacing: -0.006em; cursor: pointer; transition: background-color 80ms ease, border-color 80ms ease;
+  height: 30px;
+}
+.btn:hover { background: var(--raised-2); }
+.btn:focus-visible { outline: 2px solid var(--brand); outline-offset: 1px; }
+.btn--primary { background: var(--brand); border-color: var(--brand); color: #fff; }
+.btn--primary:hover { background: var(--brand-hover); border-color: var(--brand-hover); }
+.btn--small { height: 26px; padding: 3px 10px; font-size: 12.5px; }
+.btn--danger { color: var(--danger); background: transparent; border-color: transparent; }
+.btn--danger:hover { background: light-dark(rgba(201,42,42,.08), rgba(255,99,105,.14)); }
+
+@media (max-width: 760px) {
+  h1 { font-size: 26px; }
+  .list__row { grid-template-columns: 1fr auto; height: auto; padding: 12px 14px; row-gap: 8px; }
+  .panel__head { flex-wrap: wrap; }
+  .search { margin-left: 0; width: 100%; }
+}

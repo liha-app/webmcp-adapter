@@ -14,7 +14,7 @@
     if (theme === 'light' || theme === 'dark') {
       document.documentElement.setAttribute('data-theme', theme);
     }
-  } catch (error) {
+  } catch {
     // Storage blocked: fall through to the system appearance.
   }
 })();
