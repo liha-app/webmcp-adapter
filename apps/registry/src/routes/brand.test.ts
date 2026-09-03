@@ -40,8 +40,14 @@ describe('the app icon', () => {
     expect(body).not.toBe(squircle);
   });
 
-  it('is what favicon.svg serves', () => {
-    expect(favicon).toBe(icon);
+  it('is what the home-screen tile asks for, and not what the tab asks for', () => {
+    // A tab sits its icon on the browser's own chrome, where a filled teal
+    // square reads as a tile someone pasted in. The squircle belongs on a home
+    // screen, and that is the only place index.html points at it.
+    const page = readFileSync(join(root, 'apps/registry/index.html'), 'utf8');
+    expect(page).toContain('<link rel="apple-touch-icon" href="/brand/liha-adapter-icon.svg" />');
+    expect(page).toContain('<link rel="icon" href="/favicon.svg" type="image/svg+xml" />');
+    expect(favicon).not.toBe(icon);
   });
 });
 
@@ -62,6 +68,10 @@ describe('the mark', () => {
     // The export is 72KB, 70KB of which is a C2PA blob.
     expect(mark).not.toMatch(/c2pa|<metadata/i);
     expect(mark.length).toBeLessThan(8000);
+  });
+
+  it('is what favicon.svg serves', () => {
+    expect(favicon).toBe(mark);
   });
 
   it('takes its colour from the master drawing', () => {

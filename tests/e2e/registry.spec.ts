@@ -398,3 +398,38 @@ test.describe('Onboard your agent', () => {
     expect(chip.y + chip.height).toBeLessThanOrEqual(eyebrow.y + 1);
   });
 });
+
+test.describe('the tab icon', () => {
+  test('is the mark, and the home-screen tile is the app icon', async ({ page }) => {
+    await page.goto('http://localhost:5280/');
+    // The two forms are not interchangeable and they were swapped once.
+    await expect(page.locator('link[rel="icon"]')).toHaveAttribute('href', '/favicon.svg');
+    await expect(page.locator('link[rel="apple-touch-icon"]')).toHaveAttribute(
+      'href',
+      '/brand/liha-adapter-icon.svg',
+    );
+
+    const favicon = await (await page.request.get('http://localhost:5280/favicon.svg')).text();
+    const mark = await (
+      await page.request.get('http://localhost:5280/brand/liha-adapter-mark.svg')
+    ).text();
+    expect(favicon).toBe(mark);
+    // The mark carries the sparkle; the app icon drops it. Four paths, not three.
+    expect([...favicon.matchAll(/<path/g)]).toHaveLength(4);
+    expect(favicon).not.toContain('<rect');
+  });
+
+  test('the agent marks are served, and swap for the appearance', async ({ page }) => {
+    await page.goto('http://localhost:5280/');
+    for (const file of ['claude.svg', 'codex.svg', 'codex-dark.svg']) {
+      const response = await page.request.get(`http://localhost:5280/brand/agents/${file}`);
+      expect(response.status(), file).toBe(200);
+    }
+    await page.getByTestId('theme-control').locator('[data-theme-option="light"]').click();
+    await expect(page.locator('.onboard__agent--light')).toBeVisible();
+    await expect(page.locator('.onboard__agent--dark')).toBeHidden();
+    await page.getByTestId('theme-control').locator('[data-theme-option="dark"]').click();
+    await expect(page.locator('.onboard__agent--dark')).toBeVisible();
+    await expect(page.locator('.onboard__agent--light')).toBeHidden();
+  });
+});

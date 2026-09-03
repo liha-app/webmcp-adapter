@@ -17,8 +17,6 @@ const placeholders = (value: string): string[] => [...value.matchAll(/\{(\d+)\}/
  */
 const INTENTIONALLY_IDENTICAL = new Set([
   'hero.eyebrow',
-  // Product names, listed rather than translated.
-  'onboard.agents',
   // The Studio's own name, which is what it is called in the extension too.
   'create.eyebrow',
   'nav.github',

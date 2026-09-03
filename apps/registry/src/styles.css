@@ -278,15 +278,22 @@ code, pre { font-family: var(--mono); }
 .onboard__chip:hover { border-color: var(--ink); }
 .onboard__chip:focus-visible { outline: 3px solid var(--blue); outline-offset: 3px; }
 .onboard__agents {
-  display: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
   padding-left: 12px;
   border-left: 1px solid var(--hairline);
-  color: var(--ink-2);
-  font-size: 13px;
-  letter-spacing: -0.008em;
-  white-space: nowrap;
 }
-@media (min-width: 735px) { .onboard__agents { display: inline; } }
+.onboard__agent { display: block; width: 20px; height: 20px; }
+/* Claude's mark is a brand colour and reads either way. Codex's is monochrome,
+ * so the dark ground gets the reversed one. */
+.onboard__agent--dark { display: none; }
+:root[data-theme='dark'] .onboard__agent--light { display: none; }
+:root[data-theme='dark'] .onboard__agent--dark { display: block; }
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) .onboard__agent--light { display: none; }
+  :root:not([data-theme='light']) .onboard__agent--dark { display: block; }
+}
 .onboard__icon {
   display: grid; place-items: center; width: 26px; height: 26px; flex: none;
   border-radius: 50%; background: var(--sunken); color: var(--ink-2);

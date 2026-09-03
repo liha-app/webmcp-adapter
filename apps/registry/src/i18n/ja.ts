@@ -44,7 +44,6 @@ export const ja: Record<MessageKey, string> = {
 
   /* --------------------------------------------------------------- hero -- */
   'onboard.chip': 'エージェントに Liha WebMCP Adapter を教える',
-  'onboard.agents': 'Claude · ChatGPT · Cursor · Copilot',
   'onboard.agentsTitle': 'URLを取得できるエージェントなら何でも',
   'onboard.copied': 'コピーしました。エージェントに貼り付けてください。',
   'onboard.fallback': 'これをコピーしてエージェントに貼り付けてください：',

@@ -50,18 +50,29 @@ export function AgentOnboard() {
       <button type="button" className="onboard__chip" onClick={copy} data-action="copy-agent-prompt">
         <span className="onboard__label">{t('onboard.chip')}</span>
         {/*
-          * Which agents, named rather than drawn.
-          *
-          * Cloudflare shows the vendors' logos here. Reproducing those from
-          * memory would put four inaccurate imitations of other people's marks
-          * on the page, and using the real files is a licensing decision that
-          * belongs to whoever owns this site, not to whoever built the chip.
-          * The names say the same thing and are simply true — and the actual
-          * requirement is narrower than any list: an agent that can fetch a
-          * URL can follow this.
+          * Which agents. The real marks, not drawings of them — the files and
+          * where they came from are recorded in public/brand/agents/README.md,
+          * along with the one change made to any of them. They say which agents
+          * the copied prompt works with; the requirement is narrower than the
+          * list, and the tooltip says so.
           */}
         <span className="onboard__agents" title={t('onboard.agentsTitle')}>
-          {t('onboard.agents')}
+          <img className="onboard__agent" src="/brand/agents/claude.svg" width={20} height={20} alt="Claude" />
+          <img
+            className="onboard__agent onboard__agent--light"
+            src="/brand/agents/codex.svg"
+            width={20}
+            height={20}
+            alt="Codex"
+          />
+          <img
+            className="onboard__agent onboard__agent--dark"
+            src="/brand/agents/codex-dark.svg"
+            width={20}
+            height={20}
+            alt=""
+            aria-hidden="true"
+          />
         </span>
         <span className="onboard__icon" aria-hidden="true">
           {copied ? (

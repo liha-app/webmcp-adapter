@@ -39,7 +39,6 @@ export const en = {
 
   /* --------------------------------------------------------------- hero -- */
   'onboard.chip': 'Onboard your agent to Liha WebMCP Adapter',
-  'onboard.agents': 'Claude · ChatGPT · Cursor · Copilot',
   'onboard.agentsTitle': 'Any agent that can fetch a URL',
   'onboard.copied': 'Prompt copied. Paste it into your agent.',
   'onboard.fallback': 'Copy this and paste it into your agent:',

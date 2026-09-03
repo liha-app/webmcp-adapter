@@ -74,6 +74,16 @@ const dir = process.argv[2] ?? '.';
 writeFileSync(join(dir, 'liha-adapter-mark.svg'), mark(TEAL));
 writeFileSync(join(dir, 'liha-adapter-mark-mono.svg'), mark('currentColor'));
 writeFileSync(join(dir, 'liha-adapter-icon.svg'), icon());
-console.log(`wrote three assets to ${dir}  (viewBox ${viewBox}, ink ${TEAL})`);
+/*
+ * The tab icon is the mark, not the app icon.
+ *
+ * A browser tab sits the icon on the browser's own chrome, where a filled teal
+ * square reads as a tile someone pasted in; the mark reads as a mark. The
+ * squircle is still what a home-screen tile and the extension's toolbar slot
+ * want, and both still get it.
+ */
+const favicon = process.argv[3] ?? join(dir, '../favicon.svg');
+writeFileSync(favicon, mark(TEAL));
+console.log(`wrote three assets to ${dir} and the favicon to ${favicon}  (viewBox ${viewBox}, ink ${TEAL})`);
 
 export { BODY, EYE_R, EYE_L, SPARKLE, icon };
