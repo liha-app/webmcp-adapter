@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { highestCapability, summarizeEffects, validateAdapter, type ToolDefinition } from './adapter';
+import { displayText, highestCapability, summarizeEffects, validateAdapter, type ToolDefinition } from './adapter';
 
 const base = {
   id: 'demo-crm',
@@ -138,5 +138,59 @@ describe('highestCapability', () => {
     expect(highestCapability(['READ', 'WRITE', 'INTERACT'])).toBe('WRITE');
     expect(highestCapability(['READ', 'DESTRUCTIVE'])).toBe('DESTRUCTIVE');
     expect(highestCapability([])).toBe('READ');
+  });
+});
+
+describe('what a reader is shown, apart from what an agent is given', () => {
+  const tool = {
+    name: 'create_customer',
+    description: 'Create a customer by filling in the Add Customer form.',
+    i18n: { ja: { description: 'Add Customer フォームを入力して顧客を作成します。' } },
+  };
+
+  it('prefers the reader’s language', () => {
+    expect(displayText(tool, 'description', 'ja')).toBe('Add Customer フォームを入力して顧客を作成します。');
+  });
+
+  it('finds "ja" from "ja-JP"', () => {
+    expect(displayText(tool, 'description', 'ja-JP')).toBe('Add Customer フォームを入力して顧客を作成します。');
+  });
+
+  it('falls back to the canonical text rather than showing nothing', () => {
+    // A community contribution with no translation is the common case, and an
+    // untranslated sentence beats a missing one.
+    expect(displayText(tool, 'description', 'de')).toBe(tool.description);
+    expect(displayText({ description: 'x' }, 'description', 'ja')).toBe('x');
+  });
+
+  it('leaves the tool’s own name alone', () => {
+    // Names are typed, searched for, and matched against what the tool
+    // announces to an agent. Translating one breaks all three.
+    expect(displayText(tool, 'name', 'ja')).toBe('create_customer');
+  });
+
+  it('is not what the agent is handed', () => {
+    // The instruction a model reads stays as its author wrote it.
+    const validated = validateAdapter({
+      id: 'x',
+      name: 'X',
+      version: '1.0.0',
+      origins: ['https://x.example.com'],
+      tools: [{ ...tool, capability: 'WRITE', inputSchema: { type: 'object', properties: {} }, steps: [{ type: 'click', selector: '#a' }] }],
+    });
+    expect(validated.ok).toBe(true);
+    expect(validated.adapter?.tools[0]?.description).toBe(tool.description);
+  });
+
+  it('refuses a locale key that is not one', () => {
+    const bad = validateAdapter({
+      id: 'x',
+      name: 'X',
+      version: '1.0.0',
+      origins: ['https://x.example.com'],
+      i18n: { 'not a locale': { name: 'X' } },
+      tools: [{ name: 't', description: 'd', capability: 'READ', inputSchema: { type: 'object', properties: {} }, steps: [{ type: 'readText', selector: '#a', as: 'x' }] }],
+    });
+    expect(bad.ok).toBe(false);
   });
 });

@@ -6,7 +6,7 @@ import { fetchInstalled } from '../lib/extension';
 import { CAPABILITY_OPTIONS } from '../lib/webmcp';
 import { useI18n } from '../i18n';
 import { demoApps } from '../lib/demos';
-import { adapterDescription, catalogSearchText, categoryLabel } from '../lib/catalog-copy';
+import { adapterDescription, adapterName, catalogSearchText, categoryLabel } from '../lib/catalog-copy';
 import { ADAPTER_REGISTRY_URL, GITHUB_URL, PUBLISH_ADAPTER_URL, RELEASES_URL } from '../lib/links';
 import { AdapterIcon, BrandIcon, CapabilityBadge, HealthBadge } from './components';
 import { listRoute } from './tree';
@@ -150,7 +150,7 @@ export function AdapterList() {
                         params={{ adapterId: entry.adapter.id }}
                       >
                         <span className="lockup__title" data-field="name">
-                          {entry.adapter.name}
+                          {adapterName(entry.adapter, locale)}
                         </span>
                         <span className="lockup__sub" data-field="description">
                           {adapterDescription(entry.adapter, locale)}

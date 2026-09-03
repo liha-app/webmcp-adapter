@@ -73,6 +73,8 @@ Per tool:
 | `capability` | `READ`, `INTERACT`, `WRITE` or `DESTRUCTIVE` |
 | `inputSchema` | `{"type":"object","properties":{…},"required":[…]}`; property types are `string`, `number`, `integer`, `boolean`, with optional `description`, `format`, `enum` |
 | `probeSelectors` | optional; selectors that should exist while the page is at rest, used for health checks |
+| `appliesWhen` | optional; selectors that must all resolve for this tool to apply to the open page. Declare it on any tool that belongs to one part of a site — without it, a tool for a product page reports itself as broken on a search page and drags the adapter's health down with it |
+| `i18n` | optional; display text per locale, as `{"ja": {"description": "…"}}`. What a person is shown. An agent is always handed `description`, so do not translate that |
 | `steps` | 1–50, from the closed set below |
 
 ## 3. The step vocabulary

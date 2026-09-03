@@ -105,6 +105,35 @@ export const inputSchemaSchema = z.object({
 });
 export type ToolInputSchema = z.infer<typeof inputSchemaSchema>;
 
+/**
+ * What a person is shown, apart from what an agent is given.
+ *
+ * A tool's `description` is written for the model that has to decide whether to
+ * call it, and translating that would be translating an instruction. But the
+ * Store and the extension put the same sentence in front of a reader whose
+ * interface is otherwise in their language, so the screens read half in one
+ * language and half in another.
+ *
+ * These are display strings and nothing else: the agent is handed `description`
+ * whatever the reader's language is. Tool names, capability names and the
+ * format's own field names are not here and are not translated — they are what
+ * a person types, searches for, and matches against what the tool announces.
+ *
+ * Open-ended by locale so a contribution can add one without the format moving.
+ * A community adapter with no entry for the reader's language falls back to the
+ * canonical text, which is the honest outcome — better an untranslated sentence
+ * than a missing one.
+ */
+const localizedSchema = z
+  .record(
+    z.string().regex(/^[a-z]{2}(-[A-Z]{2})?$/, 'locale keys are like "ja" or "pt-BR"'),
+    z.object({
+      name: z.string().min(1).max(120).optional(),
+      description: z.string().min(1).max(1000).optional(),
+    }),
+  )
+  .optional();
+
 export const toolSchema = z.object({
   name: z
     .string()
@@ -131,6 +160,8 @@ export const toolSchema = z.object({
    * Declaring this is how a tool says "not here" instead of "broken".
    */
   appliesWhen: z.array(selectorSchema).max(10).optional(),
+  /** Display text per locale. The agent always gets `description`. */
+  i18n: localizedSchema,
   steps: z.array(stepSchema).min(1).max(50),
 });
 export type ToolDefinition = z.infer<typeof toolSchema>;
@@ -173,9 +204,32 @@ export const adapterSchema = z.object({
    * span different services.
    */
   origins: z.array(originSchema).min(1).max(4),
+  /** Display text per locale, for the adapter's own name and description. */
+  i18n: localizedSchema,
   tools: z.array(toolSchema).min(1).max(50),
 });
 export type AdapterDefinition = z.infer<typeof adapterSchema>;
+
+/**
+ * The name or description to put in front of a reader, in their language where
+ * the author wrote one.
+ *
+ * Never used for what is handed to an agent: that is `tool.description`, in the
+ * language its author wrote it in, because it is an instruction to a model
+ * rather than a caption on a screen.
+ */
+export function displayText(
+  entity: { name?: string; description?: string; i18n?: Record<string, { name?: string; description?: string }> },
+  field: 'name' | 'description',
+  locale: string,
+): string | undefined {
+  const exact = entity.i18n?.[locale]?.[field];
+  if (exact) return exact;
+  // "ja-JP" should find an entry written as "ja".
+  const base = locale.split('-')[0];
+  const wider = base && base !== locale ? entity.i18n?.[base]?.[field] : undefined;
+  return wider ?? entity[field];
+}
 
 export interface AdapterValidationResult {
   ok: boolean;

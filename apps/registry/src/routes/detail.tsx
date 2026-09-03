@@ -4,6 +4,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { findEntry } from '../lib/catalog';
 import {
   adapterDescription,
+  adapterName,
   categoryLabel,
   localizedInputSchema,
   toolDescription,
@@ -79,7 +80,7 @@ export function AdapterDetail() {
           <AdapterIcon id={adapter.id} category={adapter.category} size={128} />
           <div>
             <h1 className="product__title" data-field="name">
-              {adapter.name}
+              {adapterName(adapter, locale)}
             </h1>
             <p className="product__sub" data-field="description">
               {adapterDescription(adapter, locale)}
@@ -233,7 +234,7 @@ export function AdapterDetail() {
                   {health && <HealthBadge status={health.status} />}
                 </div>
                 <p className="tool__desc">
-                  {toolDescription(adapter.id, tool.name, tool.description, locale)}
+                  {toolDescription(adapter.id, tool, locale)}
                 </p>
                 <p>{t('detail.does', [toolEffectSummary(adapter, tool.name, locale), tool.steps.length])}</p>
                 <details>

@@ -3,6 +3,7 @@ import { CATALOG, findEntry, searchCatalog } from './catalog';
 import {
   JA_CATALOG_COPY,
   adapterDescription,
+  adapterName,
   catalogSearchText,
   categoryLabel,
   localizedInputSchema,
@@ -55,7 +56,7 @@ describe('official catalogue translations', () => {
     const adapter = findEntry('demo-crm')!.adapter;
     const tool = adapter.tools[0]!;
     expect(adapterDescription(adapter, 'en')).toBe(adapter.description);
-    expect(toolDescription(adapter.id, tool.name, tool.description, 'en')).toBe(tool.description);
+    expect(toolDescription(adapter.id, tool, 'en')).toBe(tool.description);
     expect(localizedInputSchema(adapter.id, tool.name, tool.inputSchema, 'en')).toBe(tool.inputSchema);
   });
 
@@ -99,5 +100,48 @@ describe('official catalogue translations', () => {
     expect(verifiedDate('2026-09-01', 'en', 'fallback')).toBe('Sep 1, 2026');
     expect(verifiedDate('2026-09-01', 'ja', 'fallback')).toBe('2026年9月1日');
     expect(verifiedDate(undefined, 'ja', '未確認')).toBe('未確認');
+  });
+});
+
+describe('an adapter that carries its own translation', () => {
+  const adapter = {
+    id: 'community-thing',
+    name: 'Community Thing',
+    version: '1.0.0',
+    description: 'Does a thing.',
+    i18n: { ja: { name: 'コミュニティのやつ', description: 'あることをします。' } },
+    origins: ['https://thing.example.com'],
+    tools: [
+      {
+        name: 'do_it',
+        description: 'Does it.',
+        capability: 'READ' as const,
+        inputSchema: { type: 'object' as const, properties: {} },
+        i18n: { ja: { description: 'それをします。' } },
+        steps: [{ type: 'readText' as const, selector: '#x', as: 'x' }],
+      },
+    ],
+  };
+
+  /*
+   * The gap this closes: the site's own Japanese copy is a table keyed by the
+   * adapters this project ships, so anything contributed read in English on an
+   * otherwise Japanese screen, with no way for its author to fix that.
+   */
+  it('is shown in the reader’s language without this site knowing about it', () => {
+    expect(adapterName(adapter, 'ja')).toBe('コミュニティのやつ');
+    expect(adapterDescription(adapter, 'ja')).toBe('あることをします。');
+    expect(toolDescription(adapter.id, adapter.tools[0]!, 'ja')).toBe('それをします。');
+  });
+
+  it('falls back to what the author wrote when there is no translation', () => {
+    const untranslated = { ...adapter, i18n: undefined, tools: [{ ...adapter.tools[0]!, i18n: undefined }] };
+    expect(adapterDescription(untranslated, 'ja')).toBe('Does a thing.');
+    expect(toolDescription(untranslated.id, untranslated.tools[0]!, 'ja')).toBe('Does it.');
+  });
+
+  it('leaves English alone', () => {
+    expect(adapterName(adapter, 'en')).toBe('Community Thing');
+    expect(toolDescription(adapter.id, adapter.tools[0]!, 'en')).toBe('Does it.');
   });
 });

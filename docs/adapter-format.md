@@ -75,6 +75,26 @@ cannot tell that from a selector that has gone stale, and it must assume the
 worse of the two. One undeclared tool for another page is enough to report a
 working adapter as `degraded` everywhere else.
 
+## Display text in another language
+
+`i18n` carries what a *reader* is shown, per locale, on the adapter and on each
+tool:
+
+```json
+"i18n": { "ja": { "name": "…", "description": "…" } }
+```
+
+It is display text and nothing else. **An agent is always handed
+`tool.description`**, in the language its author wrote it in, because that is an
+instruction to a model rather than a caption on a screen. Tool names, capability
+names and this format's own field names are not translated either — they are
+what a person types, searches for, and matches against what the tool announces.
+
+Locale keys look like `ja` or `pt-BR`; `ja-JP` finds an entry written as `ja`.
+An adapter with no entry for the reader's language falls back to the canonical
+text, which is why this is optional: an untranslated sentence beats a missing
+one.
+
 ## Capabilities
 
 | | Meaning | Confirmation |

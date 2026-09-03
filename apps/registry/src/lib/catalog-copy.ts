@@ -1,4 +1,10 @@
-import { summarizeEffects, type AdapterCategory, type AdapterDefinition } from '@liha/adapter-schema';
+import {
+  displayText,
+  summarizeEffects,
+  type AdapterCategory,
+  type AdapterDefinition,
+  type ToolDefinition,
+} from '@liha/adapter-schema';
 import type { Locale } from '../i18n';
 import type { CatalogEntry } from './catalog';
 
@@ -144,19 +150,40 @@ export function categoryLabel(category: AdapterCategory | undefined, locale: Loc
   return CATEGORY_LABELS[locale][category ?? 'other'];
 }
 
+/*
+ * The author's own translation first.
+ *
+ * `JA_CATALOG_COPY` below is this site's copy for the adapters this project
+ * ships, and it is the reason a community adapter read in English on a Japanese
+ * screen: there was no way for anyone but us to add a language. An adapter can
+ * now carry its own display text, so this asks the definition before it asks
+ * the local copy, and falls through to the canonical English rather than
+ * showing nothing.
+ *
+ * What an agent is handed is not touched by any of this. `tool.description` is
+ * an instruction to a model, and it stays in the language its author wrote it
+ * in.
+ */
 export function adapterDescription(adapter: AdapterDefinition, locale: Locale): string {
+  const authored = displayText(adapter, 'description', locale);
+  if (authored && authored !== adapter.description) return authored;
   if (locale === 'ja') return JA_CATALOG_COPY[adapter.id]?.description ?? adapter.description ?? '';
   return adapter.description ?? '';
 }
 
+export function adapterName(adapter: AdapterDefinition, locale: Locale): string {
+  return displayText(adapter, 'name', locale) ?? adapter.name;
+}
+
 export function toolDescription(
   adapterId: string,
-  toolName: string,
-  canonical: string,
+  tool: Pick<ToolDefinition, 'name' | 'description' | 'i18n'>,
   locale: Locale,
 ): string {
-  if (locale === 'ja') return JA_CATALOG_COPY[adapterId]?.tools[toolName]?.description ?? canonical;
-  return canonical;
+  const authored = displayText(tool, 'description', locale);
+  if (authored && authored !== tool.description) return authored;
+  if (locale === 'ja') return JA_CATALOG_COPY[adapterId]?.tools[tool.name]?.description ?? tool.description;
+  return tool.description;
 }
 
 export function catalogSearchText(entry: CatalogEntry, locale: Locale): string {
@@ -164,7 +191,7 @@ export function catalogSearchText(entry: CatalogEntry, locale: Locale): string {
   return [
     adapterDescription(entry.adapter, locale),
     categoryLabel(entry.adapter.category, locale),
-    ...entry.adapter.tools.map((tool) => toolDescription(entry.adapter.id, tool.name, tool.description, locale)),
+    ...entry.adapter.tools.map((tool) => toolDescription(entry.adapter.id, tool, locale)),
   ].join(' ');
 }
 

@@ -1,8 +1,8 @@
-import type { Capability, HealthStatus } from '@liha/adapter-schema';
+import { displayText, type Capability, type HealthStatus } from '@liha/adapter-schema';
 import type { InstalledAdapterStatus } from '@liha/adapter-runtime';
 import type { CatalogEntry } from '@liha/shared';
 import { ext } from '../platform';
-import { t } from '../i18n';
+import { currentLocale, t } from '../i18n';
 
 /**
  * The adapter card, shared by the two places that show one.
@@ -55,7 +55,16 @@ export function renderAdapterCard(entry: CatalogEntry, options: CardOptions): HT
   const card = el('div', { class: 'card' });
 
   const header = el('div', { class: 'row' });
-  header.append(el('h3', {}, entry.adapter.name));
+  /*
+   * The reader's language where the author wrote one. What an agent is handed
+   * is untouched: `tool.description` is an instruction to a model, not a
+   * caption, and it stays as its author wrote it.
+   */
+  const shown = (
+    entity: { name?: string; description?: string; i18n?: Record<string, { name?: string; description?: string }> },
+    field: 'name' | 'description',
+  ) => displayText(entity, field, currentLocale()) ?? '';
+  header.append(el('h3', {}, shown(entry.adapter, 'name')));
 
   const toggle = el('label', { class: 'switch' });
   // role="switch" rather than a bare checkbox: it is on/off state, not a choice
@@ -115,7 +124,7 @@ export function renderAdapterCard(entry: CatalogEntry, options: CardOptions): HT
     const line = el('div', { class: 'row' });
     line.append(el('code', {}, tool.name), capabilityBadge(tool.capability));
     row.append(line);
-    row.append(el('div', { class: 'muted' }, tool.description));
+    row.append(el('div', { class: 'muted' }, shown(tool, 'description')));
 
     const status = el('div', { class: 'row row--meta' });
     /*
