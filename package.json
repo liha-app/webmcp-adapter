@@ -1,6 +1,6 @@
 {
   "name": "liha-webmcp-adapter",
-  "version": "1.0.5",
+  "version": "1.0.6",
   "private": true,
   "description": "Make websites agent-ready without changing them. Add WebMCP tools to sites that never implemented WebMCP.",
   "license": "MIT",
