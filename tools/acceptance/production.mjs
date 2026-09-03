@@ -126,6 +126,29 @@ async function main() {
     check(response?.ok === true, `${id} serves ${path} through the SPA fallback`);
   }
 
+  /*
+   * ...and the fallback must not swallow the one file that is not the app.
+   *
+   * The hero's "onboard your agent" control copies a sentence pointing at this
+   * URL. A catch-all rewrite would answer it with index.html, an agent would
+   * fetch a page of HTML instead of instructions, and nothing local would
+   * notice: `vite preview` serves the file either way. It has to be checked
+   * against the deployed origin, which is here.
+   */
+  group('The agent onboarding document is served as itself');
+  {
+    const url = `${production('registry')}/agent-setup/prompt.md`;
+    const response = await fetchOrNull(url);
+    if (check(response?.ok === true, 'the prompt answers 200', response ? String(response.status) : 'no answer')) {
+      const type = response.headers.get('content-type') ?? '';
+      check(type.includes('markdown') || type.includes('text/plain'), 'it is served as text, not as the app', type);
+      const body = await response.text();
+      check(!body.includes('<!doctype html'), 'the SPA fallback did not swallow it', body.slice(0, 60));
+      check(body.startsWith('# Onboard your agent'), 'and it is the document, in full', body.slice(0, 60));
+      check(body.includes('chrome://flags/#enable-webmcp-testing'), 'including what the browser needs first');
+    }
+  }
+
   const browser = new Browser({ binary: findChromeBinary(), extensionPath: EXT }).launch();
   try {
     await browser.ready();
