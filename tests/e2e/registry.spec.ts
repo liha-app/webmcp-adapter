@@ -499,9 +499,16 @@ test.describe('Building an adapter by asking for one', () => {
         ],
       }),
     );
-    await page.locator('[data-action="validate-draft"]').click();
-    await expect(page.getByTestId('draft-result')).toContainText('Example — 1 tool(s), up to READ.');
-    await expect(page.getByTestId('draft-result')).toContainText('https://app.example.com');
+    // The verdict is read at a glance rather than in a sentence: what it is,
+    // where it runs, the worst it can do, and one card per tool.
+    const verdict = page.getByTestId('draft-result');
+    await expect(verdict).toContainText('Example');
+    await expect(verdict).toContainText('https://app.example.com');
+    await expect(verdict.locator('.verdict__head .cap')).toHaveText('READ');
+    await expect(verdict.locator('.toolcards li')).toHaveCount(1);
+    await expect(verdict.locator('.toolcards__name')).toHaveText('find_issue');
+    await expect(verdict.locator('.toolcards__steps')).toHaveText('2 steps');
+    await expect(page.getByTestId('draft-state')).toHaveText('Valid');
 
     const [saved] = await Promise.all([
       page.waitForEvent('download'),
@@ -537,5 +544,66 @@ test.describe('Building an adapter by asking for one', () => {
     // No extension in this browser, so the honest answer is that, not a spinner
     // that never resolves and not a claim that it worked.
     await expect(page.getByTestId('draft-install-result')).toContainText(/extension/i, { timeout: 20_000 });
+  });
+});
+
+test.describe('The Studio bench', () => {
+  test.beforeEach(async ({ page }) => {
+    await page.goto('http://localhost:5280/create');
+  });
+
+  test('checks the draft as you type, without being asked', async ({ page }) => {
+    // A validator you have to ask is a form. This one answers while you work.
+    await expect(page.getByTestId('draft-state')).toHaveText('Paste a draft');
+    await page.getByTestId('draft-json').fill('{ not json');
+    await expect(page.getByTestId('draft-state')).toContainText('problem', { timeout: 5000 });
+    await expect(page.locator('.editor')).toHaveAttribute('data-state', 'bad');
+  });
+
+  test('the pipeline follows the work rather than a click', async ({ page }) => {
+    const stages = page.locator('.agentflow > li');
+    await expect(stages).toHaveCount(4);
+    await expect(stages.nth(0)).toHaveAttribute('data-active', 'true');
+
+    await page.getByTestId('draft-json').fill('{');
+    await expect(stages.nth(2)).toHaveAttribute('data-active', 'true');
+    await expect(stages.nth(0)).toHaveAttribute('data-done', 'true');
+
+    await page.getByTestId('draft-json').fill(
+      JSON.stringify({
+        id: 'x-site',
+        name: 'X',
+        version: '1.0.0',
+        origins: ['https://app.example.com'],
+        tools: [
+          {
+            name: 'read_it',
+            description: 'Reads the page.',
+            capability: 'READ',
+            inputSchema: { type: 'object', properties: {} },
+            steps: [{ type: 'readText', selector: 'h1', as: 'title' }],
+          },
+        ],
+      }),
+    );
+    await expect(stages.nth(3)).toHaveAttribute('data-active', 'true', { timeout: 5000 });
+  });
+
+  test('the rail reports the browser rather than assuming it', async ({ page }) => {
+    // No extension and no WebMCP in this browser, and the bench says so instead
+    // of showing two hopeful ticks.
+    const rail = page.getByTestId('bench-rail');
+    await expect(rail.locator('.lamp')).toHaveCount(2);
+    await expect(rail.locator('.lamp[data-state="on"]')).toHaveCount(0);
+    await expect(rail.locator('.lamp[data-state="off"]')).toHaveCount(2, { timeout: 10_000 });
+  });
+
+  test('the download link is reachable to a click but not to the eye', async ({ page }) => {
+    // It was visible for one build, sitting next to the buttons as a stray link.
+    const link = page.locator('.editor__foot a.offscreen');
+    await expect(link).toHaveCount(1);
+    const box = await link.boundingBox();
+    expect(box!.width).toBeLessThan(3);
+    expect(box!.height).toBeLessThan(3);
   });
 });

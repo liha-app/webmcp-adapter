@@ -50,7 +50,7 @@ export const ja: Record<MessageKey, string> = {
   'agent.title': 'あるいは、エージェントに書いてもらう。',
   'agent.lede':
     'WebMCP非対応のサイトで「何を頼めるようにしたいか」を伝えるだけです。エージェントがページを読み、Adapterを書き、ここで検証します。検証ツール自体がWebMCPツールなので、人を介さずに実行できます。',
-  'agent.s1': '頼みたいことを言う',
+  'agent.s1': '頼む',
   'agent.s1Body':
     'サイトを開いて、セレクタではなく「やりたいこと」を伝えます。下のプロンプトが下準備をします。',
   'agent.example1': '「このアプリから最新の課題をチェックして」',
@@ -59,16 +59,21 @@ export const ja: Record<MessageKey, string> = {
     'そのうえで、いま開いているサイト向けのAdapterを作ってください。必要なツールはこれから伝えるので、聞いてください。',
   'agent.copyStarter': 'スタータープロンプトをコピー',
   'agent.copied': 'コピーしました',
-  'agent.s2': 'ページを読んでJSONを書く',
+  'agent.s2': '書く',
   'agent.s2Body':
     '1タスク1ツール。人が使うのと同じコントロールを通します。コードは書けません — この形式にコードを載せられるステップは存在しないからです。',
-  'agent.s3': 'ここで検証する',
+  'agent.s3': '検証する',
   'agent.s3Body':
     'validate_adapter はこのページのWebMCPツールなので、エージェントが直接呼んでエラーをテキストで受け取れます。下の入力欄は同じ検証器で、自分の目で見たいとき用です。',
-  'agent.s4': 'ダウンロードするか、インストールする',
+  'agent.s4': 'インストール',
   'agent.s4Body':
     'インストールは拡張機能を通ります。拡張機能が自前のウィンドウで、対象originと権限をすべて提示して確認します。このページが単独で何かをインストールすることはありません。',
-  'agent.paste': 'Adapterを貼り付けて検証',
+  'agent.paste': '下書きを貼り付ける',
+  'agent.pillValid': '有効',
+  'agent.pillProblems': '問題 {0} 件',
+  'agent.stepCount': '{0} ステップ',
+  'agent.railWebmcp': 'WebMCP',
+  'agent.railExtension': '拡張機能',
   'agent.validate': '検証する',
   'agent.download': 'JSONをダウンロード',
   'agent.install': 'インストール',
@@ -78,7 +83,6 @@ export const ja: Record<MessageKey, string> = {
     'このブラウザに拡張機能が入っていません。先に入れてから戻ってきてください。JSONをダウンロードして拡張機能から読み込むこともできます。',
   'agent.notJson': 'JSONとして読めません：',
   'agent.rejected': 'まだ通りません：',
-  'agent.accepted': '{0} — ツール{1}個、最大{2}。',
   'agent.effects': '全ツール合計でクリック{0}回、入力{1}回、読み取り{2}回。',
 
   /* --------------------------------------------------------------- hero -- */

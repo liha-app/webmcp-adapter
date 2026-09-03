@@ -17,6 +17,8 @@ const placeholders = (value: string): string[] => [...value.matchAll(/\{(\d+)\}/
  */
 const INTENTIONALLY_IDENTICAL = new Set([
   'hero.eyebrow',
+  // The protocol's name, which is the same word in both languages.
+  'agent.railWebmcp',
   // The Studio's own name, which is what it is called in the extension too.
   'create.eyebrow',
   'nav.github',
