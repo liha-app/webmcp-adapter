@@ -16,6 +16,7 @@ const root = join(import.meta.dirname, '../../apps/extension');
 function manifest(...args: string[]) {
   execFileSync('node', [join(root, 'build.mjs'), ...args], { cwd: root, stdio: 'ignore' });
   return JSON.parse(readFileSync(join(root, 'dist/manifest.json'), 'utf8')) as {
+    permissions: string[];
     host_permissions: string[];
     content_scripts: Array<{ matches: string[] }>;
   };
@@ -35,5 +36,10 @@ describe('the release manifest', () => {
   it('keeps them in the default build, which is what development runs on', () => {
     const dev = manifest();
     expect(dev.host_permissions.some((pattern) => pattern.includes('localhost'))).toBe(true);
+  });
+
+  it('uses temporary active-tab access to record a site before it has an adapter', () => {
+    const release = manifest('--release');
+    expect(release.permissions).toContain('activeTab');
   });
 });

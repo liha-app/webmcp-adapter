@@ -37,6 +37,25 @@ describe('draftFromRecording', () => {
     expect(draft.steps[0]?.value).toBe('');
     expect(draft.steps[0]?.parameterized).toBe(false);
   });
+
+  it('keeps a recorded navigation as a literal same-origin path', () => {
+    const navigated: RecordedAction[] = [
+      { at: 1, kind: 'navigate', selector: '', candidates: [], path: '/customers?page=2' },
+    ];
+    const draft = draftFromRecording(navigated, 'https://crm.example.com');
+    expect(draft.steps[0]).toMatchObject({ kind: 'navigate', value: '/customers?page=2', parameterized: false });
+
+    const adapter = draftToAdapter({
+      ...draft,
+      adapterId: 'crm-adapter',
+      adapterName: 'CRM adapter',
+      toolName: 'open_customers',
+      toolDescription: 'Open the second page of customers.',
+      capability: 'INTERACT',
+    }) as { tools: Array<{ steps: Array<Record<string, unknown>>; inputSchema: { properties: object } }> };
+    expect(adapter.tools[0]?.steps).toEqual([{ type: 'navigate', path: '/customers?page=2' }]);
+    expect(adapter.tools[0]?.inputSchema.properties).toEqual({});
+  });
 });
 
 describe('draftToAdapter', () => {

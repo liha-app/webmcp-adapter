@@ -1,4 +1,4 @@
-import type { PopupState } from '@liha/shared';
+import type { PopupState, RecordingCommandOutcome } from '@liha/shared';
 import { diagnostics, ext } from '../platform';
 import { applyDocumentLanguage, loadLocale, t } from '../i18n';
 import { el, renderAdapterCard, send } from '../ui/adapters';
@@ -95,10 +95,20 @@ function render(state: PopupState): void {
     recording ? t('popup.stopRecording', [state.recording?.actions.length ?? 0]) : t('popup.record'),
   );
   record.addEventListener('click', () => {
-    void send({ type: recording ? 'liha/stop-recording' : 'liha/start-recording' }).then(() => {
-      if (recording) window.close();
-      else load();
-    });
+    if (recording) {
+      void send<RecordingCommandOutcome>({ type: 'liha/stop-recording' }).then(() => window.close());
+      return;
+    }
+
+    void send<RecordingCommandOutcome>({ type: 'liha/start-recording' })
+      .then((outcome) => {
+        if (outcome.ok) {
+          load();
+          return;
+        }
+        actions.append(el('p', { class: 'notice' }, t('popup.recordUnavailable')));
+      })
+      .catch(() => actions.append(el('p', { class: 'notice' }, t('popup.recordUnavailable'))));
   });
   actions.append(record);
   app.append(actions);
