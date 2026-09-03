@@ -1,6 +1,6 @@
 import { detectModelContext, errorResult, textResult, type ToolResult } from '@liha/adapter-runtime';
 import { validateAdapter, type Capability } from '@liha/adapter-schema';
-import { extensionPresent, requestInstall, requestProbe } from './extension';
+import { extensionPresent, requestInstall } from './extension';
 import { CATALOG, findEntry, searchCatalog } from './catalog';
 import { SETUP_STEPS, demoApps } from './demos';
 // Tool output is read by models and asserted by the acceptance suite, so it
@@ -221,50 +221,6 @@ export const REGISTRY_TOOLS: RegistryTool[] = [
             ? 'Valid. This adapter would be accepted by the runtime.'
             : `Not valid:\n${result.errors.map((error) => `- ${error}`).join('\n')}`,
           { valid: result.ok, errors: result.errors },
-        );
-      },
-    },
-    {
-      name: 'probe_selectors',
-      example: {
-        origin: 'https://demo-shop.liha.review',
-        selectors: "[data-testid='product-search']\n[data-action='add-to-cart']",
-      },
-      description:
-        'Count how many elements each CSS selector matches on an open page at the given origin. One selector per line. ' +
-        'Only counts come back — never text, never attributes, never the page itself. A count of 1 is usable; 0 means the ' +
-        'selector is wrong; more than 1 means it is ambiguous and the adapter runtime will refuse to act on it. Use this to ' +
-        'check the selectors you intend to put in an adapter instead of guessing at them. Requires a tab open on that origin ' +
-        'and the Liha extension installed.',
-      inputSchema: {
-        type: 'object',
-        properties: {
-          origin: { type: 'string', description: 'Exact origin, such as https://demo-shop.liha.review' },
-          selectors: { type: 'string', description: 'CSS selectors to count, one per line' },
-        },
-        required: ['origin', 'selectors'],
-      },
-      execute: async (input) => {
-        const origin = String(input.origin ?? '').trim();
-        const selectors = String(input.selectors ?? '')
-          .split('\n')
-          .map((selector) => selector.trim())
-          .filter(Boolean);
-        if (!origin) return errorResult('An origin is required, such as https://demo-shop.liha.review');
-        if (selectors.length === 0) return errorResult('Give at least one CSS selector, one per line.');
-        if (selectors.length > 25) return errorResult('At most 25 selectors at a time.');
-
-        if (!(await extensionPresent())) return errorResult(MISSING_EXTENSION);
-        const outcome = await requestProbe(origin, selectors);
-        if (outcome.error) return errorResult(outcome.error);
-        const counts = outcome.probe ?? {};
-        const verdict = (count: number) =>
-          count === 1 ? 'usable' : count === 0 ? 'no match' : `ambiguous (${count} matches)`;
-        const lines = selectors.map((selector) => `- ${selector} → ${verdict(counts[selector] ?? 0)}`);
-        const usable = selectors.filter((selector) => counts[selector] === 1).length;
-        return textResult(
-          `${usable} of ${selectors.length} selector(s) resolve to exactly one element on ${origin}:\n${lines.join('\n')}`,
-          { origin, counts, usable },
         );
       },
     },

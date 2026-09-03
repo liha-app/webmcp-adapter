@@ -9,12 +9,8 @@
  */
 import {
   STORE_INSTALL_EVENT,
-  STORE_PROBE_EVENT,
-  STORE_PROBE_RESPONSE_EVENT,
   STORE_STATE_EVENT,
   STORE_STATE_RESPONSE_EVENT,
-  type ProbeOutcome,
-  type ProbeRequest,
   type StoreStateResponse,
 } from '@liha/shared';
 import { ext } from '../platform';
@@ -52,23 +48,20 @@ document.addEventListener(STORE_INSTALL_EVENT, (event) => {
 });
 
 /*
- * Counting selectors on another origin's page. The service worker does the
- * looking, in the ISOLATED world, and returns numbers — this relay never sees
- * page content because none is ever produced.
+ * There is deliberately no selector probe here any more.
+ *
+ * This relay ran in the Store's page, so any JavaScript on that page could ask
+ * the extension to run an arbitrary CSS selector against a *different* origin
+ * it had permission for and hand back a count. Counts are enough: repeat
+ * `[data-token^="a"]`, `[data-token^="b"]` and you read an attribute a
+ * character at a time, or you learn whether someone is signed in, or how many
+ * records they have. It needed an XSS on the Store to reach, and if that ever
+ * happened the extension's host permissions became the attacker's.
+ *
+ * Probing still exists — in the Studio, which is an extension page the user
+ * opened, not a website the extension trusts. The service worker refuses the
+ * message from anywhere else.
  */
-document.addEventListener(STORE_PROBE_EVENT, (event) => {
-  const detail = (event as CustomEvent<ProbeRequest>).detail;
-  if (!detail?.requestId || !detail.origin || !Array.isArray(detail.selectors)) return;
-  const answer = (outcome: Omit<ProbeOutcome, 'requestId'>) => {
-    document.dispatchEvent(
-      new CustomEvent(STORE_PROBE_RESPONSE_EVENT, { detail: { requestId: detail.requestId, ...outcome } }),
-    );
-  };
-  ext.runtime
-    .sendMessage({ type: 'liha/probe-selectors', origin: detail.origin, selectors: detail.selectors })
-    .then((outcome: Omit<ProbeOutcome, 'requestId'>) => answer(outcome ?? { error: 'No answer from the extension.' }))
-    .catch((error: unknown) => answer({ error: error instanceof Error ? error.message : String(error) }));
-});
 
 document.addEventListener(STORE_STATE_EVENT, () => {
   ext.runtime

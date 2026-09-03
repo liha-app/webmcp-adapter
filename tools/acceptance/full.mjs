@@ -350,7 +350,6 @@ async function main() {
       'get_adapter_permissions',
       'validate_adapter',
       'get_demo_info',
-      'probe_selectors',
       'install_adapter',
     ];
     must(
@@ -402,21 +401,32 @@ async function main() {
     await shopTab.goto('http://localhost:5274/');
     await sleep(600);
 
-    const probed = await invoke(page, watch, 'probe_selectors', {
-      origin: 'http://localhost:5274',
-      selectors: "[data-testid='config-total']\n[data-action='add-to-bag']\n[data-testid='nope']\nli",
-    });
-    const probeText = outputText(probed);
-    check(probeText.includes("[data-testid='config-total'] → usable"), 'probe_selectors confirms a good selector', probeText.replace(/\n/g, ' | ').slice(0, 200));
-    check(probeText.includes("[data-testid='nope'] → no match"), 'and reports one that matches nothing');
-    check(/li → ambiguous \(\d+ matches\)/.test(probeText), 'and one that is ambiguous, which the runtime would refuse');
+    /*
+     * There is no probe_selectors here any more. It ran an arbitrary selector
+     * against another origin and returned a count, reachable from any script on
+     * the Store's page — probing lives in the Studio now, which is a page the
+     * extension owns.
+     */
     check(
-      !/Nimbus 3|SSD|GB\b/i.test(probeText),
-      'it returns counts and no page content — an agent cannot read the page with it',
-      probeText.replace(/\n/g, ' | ').slice(0, 200),
+      !watch.tools.has('probe_selectors'),
+      'the Store offers no selector probe to the page it is on',
+      [...watch.tools.keys()].join(', '),
+    );
+    check(
+      (await page.eval(`(async () => {
+        const done = new Promise((resolve) => {
+          document.addEventListener('liha:probe-selectors-result', (e) => resolve(JSON.stringify(e.detail)), { once: true });
+          setTimeout(() => resolve('no-answer'), 2500);
+        });
+        document.dispatchEvent(new CustomEvent('liha:probe-selectors', {
+          detail: { requestId: 'x', origin: 'http://localhost:5274', selectors: ['li'] },
+        }));
+        return done;
+      })()`)) === 'no-answer',
+      'and firing the old DOM event by hand gets no answer at all',
     );
 
-    // Written the way an agent would: only selectors it just checked.
+    // The draft an agent writes, which the install path below asks about.
     const authored = {
       id: 'agent-authored-shop',
       name: 'Nimbus configurator',
@@ -441,7 +451,6 @@ async function main() {
         },
       ],
     };
-
     const rejected = await invoke(page, watch, 'install_adapter', {
       adapter: JSON.stringify({ ...authored, origins: ['https://*.example.com'] }),
     });

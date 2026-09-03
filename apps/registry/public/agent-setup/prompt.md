@@ -151,7 +151,9 @@ meaning.
 
 A selector must resolve to exactly one element. If two match, the runtime fails
 the call rather than guessing, which is the behaviour you want — but you should
-find that out while writing, not later.
+find that out while writing, not later. The Studio counts matches for you; the
+Store deliberately does not, because a page that can ask the extension to count
+elements on another origin can read that origin one character at a time.
 
 ## 8. How to check your work
 
@@ -161,7 +163,6 @@ on, the portal at `/` exposes its own tools and you can use them directly:
 | Tool | Use |
 |---|---|
 | `validate_adapter` | Parse and validate a draft. Returns the exact errors. |
-| `probe_selectors` | On the target origin, count how many elements each selector matches. Returns counts only — it cannot read the page. |
 | `search_adapters`, `get_adapter`, `list_adapter_tools` | Read the official catalogue for worked examples. |
 | `get_adapter_permissions` | See what an adapter is asking for, before installing it. |
 | `install_adapter` | Ask to install a draft. **The user confirms in a real window; you cannot install anything on your own.** |
@@ -183,7 +184,7 @@ against the adapters in `adapters/*.json`.
 1. Ask which site, and what the person wants to be able to ask an agent to do
    on it. Do not guess a tool list.
 2. Open the site. Find the controls those tasks actually go through, and the
-   selectors that identify them. Verify each with `probe_selectors` if you can.
+   selectors that identify them. Check each in the Studio, which counts matches as you type.
 3. Write the adapter. One tool per task, described the way a person would ask
    for it.
 4. Declare each capability honestly.

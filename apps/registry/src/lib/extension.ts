@@ -1,9 +1,5 @@
 import {
   STORE_INSTALL_EVENT,
-  STORE_PROBE_EVENT,
-  STORE_PROBE_RESPONSE_EVENT,
-  type ProbeOutcome,
-  type ProbeRequest,
   STORE_STATE_EVENT,
   STORE_STATE_RESPONSE_EVENT,
   type StoreStateResponse,
@@ -72,29 +68,17 @@ export interface InstallOutcome {
  * ambiguity — and it does not need, and must not get, the page's contents to
  * find that out.
  */
-export function requestProbe(origin: string, selectors: string[]): Promise<ProbeOutcome> {
-  const requestId = crypto.randomUUID();
-  return new Promise((resolve) => {
-    const timer = setTimeout(() => {
-      document.removeEventListener(STORE_PROBE_RESPONSE_EVENT, onResult);
-      resolve({ requestId, error: 'The extension did not respond. Is it installed and enabled?' });
-    }, 20_000);
-    // Correlated by id rather than answered once: two probes can be in flight,
-    // and the first answer back is not necessarily the answer to this question.
-    const onResult = (event: Event) => {
-      const detail = (event as CustomEvent<ProbeOutcome>).detail;
-      if (detail?.requestId !== requestId) return;
-      clearTimeout(timer);
-      document.removeEventListener(STORE_PROBE_RESPONSE_EVENT, onResult);
-      resolve(detail);
-    };
-    document.addEventListener(STORE_PROBE_RESPONSE_EVENT, onResult);
-    document.dispatchEvent(
-      new CustomEvent(STORE_PROBE_EVENT, { detail: { requestId, origin, selectors } satisfies ProbeRequest }),
-    );
-  });
-}
-
+/*
+ * There is no requestProbe here any more.
+ *
+ * It asked the extension to run a CSS selector against another origin and
+ * return a count, over a DOM event any script on this page could fire. Counts
+ * leak: repeated prefix queries read an attribute a character at a time, and a
+ * single one answers "is this person signed in". It needed an XSS here to
+ * reach, and that is exactly the case where it would have mattered.
+ *
+ * Probing lives in the Studio, which is a page the extension owns.
+ */
 export function requestInstall(adapter: AdapterDefinition): Promise<InstallOutcome> {
   return new Promise((resolve) => {
     const timer = setTimeout(() => {

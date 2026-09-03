@@ -177,15 +177,11 @@ const result = validateAdapter(JSON.parse(text));
 
 ## Writing one as an agent
 
-The portal registers three tools that make this a loop rather than a guess. All
-three are ordinary WebMCP tools on `https://webmcp-adapter.liha.dev`, so any
-agent that can reach that page can use them.
+The portal registers two tools that make this a loop rather than a guess. Both
+are ordinary WebMCP tools on `https://webmcp-adapter.liha.dev`, so any agent
+that can reach that page can use them.
 
 ```
-probe_selectors({ origin: "https://shop.example.com",
-                  selectors: "[data-testid='search']\n[data-action='add']" })
-  → 2 of 2 selector(s) resolve to exactly one element
-
 validate_adapter({ adapter: "<the JSON>" })
   → Valid. This adapter would be accepted by the runtime.
 
@@ -193,10 +189,13 @@ install_adapter({ adapter: "<the JSON>" })
   → a confirmation window opens; a person approves the origins and capabilities
 ```
 
-`probe_selectors` answers with counts and nothing else — no text, no attributes,
-no page. That is deliberate: an agent needs to know whether the selector it
-picked hits exactly one element, because the runtime is fail-closed on ambiguity,
-and it does not need the page's contents to find that out.
+Counting selector matches is the Studio's job rather than the portal's, and
+that is deliberate. A count is not nothing: ask `[data-token^="a"]`, then
+`[data-token^="b"]`, and you read an attribute a character at a time on an
+origin you cannot see. A tool on a web page that can ask the extension to do
+that turns the extension's host permissions into the page's, the moment anything
+gets injected into it. The Studio is a page the extension owns, opened by the
+person using it, so the same capability lives there instead.
 
 `install_adapter` cannot install anything on its own. It hands the definition to
 the extension, which re-validates it and shows the same confirmation the Store's

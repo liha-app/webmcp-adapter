@@ -400,6 +400,23 @@ ext.runtime.onMessage.addListener((message: ExtensionMessage, sender, sendRespon
       return true;
 
     case 'liha/probe-selectors':
+      /*
+       * Extension pages only, and the check is here rather than only at the
+       * relay because this is the boundary that matters.
+       *
+       * A probe runs an arbitrary selector against an origin the extension has
+       * permission for and returns a count — enough to read an attribute a
+       * character at a time from a page the asker cannot see.
+       *
+       * The test is the sender's URL, not whether it has a tab: the Studio
+       * opens in a tab like any page, so `sender.tab` says nothing. A content
+       * script's sender.url is the website's; an extension page's starts with
+       * this extension's own origin, which nothing on the web can forge.
+       */
+      if (!sender.url?.startsWith(ext.runtime.getURL(''))) {
+        sendResponse({ error: 'selector probing is only available from the extension’s own pages' });
+        return false;
+      }
       void probeSelectors(message.origin, message.selectors).then(sendResponse);
       return true;
 
