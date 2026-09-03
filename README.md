@@ -3,7 +3,7 @@
 [![CI](https://github.com/liha-app/webmcp-adapter/actions/workflows/ci.yml/badge.svg)](https://github.com/liha-app/webmcp-adapter/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
-**Make any website agent-ready.** → **[webmcp-adopter.liha.dev](https://webmcp-adopter.liha.dev)**
+**Make websites agent-ready without changing them.** → **[webmcp-adopter.liha.dev](https://webmcp-adopter.liha.dev)**
 
 Live demos, none of which contain a line of WebMCP code:
 [Acme CRM](https://demo-crm.liha.review) ·

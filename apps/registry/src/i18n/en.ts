@@ -5,7 +5,7 @@
  * for the inline <code> spans). Keys are grouped by where they appear.
  */
 export const en = {
-  'meta.title': 'Liha WebMCP Adapter — Make any website agent-ready',
+  'meta.title': 'Liha WebMCP Adapter — Make websites agent-ready without changing them',
   'meta.description':
     'Add auditable WebMCP tools to websites that never implemented WebMCP. Declarative, origin-scoped, open source.',
 
@@ -21,7 +21,7 @@ export const en = {
   'nav.language': 'Language',
 
   'status.checking': 'Checking for WebMCP…',
-  'status.supported': 'This site implements WebMCP itself — {0} tools registered: {1}',
+  'status.supported': 'WebMCP ready — this registry exposes {0} tools to the agent.',
   'status.unsupported':
     'WebMCP is not available in this browser. Enable chrome://flags/#enable-webmcp-testing to let an agent use this page directly.',
 
@@ -43,7 +43,7 @@ export const en = {
   'onboard.copied': 'Prompt copied. Paste it into your agent.',
   'onboard.fallback': 'Copy this and paste it into your agent:',
   'hero.eyebrow': 'Liha WebMCP Adapter',
-  'hero.headline': 'Make any website agent-ready.',
+  'hero.headline': 'Make websites agent-ready. Without changing them.',
   'hero.copy': 'Add WebMCP tools to websites that never implemented WebMCP.',
   'hero.tryDemo': 'Try the demo',
   'hero.install': 'Install the extension',
@@ -72,11 +72,11 @@ export const en = {
   'live.executedDirect': 'executed directly',
 
   /* ------------------------------------------------------------ problem -- */
-  'problem.headline': 'WebMCP adoption shouldn’t have to wait for every website owner.',
+  'problem.headline': 'WebMCP shouldn’t have to wait for every website owner.',
   'problem.p1':
-    'A site becomes agent-ready when its developers ship {0}. That is a good standard and a slow one: until it happens, an agent is back to screenshots and guesswork on every site that has not got round to it — which is most of them.',
+    'Native WebMCP depends on each site’s developers shipping {0}. Until then, agents fall back to screenshots and guesswork.',
   'problem.p2':
-    'An adapter moves the work. The capability is defined by whoever needs it, published as readable JSON, and installed by the person whose browser it runs in. The site is unchanged and unaware.',
+    'Liha moves that work into a readable adapter the user installs. The target site stays unchanged; the agent gets named, structured tools.',
   'problem.today': 'Today',
   'problem.withAdapter': 'With an adapter',
   'problem.factNoChangeFigure': 'No change',
@@ -90,7 +90,7 @@ export const en = {
   'flow.registerTool': 'registerTool()',
   'flow.agent': 'Agent',
   'flow.existingWebsite': 'Existing website',
-  'flow.communityAdapter': 'Community adapter',
+  'flow.communityAdapter': 'Reviewable adapter',
   'flow.extension': 'Extension',
   'flow.webmcpAgent': 'WebMCP agent',
 
@@ -135,9 +135,9 @@ export const en = {
     'is the entire vocabulary — {0} and {1} more. Nothing in it can execute code, so there is no version of an adapter that runs a script you did not read.',
 
   /* --------------------------------------------------------------- demos -- */
-  'demos.headline': 'Three ordinary web apps with zero WebMCP code.',
+  'demos.headline': 'Three ordinary apps. Zero WebMCP code.',
   'demos.copy':
-    '{0} adapters, {1} tools. That the apps implement nothing is asserted against their sources, their built bundles and the live page — if someone slipped a {2} into one of them, CI would fail.',
+    '{0} adapters add {1} tools from outside. CI verifies that none of the demo apps calls {2}.',
   'demos.open': 'Open {0}',
   'demos.adapter': 'Adapter',
   'demos.blurbCrm': 'A customer list with an add-and-edit dialog. Ordinary CRUD, ordinary React.',
@@ -161,7 +161,7 @@ export const en = {
   /* ------------------------------------------------------------ recorder -- */
   'recorder.headline': 'Teach an agent by using the website yourself.',
   'recorder.copy':
-    'The recorder does not let an AI guess at a page and invent an adapter. It watches a workflow a person performed and turns it into a declarative capability you review before it becomes a tool — selectors come from the site’s own stable attributes, never class names, and the values you typed become inputs rather than being baked in.',
+    'Perform a workflow once, review the recorded declarative steps, then install it as a named WebMCP tool. Typed values become inputs and stable page attributes become selectors — the agent does not invent the workflow.',
   'recorder.step1Title': 'Record',
   'recorder.step1': 'Press record in the extension popup.',
   'recorder.step2Title': 'Use the website',
@@ -195,11 +195,19 @@ export const en = {
     'unit and integration tests. The integration layer mounts the real demo apps and runs the real published adapters against them, so an adapter that drifts from the site it targets fails there.',
   'verified.factE2eLabel':
     'end-to-end tests in a real browser, plus three acceptance runs that drive Chrome over the DevTools protocol.',
+  'verified.summary':
+    'Real agents discover and invoke the adapters against ordinary sites. The same paths run in CI against the published definitions and demo apps.',
+  'verified.factAdapters': 'Published adapters',
+  'verified.factTools': 'Adapter tools',
+  'verified.factUnitShort': 'Unit + integration tests',
+  'verified.factE2eShort': 'Real-browser E2E tests',
 
   /* ------------------------------------------------------------ security -- */
   'security.headline': 'Auditable, origin-scoped and permission-aware.',
   'security.copy':
     'Not “safe”. The realistic worst case is a community adapter becoming browser malware, so the format is built so that is either impossible to express or visible before you install it.',
+  'security.summary':
+    'Adapters are data, not code. Every step, origin and capability is visible before installation, and unsafe patterns are rejected before the adapter can run.',
   'security.point1': 'No executable JavaScript anywhere in the format — the DSL cannot express it.',
   'security.point2': 'Exact origins only. A wildcard is rejected at validation, not warned about.',
   'security.point3': 'A hard refusal to touch password, card or other sensitive fields.',
@@ -208,6 +216,8 @@ export const en = {
   'security.limitTitle': 'The limitation we can’t engineer away.',
   'security.limitCopy':
     'WebMCP tools have to be registered in the page’s own JavaScript world, so the extension’s runtime lives there too. A hostile page can see it, call it, or patch it. It holds no extension privileges — the worst a page can do with it is drive its own DOM, which it could already do — but the isolation an extension normally gives you does not apply here, and you should weigh that.',
+  'security.limitShort':
+    'The runtime must live in the page’s JavaScript world to reach WebMCP. That trade-off and its limits are documented in the threat model.',
   'security.threatModel': 'Read the full threat model',
 
   /* --------------------------------------------------------------- close -- */
@@ -292,7 +302,7 @@ export const en = {
   'create.eyebrow': 'Adapter Studio',
   'create.headline': 'Build a WebMCP tool for a site that has none.',
   'create.lede':
-    'Record yourself using a website, shape what you did into a tool, install it, and call it from outside the page. Nothing here writes code, and the site is never touched. This page watches as you go — the steps it can check tick themselves.',
+    'Two ways, and they end in the same JSON. Ask an agent to write it, or record yourself using the site. Neither writes code, and neither touches the site. This page watches as you go — the steps it can check tick themselves.',
   'create.copy': 'Copy',
   'create.copied': 'Copied',
   'create.copyFailed': 'Copy failed',

@@ -10,7 +10,7 @@ import type { MessageKey } from './en';
  * 公開された定義そのもので、ストアの掲載文と同じく書いた人の言語のまま出す。
  */
 export const ja: Record<MessageKey, string> = {
-  'meta.title': 'Liha WebMCP Adapter — どんなWebサイトもエージェント対応に',
+  'meta.title': 'Liha WebMCP Adapter — サイトを変えずにエージェント対応へ',
   'meta.description':
     'WebMCPを実装していないWebサイトに、監査可能なWebMCPツールを追加します。宣言的・オリジン限定・オープンソース。',
 
@@ -26,7 +26,7 @@ export const ja: Record<MessageKey, string> = {
   'nav.language': '言語',
 
   'status.checking': 'WebMCPを確認しています…',
-  'status.supported': 'このサイト自身がWebMCPを実装しています — 登録済みツール{0}個: {1}',
+  'status.supported': 'WebMCP準備完了 — このレジストリはエージェントに{0}個のツールを公開しています。',
   'status.unsupported':
     'このブラウザではWebMCPを利用できません。chrome://flags/#enable-webmcp-testing を有効にすると、エージェントがこのページを直接操作できます。',
 
@@ -48,7 +48,7 @@ export const ja: Record<MessageKey, string> = {
   'onboard.copied': 'コピーしました。エージェントに貼り付けてください。',
   'onboard.fallback': 'これをコピーしてエージェントに貼り付けてください：',
   'hero.eyebrow': 'Liha WebMCP Adapter',
-  'hero.headline': 'どんなWebサイトも、エージェント対応に。',
+  'hero.headline': 'サイトを変えずに、エージェント対応へ。',
   'hero.copy': 'WebMCPを実装していないWebサイトに、WebMCPツールを追加します。',
   'hero.tryDemo': 'デモを試す',
   'hero.install': '拡張機能を入れる',
@@ -77,11 +77,11 @@ export const ja: Record<MessageKey, string> = {
   'live.executedDirect': '直接実行',
 
   /* ------------------------------------------------------------ problem -- */
-  'problem.headline': 'WebMCPの普及を、すべてのサイト運営者に委ねる必要はありません。',
+  'problem.headline': 'WebMCPの普及を、サイト運営者だけに任せない。',
   'problem.p1':
-    'サイトがエージェント対応になるのは、その開発者が{0}を出荷したときです。良い標準ですが、進みは遅い。それまでエージェントは、まだ対応していないサイト — つまり大半のサイト — でスクリーンショットと当て推量に逆戻りします。',
+    'ネイティブWebMCPは、各サイトの開発者が{0}を実装して初めて使えます。それまでは、エージェントがスクリーンショットと推測に逆戻りします。',
   'problem.p2':
-    'Adapterは、その作業を移します。必要な人が能力を定義し、読めるJSONとして公開し、それが動くブラウザの持ち主がインストールする。サイト側は変更もされず、気づきもしません。',
+    'Lihaは、その作業を読めるAdapterへ移します。対象サイトを変更せず、エージェントには名前とスキーマを持つツールを渡します。',
   'problem.today': '今日',
   'problem.withAdapter': 'Adapterがあれば',
   'problem.factNoChangeFigure': '改修ゼロ',
@@ -95,7 +95,7 @@ export const ja: Record<MessageKey, string> = {
   'flow.registerTool': 'registerTool()',
   'flow.agent': 'エージェント',
   'flow.existingWebsite': '既存のWebサイト',
-  'flow.communityAdapter': 'コミュニティAdapter',
+  'flow.communityAdapter': '確認できるAdapter',
   'flow.extension': '拡張機能',
   'flow.webmcpAgent': 'WebMCPエージェント',
 
@@ -140,9 +140,9 @@ export const ja: Record<MessageKey, string> = {
     'が語彙のすべてです — {0}、ほか{1}種類。そのどれもコードを実行できないので、読んでいないスクリプトが走るAdapterというものが存在しません。',
 
   /* --------------------------------------------------------------- demos -- */
-  'demos.headline': 'WebMCPコードを1行も持たない、ごく普通のWebアプリが3つ。',
+  'demos.headline': '普通のWebアプリが3つ。WebMCPコードはゼロ。',
   'demos.copy':
-    'Adapter {0}個、ツール{1}個。アプリ側が何も実装していないことは、ソース・ビルド済みバンドル・実際のページの3方向から検証しています。誰かが{2}を紛れ込ませればCIが落ちます。',
+    '外側から、Adapter {0}個がツール{1}個を追加します。デモアプリが{2}を呼んでいないことはCIで検証しています。',
   'demos.open': '{0} を開く',
   'demos.adapter': 'Adapter',
   'demos.blurbCrm': '追加・編集ダイアログ付きの顧客一覧。ごく普通のCRUD、ごく普通のReactです。',
@@ -167,7 +167,7 @@ export const ja: Record<MessageKey, string> = {
   /* ------------------------------------------------------------ recorder -- */
   'recorder.headline': '自分でサイトを操作して、エージェントに教える。',
   'recorder.copy':
-    'Recorderは、AIにページを推測させてAdapterをでっち上げさせる仕組みではありません。人が実際に行った操作を記録し、ツールになる前にあなたがレビューできる宣言的な能力に変換します。セレクタはクラス名ではなくサイト自身の安定した属性から取り、入力した値はハードコードされずツールの引数になります。',
+    '操作を一度実演し、記録された宣言的stepを確認して、名前の付いたWebMCPツールとしてインストールします。入力値は引数に、安定したページ属性はセレクタになります。Agentが操作をでっち上げることはありません。',
   'recorder.step1Title': '記録する',
   'recorder.step1': '拡張機能のポップアップで記録を開始します。',
   'recorder.step2Title': 'サイトを使う',
@@ -201,11 +201,19 @@ export const ja: Record<MessageKey, string> = {
     '件のユニット/インテグレーションテスト。インテグレーション層は実物のデモアプリをマウントし、公開中の実物のAdapterを走らせるので、対象サイトとズレたAdapterはそこで落ちます。',
   'verified.factE2eLabel':
     '件の実ブラウザE2Eテスト。加えて、DevToolsプロトコル経由でChromeを操作する受け入れテストが3本あります。',
+  'verified.summary':
+    '実在するエージェントが、通常のWebサイトに対してAdapterを発見し呼び出します。同じ経路を、公開中の定義とデモアプリに対してCIでも実行しています。',
+  'verified.factAdapters': '公開Adapter',
+  'verified.factTools': 'Adapterツール',
+  'verified.factUnitShort': 'ユニット＋統合テスト',
+  'verified.factE2eShort': '実ブラウザE2E',
 
   /* ------------------------------------------------------------ security -- */
   'security.headline': '監査できる。オリジンに限定される。権限を意識している。',
   'security.copy':
     '「安全です」とは言いません。現実的な最悪ケースは、コミュニティのAdapterがブラウザ内マルウェアになることです。だからフォーマット側で、それを表現できないか、インストール前に見えるかのどちらかにしてあります。',
+  'security.summary':
+    'Adapterはコードではなくデータです。すべてのstep・オリジン・capabilityをインストール前に確認でき、危険なパターンは実行前の検証で拒否されます。',
   'security.point1': 'フォーマットのどこにも実行可能なJavaScriptはない — DSLがそれを表現できない。',
   'security.point2': 'オリジンは完全一致のみ。ワイルドカードは警告ではなく検証で拒否する。',
   'security.point3': 'パスワード・カード番号などの機微なフィールドには一切触れない。',
@@ -214,6 +222,8 @@ export const ja: Record<MessageKey, string> = {
   'security.limitTitle': '設計では消せない限界。',
   'security.limitCopy':
     'WebMCPツールはページ自身のJavaScriptワールドで登録するしかないので、拡張機能のランタイムもそこに置かれます。悪意あるページからは、それが見え、呼べ、書き換えられます。ランタイムは拡張機能の権限を一切持たないため、ページにできる最悪のことは自分自身のDOMを操作すること — もともとできること — にとどまります。とはいえ拡張機能が普段与えてくれる分離はここでは効きません。そこは織り込んで判断してください。',
+  'security.limitShort':
+    'WebMCPに到達するため、ランタイムはページ自身のJavaScriptワールドに置かれます。そのトレードオフと限界は脅威モデルに明記しています。',
   'security.threatModel': '脅威モデル全文を読む',
 
   /* --------------------------------------------------------------- close -- */
@@ -298,7 +308,7 @@ export const ja: Record<MessageKey, string> = {
   'create.eyebrow': 'Adapter Studio',
   'create.headline': 'WebMCP を持たないサイトに、WebMCP ツールを作る。',
   'create.lede':
-    'Web サイトを普通に操作するところを記録し、それをツールの形に整えて、インストールし、ページの外から呼びます。コードは書きません。サイトにも一切手を入れません。このページは進み具合を見ていて、判定できるステップは自動で埋まります。',
+    '道は二つ、行き着くJSONは同じです。エージェントに書いてもらうか、自分で操作を記録するか。どちらもコードは書かず、サイトにも一切手を入れません。このページは進み具合を見ていて、判定できるステップは自動で埋まります。',
   'create.copy': 'コピー',
   'create.copied': 'コピーしました',
   'create.copyFailed': 'コピーできませんでした',

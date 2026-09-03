@@ -8,93 +8,55 @@ test.describe('Landing page', () => {
     await page.goto('http://localhost:5280/');
   });
 
-  // A judge has to understand the idea before they will install anything, so
-  // the claim and the three ways in are checked explicitly.
-  test('states the claim and offers the three ways in', async ({ page }) => {
-    await expect(page.getByRole('heading', { level: 1 })).toHaveText('Make any website agent-ready.');
+  // A judge has to understand the idea before they will install anything.
+  test('states the claim and offers clear demo, build and source paths', async ({ page }) => {
+    await expect(page.getByRole('heading', { level: 1 })).toHaveText(en['hero.headline']);
     await expect(page.getByText('Add WebMCP tools to websites that never implemented WebMCP.')).toBeVisible();
-    await expect(page.getByRole('link', { name: 'Try the demo' }).first()).toBeVisible();
-    await expect(page.getByRole('link', { name: 'Install the extension' }).first()).toBeVisible();
+    await expect(page.getByRole('link', { name: 'Try the demo' }).first()).toHaveAttribute(
+      'href',
+      '/adapters/demo-crm',
+    );
+    await expect(page.getByRole('link', { name: 'Build one' }).first()).toHaveAttribute('href', '/create');
     await expect(page.getByRole('link', { name: 'View on GitHub' }).first()).toHaveAttribute(
       'href',
       'https://github.com/liha-app/webmcp-adapter',
     );
   });
 
-  // The centrepiece. It has to actually call the page's own tools, and it has
-  // to be truthful about which path executed the call.
-  test('really runs this page’s own WebMCP tools', async ({ page }) => {
-    const live = page.getByTestId('live-tools');
-    await expect(live).toBeVisible();
-    await expect(live.getByRole('tab')).toHaveCount(8);
-
-    await live.getByRole('button', { name: 'Run search_adapters' }).click();
-    const result = page.getByTestId('live-result');
-    await expect(result).toBeVisible();
-    // A real answer from the real catalogue, not a canned string.
-    await expect(result).toContainText('demo-crm');
-    await expect(result).toContainText('adapter(s)');
-  });
-
-  test('says which path executed the call, and does not pretend', async ({ page }) => {
-    // Which label is honest depends on the browser this runs in, and that has
-    // changed underneath the suite before: Playwright's Chromium exposes WebMCP
-    // now and did not always. So the expectation is read from the page rather
-    // than assumed, and both labels are asserted against what is really there.
+  test('keeps WebMCP working without turning the landing page into an inspector', async ({ page }) => {
     const hasWebMcp = await page.evaluate(() => 'modelContext' in document);
-    await page.getByRole('button', { name: /^Run / }).click();
-    await expect(page.getByTestId('live-result')).toBeVisible();
-    await expect(page.locator('.live__badge')).toHaveText(
-      hasWebMcp ? 'executed through WebMCP' : 'executed directly',
-    );
-    if (!hasWebMcp) {
-      await expect(page.getByText(/your browser has no WebMCP/)).toBeVisible();
+    if (hasWebMcp) {
+      await expect(page.getByTestId('webmcp-status')).toContainText('8 tools');
+      const names = await page.evaluate(async () => {
+        const mc = (document as Document & {
+          modelContext?: { getTools(): Promise<Array<{ name: string }>> };
+        }).modelContext;
+        return mc ? (await mc.getTools()).map((tool) => tool.name) : [];
+      });
+      expect(names).toContain('search_adapters');
+      expect(names).toContain('install_adapter');
+    } else {
+      await expect(page.getByTestId('webmcp-status')).toContainText('WebMCP is not available');
     }
-  });
-
-  test('switching tools swaps the arguments and clears the last result', async ({ page }) => {
-    await page.getByRole('button', { name: /^Run / }).click();
-    await expect(page.getByTestId('live-result')).toBeVisible();
-    await page.getByRole('tab', { name: 'get_adapter', exact: true }).click();
-    await expect(page.getByTestId('live-result')).toHaveCount(0);
-    await expect(page.locator('.live__form input').first()).toHaveValue('demo-crm');
-    await page.getByRole('button', { name: 'Run get_adapter' }).click();
-    await expect(page.getByTestId('live-result')).toContainText('create_customer');
-  });
-
-  test('validate_adapter really rejects a wildcard origin', async ({ page }) => {
-    await page.getByRole('tab', { name: 'validate_adapter' }).click();
-    await page.getByRole('button', { name: 'Run validate_adapter' }).click();
-    await expect(page.getByTestId('live-result')).toContainText('Not valid');
-    await expect(page.getByTestId('live-result')).toContainText('wildcards');
+    await expect(page.getByTestId('live-tools')).toHaveCount(0);
   });
 
   test('explains the problem it exists to solve', async ({ page }) => {
-    await expect(page.getByText('WebMCP adoption shouldn’t have to wait for every website owner.')).toBeVisible();
+    await expect(page.getByText(en['problem.headline'])).toBeVisible();
     await expect(page.getByText('registerTool()').first()).toBeVisible();
   });
 
-  // Read from the same constant the page renders, so a suite that grows cannot
-  // leave a stale number on the public page with the test still green.
-  test('shows what has actually been verified', async ({ page }) => {
-    for (const run of PROOF.acceptance) {
-      await expect(page.getByText(run.result, { exact: true })).toBeVisible();
-      await expect(page.getByText(en[run.nameKey], { exact: true })).toBeVisible();
-    }
-    // The two figures are fact tiles now; both still come from the constant.
+  test('shows concise implementation evidence', async ({ page }) => {
+    await expect(page.getByText('Published adapters', { exact: true })).toBeVisible();
+    await expect(page.getByText('Adapter tools', { exact: true })).toBeVisible();
     await expect(page.getByText(String(PROOF.unitAndIntegrationTests), { exact: true })).toBeVisible();
-    await expect(page.getByText(/^unit and integration tests\./)).toBeVisible();
     await expect(page.getByText(String(PROOF.e2eTests), { exact: true })).toBeVisible();
-    await expect(page.getByText(/^end-to-end tests in a real browser/)).toBeVisible();
-    await expect(page.getByText(en['verified.fact5'])).toBeVisible();
   });
 
-  test('shows a real adapter definition rather than describing one', async ({ page }) => {
-    const excerpt = page.locator('.excerpt pre');
-    await expect(excerpt).toContainText('"capability": "WRITE"');
-    await expect(excerpt).toContainText('"type": "click"');
-    const text = (await excerpt.textContent()) ?? '';
-    expect(text).not.toMatch(/function\s*\(|=>|eval\(/);
+  test('moves detailed adapter definitions to the adapter product page', async ({ page }) => {
+    await expect(page.locator('.excerpt')).toHaveCount(0);
+    await page.goto('http://localhost:5280/adapters/demo-crm');
+    await expect(page.getByRole('button', { name: 'Show full definition' })).toBeVisible();
   });
 
   test('links to all three demos with their tools and capabilities', async ({ page }) => {
@@ -108,23 +70,24 @@ test.describe('Landing page', () => {
     await expect(demos.locator('.appicon svg')).toHaveCount(3);
   });
 
-  test('tells a first-time visitor exactly what to switch on', async ({ page }) => {
+  test('moves setup instructions to the guided build', async ({ page }) => {
+    await expect(page.locator('[data-testid="setup-steps"]')).toHaveCount(0);
+    await page.getByRole('link', { name: 'Build one' }).first().click();
+    await expect(page).toHaveURL(/\/create$/);
     await expect(page.getByText('chrome://flags/#enable-webmcp-testing').first()).toBeVisible();
-    await expect(page.locator('[data-testid="setup-steps"] li')).toHaveCount(6);
-    await expect(page.getByRole('link', { name: 'Download extension' })).toHaveAttribute('href', /releases/);
   });
 
   test('describes the recorder as a human workflow, not AI guesswork', async ({ page }) => {
     await expect(page.getByText('Teach an agent by using the website yourself.')).toBeVisible();
-    await expect(page.getByText(/does not let an AI guess/)).toBeVisible();
-    await expect(page.locator('[data-testid="recorder-steps"] li')).toHaveCount(6);
+    await expect(page.getByText(en['recorder.copy'])).toBeVisible();
+    await expect(page.locator('#create .flow__node')).toHaveCount(3);
   });
 
   // "Safe" would be a claim this project cannot make; the limitation has to be
   // on the page, not only in the repository.
   test('is honest about the MAIN-world limitation', async ({ page }) => {
     await expect(page.getByText('Auditable, origin-scoped and permission-aware.')).toBeVisible();
-    await expect(page.getByText(/The limitation we can’t engineer away/)).toBeVisible();
+    await expect(page.getByText(/runtime must live in the page’s JavaScript world/)).toBeVisible();
     await expect(page.getByRole('link', { name: 'Read the full threat model' })).toHaveAttribute(
       'href',
       /SECURITY\.md$/,
@@ -137,8 +100,8 @@ test.describe('Landing page', () => {
   });
 
   test('carries share metadata', async ({ page }) => {
-    await expect(page).toHaveTitle('Liha WebMCP Adapter — Make any website agent-ready');
-    await expect(page.locator('meta[property="og:title"]')).toHaveAttribute('content', /Make any website agent-ready/);
+    await expect(page).toHaveTitle(en['meta.title']);
+    await expect(page.locator('meta[property="og:title"]')).toHaveAttribute('content', /Make websites agent-ready/);
     await expect(page.locator('meta[name="twitter:card"]')).toHaveAttribute('content', 'summary_large_image');
     await expect(page.locator('link[rel="icon"]')).toHaveAttribute('href', '/favicon.svg');
   });
@@ -185,7 +148,7 @@ test.describe('Appearance and language', () => {
     await expect(page.getByRole('heading', { level: 1 })).toHaveText(ja['hero.headline']);
     await expect(page.locator('html')).toHaveAttribute('lang', 'ja');
     await expect(page).toHaveTitle(ja['meta.title']);
-    await expect(page.getByText(ja['security.limitTitle'])).toBeVisible();
+    await expect(page.getByText(ja['security.limitShort'])).toBeVisible();
 
     await page.reload();
     await expect(page.getByRole('heading', { level: 1 })).toHaveText(ja['hero.headline']);
@@ -203,9 +166,20 @@ test.describe('Appearance and language', () => {
   // must not follow the interface language.
   test('the WebMCP tools stay in one language whatever the page is showing', async ({ page }) => {
     await page.getByTestId('language-control').locator('[data-locale-option="ja"]').click();
-    await expect(page.locator('.live__desc').first()).toContainText('Search the Liha adapter registry');
-    await page.getByRole('button', { name: /search_adapters/ }).click();
-    await expect(page.getByTestId('live-result')).toContainText('adapter(s)');
+    const hasWebMcp = await page.evaluate(() => 'modelContext' in document);
+    if (hasWebMcp) {
+      await expect(page.getByTestId('webmcp-status')).toContainText('8個');
+      const names = await page.evaluate(async () => {
+        const mc = (document as Document & {
+          modelContext?: { getTools(): Promise<Array<{ name: string }>> };
+        }).modelContext;
+        return mc ? (await mc.getTools()).map((tool) => tool.name) : [];
+      });
+      expect(names).toContain('search_adapters');
+      expect(names.some((name) => /[ぁ-んァ-ン一-龯]/.test(name))).toBe(false);
+    } else {
+      await expect(page.getByTestId('webmcp-status')).toContainText('このブラウザではWebMCPを利用できません');
+    }
   });
 
   test('the store and the product page are translated too', async ({ page }) => {

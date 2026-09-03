@@ -73,7 +73,6 @@ export function Root() {
       <footer className="globalfooter">
         <div className="globalfooter__inner">
           <p>{t('footer.readable')}</p>
-          <p>{t('footer.mainWorld')}</p>
           <div className="globalfooter__rule" />
           <div className="globalfooter__links">
             <span>{t('footer.mit')}</span>
@@ -94,7 +93,6 @@ export function Root() {
             </span>
             <a href={`${GITHUB_URL}/blob/main/docs/webmcp-api.md`}>{t('footer.apiNotes')}</a>
           </div>
-          <p style={{ marginTop: 14 }}>{t('footer.disclaimer')}</p>
         </div>
       </footer>
     </>
