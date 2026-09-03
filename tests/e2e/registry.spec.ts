@@ -632,3 +632,21 @@ test.describe('The Studio’s own onboarding chip', () => {
     await expect(page.locator('[data-action="copy-agent-prompt"]')).toHaveCount(1);
   });
 });
+
+test.describe('The extension download link', () => {
+  test('carries the mark of where it goes, and swaps it for the appearance', async ({ page }) => {
+    await page.goto('http://localhost:5280/create');
+    const link = page.locator('.outlink');
+    await expect(link).toHaveAttribute('href', /github\.com\/.+\/releases/);
+    for (const file of ['github.svg', 'github-dark.svg']) {
+      expect((await page.request.get(`http://localhost:5280/brand/vendors/${file}`)).status(), file).toBe(200);
+    }
+
+    await page.getByTestId('theme-control').locator('[data-theme-option="light"]').click();
+    await expect(link.locator('.outlink__mark--light')).toBeVisible();
+    await expect(link.locator('.outlink__mark--dark')).toBeHidden();
+    await page.getByTestId('theme-control').locator('[data-theme-option="dark"]').click();
+    await expect(link.locator('.outlink__mark--dark')).toBeVisible();
+    await expect(link.locator('.outlink__mark--light')).toBeHidden();
+  });
+});

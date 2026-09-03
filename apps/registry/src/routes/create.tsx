@@ -157,8 +157,11 @@ export function Create() {
               <p className="muted">{t('create.step2Body')}</p>
               {extension === false && (
                 <p>
-                  <a className="btn btn--primary" href={RELEASES_URL}>
+                  <a className="btn btn--primary outlink" href={RELEASES_URL}>
                     {t('create.getExtension')}
+                    {/* Where the download comes from, said before the click. */}
+                    <img className="outlink__mark outlink__mark--light" src="/brand/vendors/github.svg" width={14} height={14} alt="GitHub" />
+                    <img className="outlink__mark outlink__mark--dark" src="/brand/vendors/github-dark.svg" width={14} height={14} alt="" aria-hidden="true" />
                   </a>
                 </p>
               )}
