@@ -50,9 +50,16 @@ h1 { margin: 0; font-size: 48px; line-height: 1.146; font-weight: 600; }
 /* 792 + 328, the buy page's own split. */
 .buy { display: grid; grid-template-columns: minmax(0, 792px) 328px; gap: 40px; align-items: start; }
 
-.left { display: flex; flex-direction: column; gap: 20px; position: sticky; top: 76px; }
+/*
+ * The buy page's own geometry, read off the live page rather than guessed:
+ * a 792px left column that is `position: sticky` and holds nothing but the
+ * gallery, and a 328px right column that is static and very tall — every step
+ * stacked down it, with the summary as the last block in the column. The
+ * summary is not a card: no background, no radius, no padding. The running
+ * price lives in a bar that appears once you scroll past the hero.
+ */
+.gallerycol { position: sticky; top: 76px; }
 
-/* The product, on its own ground — Apple's gallery panel. */
 .gallery { margin: 0; background: var(--stage); border-radius: 18px; padding: 24px 24px 18px; text-align: center; }
 .gallery img { display: block; width: 100%; height: auto; border-radius: 10px; }
 /* Qualified by `.gallery img`, which is what sets display in the first place —
@@ -65,6 +72,26 @@ h1 { margin: 0; font-size: 48px; line-height: 1.146; font-weight: 600; }
   :root:not([data-theme='light']) .gallery img.gallery__light { display: none; }
   :root:not([data-theme='light']) .gallery img.gallery__dark { display: block; }
 }
+
+.pricebar {
+  position: sticky; top: 44px; z-index: 15;
+  border-bottom: 1px solid transparent;
+  background: light-dark(rgba(255,255,255,.86), rgba(29,29,31,.86));
+  backdrop-filter: saturate(180%) blur(20px); -webkit-backdrop-filter: saturate(180%) blur(20px);
+  opacity: 0; transform: translateY(-6px); pointer-events: none;
+  transition: opacity 180ms ease, transform 180ms ease;
+}
+.pricebar--on { opacity: 1; transform: none; pointer-events: auto; border-bottom-color: var(--hairline); }
+.pricebar__inner {
+  width: 1160px; max-width: calc(100% - 44px); margin: 0 auto;
+  display: flex; align-items: baseline; gap: 12px; padding: 14px 0;
+}
+.pricebar__name { font-size: 17px; font-weight: 600; }
+.pricebar__price { font-size: 14px; color: var(--muted); font-variant-numeric: tabular-nums; }
+
+/* The summary: the last block in the right column, not a panel. */
+.summary { display: flex; flex-direction: column; gap: 14px; padding-top: 8px; }
+.summary__price { margin: 0; font-size: 32px; line-height: 1.125; font-weight: 600; font-variant-numeric: tabular-nums; }
 
 .thumb { width: 44px; height: 44px; border-radius: 8px; background: var(--stage); }
 .list__row .thumb--dark { display: none; }
@@ -80,14 +107,14 @@ h1 { margin: 0; font-size: 48px; line-height: 1.146; font-weight: 600; }
 .list__row--withthumb [data-field='spec'] { grid-column: 2; }
 .list__row--withthumb [data-field='price'] { grid-column: 3; grid-row: 1 / span 2; align-self: center; }
 
+/* Only the bag uses a panel: it is a summary of an order, not a step. */
 .stage {
   background: var(--stage); border-radius: 18px; padding: 40px;
   display: flex; flex-direction: column; gap: 16px;
+  position: sticky; top: 76px;
 }
 .stage__kicker { margin: 0; font-size: 14px; font-weight: 600; color: var(--muted); letter-spacing: 0.01em; }
 .stage__line { margin: 0; font-size: 21px; line-height: 1.381; font-weight: 600; letter-spacing: 0.011em; max-width: 22em; }
-.stage__search { display: block; margin-top: 10px; max-width: 340px; }
-.stage__count { margin: 0; font-size: 14px; color: var(--muted); }
 .stage__total { margin: 0; font-size: 40px; line-height: 1.1; font-weight: 600; font-variant-numeric: tabular-nums; }
 .stage--summary .stage__line { font-size: 17px; font-weight: 400; }
 
@@ -172,8 +199,8 @@ h1 { margin: 0; font-size: 48px; line-height: 1.146; font-weight: 600; }
 
 @media (max-width: 1100px) {
   .buy { grid-template-columns: 1fr; }
-  .left { position: static; }
-  .stage { padding: 32px 28px; }
+  .gallerycol { position: static; }
+  .stage { position: static; padding: 32px 28px; }
   .options { max-width: 520px; }
 }
 @media (max-width: 640px) {
