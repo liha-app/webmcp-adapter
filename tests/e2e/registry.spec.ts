@@ -17,7 +17,14 @@ test.describe('Landing page', () => {
       '/adapters/demo-crm',
     );
     await expect(page.getByRole('link', { name: 'Build one' }).first()).toHaveAttribute('href', '/create');
-    await expect(page.getByRole('link', { name: 'View on GitHub' }).first()).toHaveAttribute(
+    // Source is still one of the three ways in, but it is the nav's job now:
+    // the hero asks for a decision about this product, and "read the code" is
+    // not one. Two calls to action, and the mark is one glance up.
+    // The closing section keeps it — that is where "now go and read it" lands.
+    // The top hero does not: it asks for a decision about this product.
+    await expect(page.locator('section.hero').first().locator('a[href*="github.com"]')).toHaveCount(0);
+    await expect(page.locator('section.hero').last().locator('a[href*="github.com"]')).toHaveCount(1);
+    await expect(page.locator('.globalnav a[href*="github.com"]')).toHaveAttribute(
       'href',
       'https://github.com/liha-app/webmcp-adapter',
     );
@@ -643,10 +650,27 @@ test.describe('The extension download link', () => {
     }
 
     await page.getByTestId('theme-control').locator('[data-theme-option="light"]').click();
-    await expect(link.locator('.outlink__mark--light')).toBeVisible();
-    await expect(link.locator('.outlink__mark--dark')).toBeHidden();
+    await expect(link.locator('.vendormark--light')).toBeVisible();
+    await expect(link.locator('.vendormark--dark')).toBeHidden();
     await page.getByTestId('theme-control').locator('[data-theme-option="dark"]').click();
-    await expect(link.locator('.outlink__mark--dark')).toBeVisible();
-    await expect(link.locator('.outlink__mark--light')).toBeHidden();
+    await expect(link.locator('.vendormark--dark')).toBeVisible();
+    await expect(link.locator('.vendormark--light')).toBeHidden();
+  });
+});
+
+test.describe('The header’s GitHub link', () => {
+  test('carries the mark, on every page and in either appearance', async ({ page }) => {
+    for (const route of ['/', '/create', '/adapters']) {
+      await page.goto(`http://localhost:5280${route}`);
+      const link = page.locator('.globalnav a[href*="github.com"]');
+      await expect(link, route).toHaveCount(1);
+      await expect(link.locator('.vendormark'), route).toHaveCount(2);
+      // The word stays: an icon alone is a guess, and the nav is text.
+      await expect(link, route).toContainText('GitHub');
+    }
+
+    await page.getByTestId('theme-control').locator('[data-theme-option="dark"]').click();
+    await expect(page.locator('.globalnav .vendormark--dark')).toBeVisible();
+    await expect(page.locator('.globalnav .vendormark--light')).toBeHidden();
   });
 });

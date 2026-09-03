@@ -3,7 +3,7 @@ import { Link, Outlet, useRouterState } from '@tanstack/react-router';
 import { GITHUB_URL } from '../lib/links';
 import { registerRegistryTools, type WebMcpStatus } from '../lib/webmcp';
 import { useI18n } from '../i18n';
-import { BrandMark } from './components';
+import { BrandMark, VendorMark } from './components';
 import { LanguageControl, ThemeControl } from './controls';
 
 export function Root() {
@@ -44,7 +44,8 @@ export function Root() {
             <a data-secondary="" href={onLanding ? '#security' : '/#security'}>
               {t('nav.trust')}
             </a>
-            <a data-secondary="" href={GITHUB_URL}>
+            <a data-secondary="" className="navlink--marked" href={GITHUB_URL}>
+              <VendorMark name="github" label="GitHub" size={13} />
               {t('nav.github')}
             </a>
             <LanguageControl />

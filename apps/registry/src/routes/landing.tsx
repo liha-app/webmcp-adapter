@@ -40,9 +40,6 @@ export function Landing() {
             <Link className="more" to="/create">
               {t('nav.create')}
             </Link>
-            <a className="more" href={GITHUB_URL}>
-              {t('hero.github')}
-            </a>
           </div>
           <p className="hero__note">{t('hero.note')}</p>
         </div>

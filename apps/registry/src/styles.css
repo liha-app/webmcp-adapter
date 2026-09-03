@@ -709,14 +709,15 @@ details pre { margin-top: 10px; }
 }
 
 /* A link that leaves for somewhere named, with the destination's mark on it. */
-.outlink { display: inline-flex; align-items: center; gap: 7px; }
-.outlink__mark { display: block; width: 14px; height: 14px; opacity: 0.9; }
-.outlink__mark--dark { display: none; }
-:root[data-theme='dark'] .outlink__mark--light { display: none; }
-:root[data-theme='dark'] .outlink__mark--dark { display: block; }
+.outlink, .navlink--marked { display: inline-flex; align-items: center; gap: 7px; }
+.navlink--marked { gap: 6px; }
+.vendormark { display: block; opacity: 0.9; }
+.vendormark--dark { display: none; }
+:root[data-theme='dark'] .vendormark--light { display: none; }
+:root[data-theme='dark'] .vendormark--dark { display: block; }
 @media (prefers-color-scheme: dark) {
-  :root:not([data-theme='light']) .outlink__mark--light { display: none; }
-  :root:not([data-theme='light']) .outlink__mark--dark { display: block; }
+  :root:not([data-theme='light']) .vendormark--light { display: none; }
+  :root:not([data-theme='light']) .vendormark--dark { display: block; }
 }
 
 /* The second route, kept clearly second: its own rule and its own air. */

@@ -8,6 +8,7 @@ import { useI18n } from '../i18n';
 import type { MessageKey } from '../i18n/en';
 import { AgentBuild } from './agentbuild';
 import { AgentOnboard } from './onboard';
+import { VendorMark } from './components';
 
 const FLAG_URL = 'chrome://flags/#enable-webmcp-testing';
 
@@ -160,8 +161,7 @@ export function Create() {
                   <a className="btn btn--primary outlink" href={RELEASES_URL}>
                     {t('create.getExtension')}
                     {/* Where the download comes from, said before the click. */}
-                    <img className="outlink__mark outlink__mark--light" src="/brand/vendors/github.svg" width={14} height={14} alt="GitHub" />
-                    <img className="outlink__mark outlink__mark--dark" src="/brand/vendors/github-dark.svg" width={14} height={14} alt="" aria-hidden="true" />
+                    <VendorMark name="github" label="GitHub" />
                   </a>
                 </p>
               )}

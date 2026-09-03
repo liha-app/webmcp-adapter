@@ -6,6 +6,35 @@ import { useI18n, type MessageKey } from '../i18n';
  * so every call site in this app still reaches for it in one place. */
 export { BrandMark, BrandIcon, BRAND_TEAL } from '@liha/brand';
 
+/**
+ * Somebody else's mark, on the link that leads to them.
+ *
+ * Two files rather than one: GitHub's mark is monochrome, and a monochrome mark
+ * on the wrong ground is an invisible mark. The pair swaps with the appearance.
+ * Provenance and the trademark note are in public/brand/vendors/README.md.
+ */
+export function VendorMark({ name, label, size = 14 }: { name: string; label: string; size?: number }) {
+  return (
+    <>
+      <img
+        className="vendormark vendormark--light"
+        src={`/brand/vendors/${name}.svg`}
+        width={size}
+        height={size}
+        alt={label}
+      />
+      <img
+        className="vendormark vendormark--dark"
+        src={`/brand/vendors/${name}-dark.svg`}
+        width={size}
+        height={size}
+        alt=""
+        aria-hidden="true"
+      />
+    </>
+  );
+}
+
 export function CapabilityBadge({ capability }: { capability: Capability }) {
   return <span className={`cap cap--${capability}`}>{capability}</span>;
 }
