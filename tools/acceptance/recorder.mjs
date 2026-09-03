@@ -76,6 +76,26 @@ const clickOn = (selector) => `(() => {
  * itself as a TypeError in the middle of a passing run. Wait for the API, not
  * for the window.
  */
+/**
+ * Answers the confirmation window the runtime raises before a stranger's
+ * adapter writes to a page. Driven rather than stubbed: it is the gate, so the
+ * test goes through it the way a person does.
+ */
+async function answerConfirmation(browser, decision) {
+  const target = await browser.waitForTarget(
+    (candidate) => candidate.type === 'page' && candidate.url.includes('confirm/confirm.html'),
+    20000,
+  );
+  if (!target) return { shown: false };
+  const session = await new Session(target.webSocketDebuggerUrl).open();
+  await waitFor(async () => session.eval('Boolean(document.querySelector("button"))').catch(() => false));
+  const summary = await session.eval('document.body.innerText');
+  await session.eval(
+    `(() => { const target = document.querySelector('button[data-decision="${decision}"]'); if (target) target.click(); return Boolean(target); })()`,
+  );
+  return { shown: true, summary };
+}
+
 async function openExtensionPage(browser, url) {
   const target = await browser.waitForTarget((candidate) => candidate.type === 'page' && candidate.url.includes(url));
   if (!target) return null;
@@ -356,6 +376,7 @@ async function main() {
     const line = (banner ?? '').split('\n').find((entry) => entry.includes('resolved to exactly one element')) ?? '';
     check(/[1-9]\d* resolved to exactly one element/.test(line), 'the selectors it generated actually resolve', line);
 
+
     /* ------------------------------------------------------------ native -- */
     /*
      * An adapter exists because the site did not implement WebMCP. The Studio's
@@ -433,6 +454,136 @@ async function main() {
       'and gets the honest stub back, as an MCP error rather than a thrown one',
       text.slice(0, 120),
     );
+
+    /* ------------------------------------------------- install and drive -- */
+    /*
+     * The rest of what a person does, in the order they do it.
+     *
+     * Everything above ends with a file. This is the other half of the loop:
+     * the adapter goes into the extension, the site is reloaded, the tool shows
+     * up in WebMCP, an agent outside the page calls it, and the site's own UI
+     * moves. Then it is switched off and the tool goes away again. Each of
+     * those was verified by hand and by nothing else.
+     */
+    group('The recorded adapter installs, registers, runs, and can be switched off');
+    /*
+     * A name of its own.
+     *
+     * This site already ships with a builtin adapter that has a
+     * `create_customer`, and an earlier version of this group installed the
+     * recorded one under the same name and then watched the builtin do the
+     * work — it passed the parts about registering and driving the page, and
+     * failed the one about a stranger's adapter asking before it writes,
+     * because the tool that ran was not a stranger's.
+     */
+    await studio.eval(typeInto('.panel__body input', 'record_customer'));
+    await sleep(400);
+    await studio.eval(
+      `[...document.querySelectorAll('button')].find((b) => b.textContent.includes('Install locally')).click()`,
+    );
+    /*
+     * The Studio is not a licence to skip the gate. Building an adapter and
+     * installing one are different acts, and the second asks — with the origins
+     * it wants and what each tool's steps actually do.
+     */
+    const installPrompt = await answerConfirmation(browser, 'allow');
+    check(installPrompt.shown, 'installing it asks first, even from the Studio that built it');
+    check(
+      (installPrompt.summary ?? '').includes(`localhost:${PORT}`),
+      'and the confirmation names the origin the adapter would reach',
+      (installPrompt.summary ?? '').replace(/\s+/g, ' ').slice(0, 140),
+    );
+    must(
+      await waitFor(async () => (await studio.eval('document.body.innerText')).includes('Installed')),
+      'the Studio installs the adapter it just built',
+    );
+
+    const live = await browser.newPage();
+    const announced = new Map();
+    live.on((message) => {
+      if (message.method === 'WebMCP.toolsAdded') {
+        for (const tool of message.params.tools ?? []) announced.set(tool.name, tool);
+      }
+    });
+    await live.send('WebMCP.enable');
+    await live.goto(`http://localhost:${PORT}/`);
+    const registeredTool = await waitFor(async () => announced.get('record_customer') ?? null, 20000);
+    must(Boolean(registeredTool), 'reloading the site registers the recorded tool with WebMCP');
+
+    const answers = [];
+    live.on((message) => {
+      if (message.method === 'WebMCP.toolResponded') answers.push(message.params);
+    });
+    const call = live.send('WebMCP.invokeTool', {
+      frameId: registeredTool.frameId,
+      toolName: 'record_customer',
+      input: { name: 'Priya Raman', email: 'priya@example.com' },
+    });
+    /*
+     * A recording is a stranger's adapter as far as the runtime is concerned —
+     * the Studio is not a licence to skip the gate — so a WRITE asks first.
+     */
+    const prompt = await answerConfirmation(browser, 'allow');
+    check(prompt.shown, 'and a WRITE built here still asks before it writes');
+    check(
+      (prompt.summary ?? '').includes('record_customer') && (prompt.summary ?? '').includes('Priya Raman'),
+      'the confirmation names the tool and the values the agent supplied',
+      (prompt.summary ?? '').replace(/\s+/g, ' ').slice(0, 140),
+    );
+    await call;
+    must(Boolean(await waitFor(async () => answers[0] ?? null, 20000)), 'the call comes back');
+    check(
+      (await live.eval(`document.body.innerText.includes('priya@example.com')`)) === true,
+      'and the site\'s own list has the customer in it — the UI was driven, not simulated',
+    );
+
+    const manage = await browser.newPage();
+    await manage.goto(`chrome-extension://${extensionId}/manage/manage.html`);
+    await waitFor(async () => manage.eval(`Boolean(document.querySelector('.card'))`));
+    const switched = await manage.eval(
+      `(() => {
+         const card = [...document.querySelectorAll('.card')].find((c) => c.textContent.includes('localhost adapter'));
+         const box = card && card.querySelector('input[type="checkbox"]');
+         if (!box || !box.checked) return false;
+         box.click();
+         return true;
+       })()`,
+    );
+    must(switched === true, 'the Adapters page offers the switch that turns it off');
+    await sleep(600);
+    announced.clear();
+    await live.goto(`http://localhost:${PORT}/`);
+    await sleep(2500);
+    check(
+      !announced.has('record_customer'),
+      'and with it off, the tool is gone from the page an agent can see',
+      [...announced.keys()].join(','),
+    );
+    /*
+     * And gone for good. Switching off is reversible and removing is not, so
+     * they are different questions: does the tool stop being offered, and does
+     * the adapter stop existing.
+     */
+    const removed = await manage.eval(
+      `(() => {
+         const card = [...document.querySelectorAll('.card')].find((c) => c.textContent.includes('localhost adapter'));
+         const button = card && [...card.querySelectorAll('button')].find((b) => /remove/i.test(b.textContent));
+         if (!button) return false;
+         button.click();
+         return true;
+       })()`,
+    );
+    check(removed === true, 'and an adapter installed here can be removed, which a builtin cannot');
+    await sleep(800);
+    check(
+      (await manage.eval(
+        `[...document.querySelectorAll('.card')].some((c) => c.textContent.includes('localhost adapter'))`,
+      )) === false,
+      'after which it is not in the list any more',
+    );
+    manage.close();
+    live.close();
+
   } finally {
     browser?.close?.();
     await stopServer();
