@@ -283,6 +283,7 @@ export const ja: Record<MessageKey, string> = {
   'store.featureHeadline': 'Adapter {0}個、ツール{1}個。そのどこにもJavaScriptは1行もありません。',
   'store.featureCopy':
     'stepの語彙には{0}も式言語もありません。だからコミュニティのAdapterは、信用するしかないものではなく、読めるものになります。',
+  'store.newAdapters': '投稿された新しいAdapter',
   'store.shelfMatching': '条件に合うAdapter',
   'store.count': '{0}件',
   'store.countOne': '1件',
@@ -290,7 +291,7 @@ export const ja: Record<MessageKey, string> = {
   'store.view': '見る',
   'store.open': '開く',
   'store.noResults': '条件に合うAdapterはありません。',
-  'store.demoShelf': '今すぐ操作できるサイト',
+  'store.demoShelf': 'デモを試す',
   'store.demoShelfLink': '事前に必要なもの',
   'store.noOwnWebmcp': 'WebMCPコードを持たない',
   'store.extShelf': '拡張機能',

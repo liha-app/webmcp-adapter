@@ -292,24 +292,39 @@ test.describe('Adapter Registry', () => {
     const sidebar = page.getByTestId('category-filter');
     await expect(sidebar.getByRole('button', { name: 'All adapters' })).toHaveAttribute('aria-current', 'true');
     // The counts beside each filter have to be real, not decoration.
-    await expect(sidebar.getByRole('button', { name: 'All adapters' })).toContainText('3');
-    await expect(page.locator('.featurecard')).toContainText('3 adapters');
+    const listedCount = await page.getByTestId('adapter-list').locator('li').count();
+    expect(listedCount).toBeGreaterThanOrEqual(3);
+    await expect(sidebar.getByRole('button', { name: 'All adapters' })).toContainText(String(listedCount));
+    await expect(page.locator('.featurecard')).toContainText(`${listedCount} adapters`);
     await expect(page.locator('.featurecard')).toHaveAttribute('href', '/#how');
-    await expect(page.locator('[data-testid="adapter-list"] .appicon svg')).toHaveCount(3);
+    await expect(page.getByRole('heading', { name: en['store.newAdapters'] })).toBeVisible();
+    await expect(page.getByTestId('adapter-list')).toHaveClass(/shelf__body--grid/);
+    await expect(page.locator('[data-testid="adapter-list"] .appicon svg')).toHaveCount(listedCount);
     await expect(page.getByTestId('adapter-list').locator('.chip--official')).toHaveCount(3);
     await expect(page.getByTestId('adapter-list').locator('.chip--verified')).toHaveCount(3);
     // The demo shelf links straight at the running demo apps.
     await expect(page.getByRole('link', { name: 'Open' }).first()).toHaveAttribute('href', /5273|crm\./);
+    await expect(page.getByRole('heading', { name: en['store.demoShelf'] })).toBeVisible();
     await expect(page.getByRole('link', { name: /What you need first/ })).toHaveAttribute('href', '/create');
+    const shelfTitles = await page.locator('.store__main > .shelf .shelf__title').allTextContents();
+    expect(shelfTitles).toEqual([
+      en['store.newAdapters'],
+      en['store.demoShelf'],
+      en['store.extShelf'],
+      en['store.publishTitle'],
+    ]);
   });
 
   test.beforeEach(async ({ page }) => {
     await page.goto('http://localhost:5280/adapters');
   });
 
-  test('lists the official adapters', async ({ page }) => {
-    await expect(page.getByTestId('adapter-list').locator('li')).toHaveCount(3);
-    await expect(page.getByTestId('result-count')).toHaveText('3 adapters');
+  test('always lists the official adapters and accepts published community additions', async ({ page }) => {
+    const items = page.getByTestId('adapter-list').locator('li');
+    expect(await items.count()).toBeGreaterThanOrEqual(3);
+    await expect(page.getByTestId('adapter-list')).toContainText('Acme CRM');
+    await expect(page.getByTestId('adapter-list')).toContainText('Kite Project Manager');
+    await expect(page.getByTestId('adapter-list')).toContainText('Nimbus Supply');
   });
 
   test('filters by text, category and capability, and keeps it in the URL', async ({ page }) => {

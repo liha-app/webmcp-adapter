@@ -34,7 +34,7 @@ export function AdapterList() {
   const results = searchCatalog(
     { query: search.q ?? '', category: activeCategory, capability: activeCapability },
     localizedText,
-  );
+  ).sort((left, right) => Number(right.status === 'community') - Number(left.status === 'community'));
 
   const update = (patch: Record<string, string | undefined>) => {
     void navigate({ search: (prev) => ({ ...prev, ...patch }) });
@@ -128,7 +128,7 @@ export function AdapterList() {
           <div className="shelf__head">
             <h2 className="shelf__title">
               {activeCategory === 'all' && activeCapability === 'all' && !search.q
-                ? t('store.allAdapters')
+                ? t('store.newAdapters')
                 : t('store.shelfMatching')}
             </h2>
             <span className="shelf__count" data-testid="result-count">
@@ -136,7 +136,7 @@ export function AdapterList() {
             </span>
           </div>
 
-          <ul className="shelf__body" style={{ gridTemplateColumns: 'minmax(0, 1fr)' }} data-testid="adapter-list">
+          <ul className="shelf__body shelf__body--grid" data-testid="adapter-list">
             {results.map((entry) => {
               const live = installedById.get(entry.adapter.id);
               return (
@@ -161,10 +161,10 @@ export function AdapterList() {
                           {t(`store.badge${entry.status === 'official' ? 'Official' : 'Community'}`)}
                         </span>
                         {entry.verified && <span className="chip chip--verified">{t('store.badgeVerified')}</span>}
-                        <span className="chip" data-field="category">
+                        <span className="chip lockup__aux" data-field="category">
                           {categoryLabel(entry.adapter.category, locale)}
                         </span>
-                        <span className="chip">{t('store.toolCount', [entry.toolCount])}</span>
+                        <span className="chip lockup__aux">{t('store.toolCount', [entry.toolCount])}</span>
                         {entry.capabilities.map((capability) => (
                           <CapabilityBadge key={capability} capability={capability} />
                         ))}
@@ -174,7 +174,7 @@ export function AdapterList() {
                             {t('store.installed')}
                           </span>
                         )}
-                        <span className="chip" data-field="version">
+                        <span className="chip lockup__aux" data-field="version">
                           v{entry.adapter.version}
                         </span>
                       </span>
@@ -197,34 +197,12 @@ export function AdapterList() {
 
         <section className="shelf">
           <div className="shelf__head">
-            <h2 className="shelf__title">{t('store.publishTitle')}</h2>
-            <a className="shelf__link" href={ADAPTER_REGISTRY_URL}>
-              {t('store.publishRepo')} ›
-            </a>
-          </div>
-          <div className="publishcard">
-            <div>
-              <p>{t('store.publishCopy')}</p>
-              <p className="publishcard__badges">
-                <span className="chip chip--official">{t('store.badgeOfficial')}</span>
-                <span className="chip chip--verified">{t('store.badgeVerified')}</span>
-                <span className="chip chip--community">{t('store.badgeCommunity')}</span>
-              </p>
-            </div>
-            <a className="getbutton getbutton--filled" href={PUBLISH_ADAPTER_URL}>
-              {t('store.publishCta')}
-            </a>
-          </div>
-        </section>
-
-        <section className="shelf">
-          <div className="shelf__head">
             <h2 className="shelf__title">{t('store.demoShelf')}</h2>
             <Link className="shelf__link" to="/create">
               {t('store.demoShelfLink')} ›
             </Link>
           </div>
-          <ul className="shelf__body" style={{ gridTemplateColumns: 'minmax(0, 1fr)' }}>
+          <ul className="shelf__body shelf__body--grid">
             {demos.map((demo) => {
               const entry = findEntry(demo.adapterId);
               return (
@@ -256,7 +234,7 @@ export function AdapterList() {
               {t('store.extBuild')} ›
             </a>
           </div>
-          <ul className="shelf__body" style={{ gridTemplateColumns: 'minmax(0, 1fr)' }}>
+          <ul className="shelf__body shelf__body--single">
             <li className="lockup">
               <div className="lockup__inner">
                 <BrandIcon size={64} />
@@ -274,6 +252,28 @@ export function AdapterList() {
               </div>
             </li>
           </ul>
+        </section>
+
+        <section className="shelf">
+          <div className="shelf__head">
+            <h2 className="shelf__title">{t('store.publishTitle')}</h2>
+            <a className="shelf__link" href={ADAPTER_REGISTRY_URL}>
+              {t('store.publishRepo')} ›
+            </a>
+          </div>
+          <div className="publishcard">
+            <div>
+              <p>{t('store.publishCopy')}</p>
+              <p className="publishcard__badges">
+                <span className="chip chip--official">{t('store.badgeOfficial')}</span>
+                <span className="chip chip--verified">{t('store.badgeVerified')}</span>
+                <span className="chip chip--community">{t('store.badgeCommunity')}</span>
+              </p>
+            </div>
+            <a className="getbutton getbutton--filled" href={PUBLISH_ADAPTER_URL}>
+              {t('store.publishCta')}
+            </a>
+          </div>
         </section>
       </div>
     </div>
