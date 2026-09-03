@@ -59,7 +59,7 @@ h1 { margin: 0; font-size: 48px; line-height: 1.146; font-weight: 600; }
 .stage__line { margin: 0; font-size: 21px; line-height: 1.381; font-weight: 600; letter-spacing: 0.011em; max-width: 22em; }
 .stage__search { display: block; margin-top: 10px; max-width: 340px; }
 .stage__count { margin: 0; font-size: 14px; color: var(--muted); }
-.stage--summary .stage__total { margin: 0; font-size: 40px; line-height: 1.1; font-weight: 600; letter-spacing: 0; font-variant-numeric: tabular-nums; }
+.stage__total { margin: 0; font-size: 40px; line-height: 1.1; font-weight: 600; font-variant-numeric: tabular-nums; }
 .stage--summary .stage__line { font-size: 17px; font-weight: 400; }
 
 .search {
@@ -69,26 +69,44 @@ h1 { margin: 0; font-size: 48px; line-height: 1.146; font-weight: 600; }
 .search::placeholder { color: var(--muted); }
 .search:focus-visible { outline: none; border-color: var(--blue); box-shadow: 0 0 0 4px light-dark(rgba(0,113,227,.22), rgba(41,151,255,.3)); }
 
-/* The 328px option column. */
-.options { display: flex; flex-direction: column; gap: 12px; }
-.step { margin: 0 0 6px; font-size: 24px; line-height: 1.25; font-weight: 600; }
-.step span { color: var(--muted); font-weight: 600; }
+/* The 328px option column: one section per step, cards inside. */
+.options { display: flex; flex-direction: column; gap: 34px; }
+.step { display: flex; flex-direction: column; gap: 12px; }
+.step__head { margin: 0 0 2px; font-size: 24px; line-height: 1.25; font-weight: 600; }
+.step__head span { color: var(--muted); font-weight: 600; }
 
 .list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 12px; }
 .list__row {
-  display: grid; grid-template-columns: 1fr auto; column-gap: 14px;
+  display: grid; grid-template-columns: 1fr auto; column-gap: 14px; row-gap: 2px;
   background: var(--card); border: 1px solid var(--edge); border-radius: 12px; padding: 15px;
 }
+/* Apple marks the chosen option with a second, darker ring rather than a fill. */
+.list__row--on { border-color: var(--ink); box-shadow: 0 0 0 1px var(--ink) inset; }
 .list__name { font-size: 17px; line-height: 1.235; font-weight: 600; }
-.list__row [data-field='category'] { grid-column: 1; font-size: 12px; line-height: 1.417; color: var(--muted); }
-.list__row [data-field='price'] { grid-row: 1 / span 2; grid-column: 2; align-self: start; text-align: right; font-size: 12px; line-height: 1.417; font-variant-numeric: tabular-nums; }
-.list__row [data-field='quantity'] { grid-column: 1; font-size: 12px; line-height: 1.417; color: var(--muted); }
-/* Small enough that six of them down a column do not shout. */
+.list__blurb { grid-column: 1; font-size: 12px; line-height: 1.417; color: var(--muted); }
+.list__price {
+  grid-row: 1 / span 2; grid-column: 2; align-self: start; text-align: right;
+  font-size: 12px; line-height: 1.417; color: var(--muted); font-variant-numeric: tabular-nums;
+}
 .btn--small { grid-column: 1 / -1; justify-self: start; margin-top: 12px; font-size: 13px; padding: 6px 13px; }
+.list__row--on .btn--small { background: transparent; border-color: var(--edge); color: var(--muted); }
 
 .empty { margin: 0; padding: 40px 15px; text-align: center; color: var(--muted); font-size: 17px; }
 
-.cart__footer { margin-top: 18px; }
+/* The configuration read-out on the stage. */
+.spec { margin: 6px 0 0; display: flex; flex-direction: column; gap: 10px; }
+.spec__row { display: grid; grid-template-columns: 92px 1fr; align-items: center; gap: 14px; }
+.spec__row dt { font-size: 14px; color: var(--muted); }
+.spec__row dd { margin: 0; }
+.spec select {
+  width: 100%; appearance: none; font: inherit; font-size: 15px; color: var(--ink);
+  background: var(--card); border: 1px solid var(--hairline); border-radius: 8px; padding: 8px 30px 8px 11px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='%236e6e73' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat; background-position: right 11px center; cursor: pointer;
+}
+.spec select:focus-visible { outline: none; border-color: var(--blue); box-shadow: 0 0 0 4px light-dark(rgba(0,113,227,.22), rgba(41,151,255,.3)); }
+
+.cart__footer { margin-top: 4px; }
 .coupon { display: flex; gap: 8px; }
 .coupon input {
   flex: 1; min-width: 0; font: inherit; font-size: 14px; color: var(--ink);
@@ -98,6 +116,11 @@ h1 { margin: 0; font-size: 48px; line-height: 1.146; font-weight: 600; }
 .status { margin: 12px 0 0; color: var(--muted); font-size: 14px; }
 .list__muted { color: var(--muted); }
 
+.review { border-top: 1px solid var(--hairline); padding-top: 26px; display: flex; flex-direction: column; gap: 10px; }
+.review__line { margin: 0; font-size: 17px; }
+.review__line strong { font-weight: 600; font-variant-numeric: tabular-nums; }
+.review__note { margin: 0; font-size: 12px; line-height: 1.417; color: var(--muted); }
+
 /* Apple's store button: an 8px rounded rect at 14/18, not the marketing pill. */
 .btn {
   appearance: none; border: 1px solid var(--hairline); background: var(--card); color: var(--ink);
@@ -106,8 +129,11 @@ h1 { margin: 0; font-size: 48px; line-height: 1.146; font-weight: 600; }
 }
 .btn:hover { border-color: var(--ink); }
 .btn:focus-visible { outline: 3px solid var(--blue); outline-offset: 2px; }
-.btn--primary, .btn--small { background: var(--blue); border-color: var(--blue); color: var(--blue-ink); }
-.btn--primary:hover, .btn--small:hover { background: light-dark(#0077ed, #47a9ff); border-color: light-dark(#0077ed, #47a9ff); }
+.btn--primary { background: var(--blue); border-color: var(--blue); color: var(--blue-ink); }
+.btn--primary:hover { background: light-dark(#0077ed, #47a9ff); border-color: light-dark(#0077ed, #47a9ff); }
+.btn--small { background: var(--blue); border-color: var(--blue); color: var(--blue-ink); }
+.btn--small:hover { background: light-dark(#0077ed, #47a9ff); border-color: light-dark(#0077ed, #47a9ff); }
+.btn--wide { width: 100%; margin-top: 8px; padding: 11px 15px; font-size: 15px; }
 .btn .badge { margin-left: 4px; }
 .badge {
   display: inline-block; min-width: 20px; padding: 0 7px; border-radius: 980px;
@@ -117,7 +143,7 @@ h1 { margin: 0; font-size: 48px; line-height: 1.146; font-weight: 600; }
 
 @media (max-width: 1100px) {
   .buy { grid-template-columns: 1fr; }
-  .stage { position: static; min-height: 0; padding: 32px 28px; }
+  .stage { position: static; padding: 32px 28px; }
   .options { max-width: 520px; }
 }
 @media (max-width: 640px) {

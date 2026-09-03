@@ -105,7 +105,7 @@ async function main() {
     }
   }
   // Deep routes exist only in the app, so a 200 here proves the SPA fallback.
-  for (const [id, path] of [['registry', '/adapters/demo-project'], ['demo-shop', '/cart']]) {
+  for (const [id, path] of [['registry', '/adapters/demo-project'], ['demo-shop', '/bag']]) {
     const response = await fetchOrNull(production(id) + path);
     check(response?.ok === true, `${id} serves ${path} through the SPA fallback`);
   }
@@ -162,7 +162,7 @@ async function main() {
     group('The other two adapters register on their own production origins');
     for (const [id, tool, input] of [
       ['demo-project', 'list_tasks', { query: '' }],
-      ['demo-shop', 'search_products', { query: 'cable' }],
+      ['demo-shop', 'read_configuration', {}],
     ]) {
       await page.send('Page.navigate', { url: `${production(id)}/` });
       await sleep(3000);

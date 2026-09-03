@@ -119,7 +119,7 @@ Toggle back on, reload, repeat step 4.
 
 **Nimbus Supply** (5274): ask for *"search for lighting products"*, then
 *"add the Aurora Desk Lamp to my cart"*, then *"apply coupon SAVE10"*. Ask for
-*"what's in my cart"* — `view_cart` navigates to `/cart` client-side and reads it
+*"what's in my bag"* — `view_bag` navigates to `/bag` client-side and reads it
 back, without the tool call dying mid-navigation.
 
 Then ask to add *"lighting"* to the cart. Two products match, so the tool fails

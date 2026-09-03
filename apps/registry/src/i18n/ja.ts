@@ -142,7 +142,7 @@ export const ja: Record<MessageKey, string> = {
   'demos.open': '{0} を開く',
   'demos.adapter': 'Adapter',
   'demos.blurbCrm': '追加・編集ダイアログ付きの顧客一覧。ごく普通のCRUD、ごく普通のReactです。',
-  'demos.blurbShop': '検索・カート・クーポンコードのあるストアフロント。決済は意図的にありません。',
+  'demos.blurbShop': 'チップ・メモリ・ストレージを選んで構成し、バッグに入れ、クーポンを適用し、注文内容を確認するまで。確認で止まります — 決済のステップは意図的にありません。',
   'demos.blurbProject':
     '担当者とステータスを持つタスク管理。削除もあるので、破壊的ツールが確認を求める様子を見られます。',
   'demos.noteProject': 'DESTRUCTIVEの確認ダイアログを見るならこれ。',

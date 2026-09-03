@@ -159,8 +159,26 @@ export function submitForm(element: Element): void {
   else form.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
 }
 
+/**
+ * The text of an element — and for a form control, its value.
+ *
+ * `textContent` of a `<select>` is every option concatenated, which is never
+ * what anyone means by "read this". The reading that matters for a control is
+ * what it currently holds, so a select answers with its selected option's
+ * label and an input or textarea with its value. Sensitive fields are refused
+ * before any of that, the same as everywhere else.
+ */
 export function readElementText(element: Element): string {
   assertNotSensitive(element, 'read');
+  const tag = element.tagName.toLowerCase();
+  if (tag === 'select') {
+    const select = element as HTMLSelectElement;
+    const option = select.selectedOptions[0] ?? select.options[select.selectedIndex];
+    return (option?.textContent ?? select.value).replace(/\s+/g, ' ').trim();
+  }
+  if (tag === 'input' || tag === 'textarea') {
+    return (element as HTMLInputElement | HTMLTextAreaElement).value.replace(/\s+/g, ' ').trim();
+  }
   return (element.textContent ?? '').replace(/\s+/g, ' ').trim();
 }
 

@@ -171,6 +171,26 @@ describe('submitForm', () => {
   });
 });
 
+describe('readElementText on a form control', () => {
+  it('answers with the selected option, not every option', () => {
+    // textContent of a <select> is the whole list concatenated, which is never
+    // what "read this" means. A configurator reading its own choice back got
+    // "Nimbus 3Nimbus 3 ProNimbus 3 Max" before this.
+    document.body.innerHTML = `<select><option value="a">Nimbus 3</option><option value="b" selected>Nimbus 3 Pro</option></select>`;
+    expect(readElementText(one('select'))).toBe('Nimbus 3 Pro');
+  });
+
+  it('answers with an input’s value rather than its empty text', () => {
+    document.body.innerHTML = `<input value="cable" />`;
+    expect(readElementText(one('input'))).toBe('cable');
+  });
+
+  it('still refuses a credential field', () => {
+    document.body.innerHTML = `<input type="password" value="hunter2" />`;
+    expect(() => readElementText(one('input'))).toThrow(/credential or payment/);
+  });
+});
+
 describe('clickElement and readElementText', () => {
   it('clicks and reads collapsed text', () => {
     setBody('<div id="d">  Alice   Smith\n</div>');

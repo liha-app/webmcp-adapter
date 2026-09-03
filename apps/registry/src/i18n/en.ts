@@ -137,7 +137,7 @@ export const en = {
   'demos.open': 'Open {0}',
   'demos.adapter': 'Adapter',
   'demos.blurbCrm': 'A customer list with an add-and-edit dialog. Ordinary CRUD, ordinary React.',
-  'demos.blurbShop': 'A storefront with search, a cart and coupon codes. No checkout, by design.',
+  'demos.blurbShop': 'A configurator: pick a chip, memory and storage, bag it, apply a coupon, review the order. It stops at the review — no payment step, by design.',
   'demos.blurbProject':
     'Tasks with assignees and statuses — including a delete, so you can watch a destructive tool ask first.',
   'demos.noteProject': 'Use this one to see the DESTRUCTIVE confirmation.',

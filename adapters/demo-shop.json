@@ -1,11 +1,11 @@
 {
   "id": "demo-shop",
   "name": "Nimbus Supply",
-  "version": "1.1.0",
-  "description": "Search products, add them to the cart and apply coupons on the Nimbus Supply demo storefront. No checkout or payment steps exist in this adapter.",
+  "version": "2.0.0",
+  "description": "Configure a Nimbus Studio, put it in the bag, apply a coupon and review the order \u2014 by driving the store's own controls. The site itself implements no WebMCP.",
   "category": "commerce",
   "author": "Liha WebMCP Adapter",
-  "verifiedAt": "2026-09-01",
+  "verifiedAt": "2026-09-03",
   "origins": [
     "http://localhost:5274",
     "http://127.0.0.1:5274",
@@ -13,122 +13,14 @@
   ],
   "tools": [
     {
-      "name": "search_products",
-      "title": "Search products",
-      "description": "Search the catalogue by product name or category and return the matching products with their prices.",
-      "capability": "READ",
-      "inputSchema": {
-        "type": "object",
-        "properties": {
-          "query": {
-            "type": "string",
-            "description": "Product name or category to search for"
-          }
-        },
-        "required": [
-          "query"
-        ]
-      },
-      "probeSelectors": [
-        "[data-testid='product-search']"
-      ],
-      "steps": [
-        {
-          "type": "fill",
-          "selector": "[data-testid='product-search']",
-          "value": "{{query}}"
-        },
-        {
-          "type": "waitFor",
-          "selector": "[data-testid='product-list']"
-        },
-        {
-          "type": "readList",
-          "selector": "[data-testid='product-list'] li",
-          "as": "products",
-          "limit": 25,
-          "fields": {
-            "id": {
-              "attribute": "data-product-id"
-            },
-            "name": {
-              "selector": "[data-field='name']"
-            },
-            "category": {
-              "selector": "[data-field='category']"
-            },
-            "price": {
-              "selector": "[data-field='price']"
-            }
-          }
-        }
-      ]
-    },
-    {
-      "name": "view_cart",
-      "title": "View cart",
-      "description": "Open the cart page and return its current contents and total.",
+      "name": "view_configure",
+      "title": "Open the configurator",
+      "description": "Open the page where the machine is configured, and report what is currently selected.",
       "capability": "INTERACT",
       "inputSchema": {
         "type": "object",
         "properties": {}
       },
-      "probeSelectors": [
-        "[data-action='view-cart']"
-      ],
-      "steps": [
-        {
-          "type": "navigate",
-          "path": "/cart"
-        },
-        {
-          "type": "waitFor",
-          "selector": "[data-testid='cart-panel']"
-        },
-        {
-          "type": "readList",
-          "selector": "[data-testid='cart-items'] li",
-          "as": "items",
-          "limit": 50,
-          "fields": {
-            "name": {
-              "selector": "[data-field='name']"
-            },
-            "quantity": {
-              "selector": "[data-field='quantity']"
-            },
-            "price": {
-              "selector": "[data-field='price']"
-            }
-          }
-        },
-        {
-          "type": "readText",
-          "selector": "[data-testid='cart-total']",
-          "as": "total"
-        }
-      ]
-    },
-    {
-      "name": "add_to_cart",
-      "title": "Add a product to the cart",
-      "description": "Add a product to the cart. The product is located by searching for it, and the tool fails if the search does not narrow to exactly one product.",
-      "capability": "WRITE",
-      "inputSchema": {
-        "type": "object",
-        "properties": {
-          "product": {
-            "type": "string",
-            "description": "Product name, specific enough to match exactly one item"
-          }
-        },
-        "required": [
-          "product"
-        ]
-      },
-      "probeSelectors": [
-        "[data-testid='product-search']"
-      ],
       "steps": [
         {
           "type": "navigate",
@@ -136,61 +28,284 @@
         },
         {
           "type": "waitFor",
-          "selector": "[data-testid='product-search']"
+          "selector": "[data-testid='config-summary']"
         },
         {
-          "type": "fill",
-          "selector": "[data-testid='product-search']",
-          "value": "{{product}}"
+          "type": "readText",
+          "selector": "[data-testid='config-total']",
+          "as": "price"
+        }
+      ]
+    },
+    {
+      "name": "read_configuration",
+      "title": "Read the configuration",
+      "description": "Return the Nimbus Studio currently configured \u2014 chip, memory, storage \u2014 and what it costs. Reads the configure page as it stands; open it first with view_configure.",
+      "capability": "READ",
+      "inputSchema": {
+        "type": "object",
+        "properties": {}
+      },
+      "steps": [
+        {
+          "type": "waitFor",
+          "selector": "[data-testid='config-summary']"
+        },
+        {
+          "type": "readText",
+          "selector": "[data-testid='config-chip']",
+          "as": "chip"
+        },
+        {
+          "type": "readText",
+          "selector": "[data-testid='config-memory']",
+          "as": "memory"
+        },
+        {
+          "type": "readText",
+          "selector": "[data-testid='config-storage']",
+          "as": "storage"
+        },
+        {
+          "type": "readText",
+          "selector": "[data-testid='config-total']",
+          "as": "price"
+        }
+      ]
+    },
+    {
+      "name": "choose_chip",
+      "title": "Choose the chip",
+      "description": "Pick which chip the machine is built around. The price updates as soon as it is set.",
+      "capability": "WRITE",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "chip": {
+            "type": "string",
+            "description": "Which chip to fit",
+            "enum": [
+              "Nimbus 3",
+              "Nimbus 3 Pro",
+              "Nimbus 3 Max"
+            ]
+          }
+        },
+        "required": [
+          "chip"
+        ]
+      },
+      "steps": [
+        {
+          "type": "navigate",
+          "path": "/"
         },
         {
           "type": "waitFor",
-          "selector": "[data-testid='product-list'] li"
+          "selector": "[data-testid='config-chip']"
+        },
+        {
+          "type": "select",
+          "selector": "[data-testid='config-chip']",
+          "value": "{{chip}}"
         },
         {
           "type": "readText",
-          "selector": "[data-testid='product-list'] li [data-field='name']",
-          "as": "added_product"
+          "selector": "[data-testid='config-chip']",
+          "as": "chip"
+        },
+        {
+          "type": "readText",
+          "selector": "[data-testid='config-total']",
+          "as": "price"
+        }
+      ]
+    },
+    {
+      "name": "choose_memory",
+      "title": "Choose the memory",
+      "description": "Pick how much unified memory the machine is built with.",
+      "capability": "WRITE",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "memory": {
+            "type": "string",
+            "description": "How much memory to fit",
+            "enum": [
+              "32GB",
+              "64GB",
+              "128GB"
+            ]
+          }
+        },
+        "required": [
+          "memory"
+        ]
+      },
+      "steps": [
+        {
+          "type": "navigate",
+          "path": "/"
+        },
+        {
+          "type": "waitFor",
+          "selector": "[data-testid='config-memory']"
+        },
+        {
+          "type": "select",
+          "selector": "[data-testid='config-memory']",
+          "value": "{{memory}}"
+        },
+        {
+          "type": "readText",
+          "selector": "[data-testid='config-memory']",
+          "as": "memory"
+        },
+        {
+          "type": "readText",
+          "selector": "[data-testid='config-total']",
+          "as": "price"
+        }
+      ]
+    },
+    {
+      "name": "choose_storage",
+      "title": "Choose the storage",
+      "description": "Pick how much storage the machine is built with.",
+      "capability": "WRITE",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "storage": {
+            "type": "string",
+            "description": "How much storage to fit",
+            "enum": [
+              "512GB SSD",
+              "1TB SSD",
+              "2TB SSD"
+            ]
+          }
+        },
+        "required": [
+          "storage"
+        ]
+      },
+      "steps": [
+        {
+          "type": "navigate",
+          "path": "/"
+        },
+        {
+          "type": "waitFor",
+          "selector": "[data-testid='config-storage']"
+        },
+        {
+          "type": "select",
+          "selector": "[data-testid='config-storage']",
+          "value": "{{storage}}"
+        },
+        {
+          "type": "readText",
+          "selector": "[data-testid='config-storage']",
+          "as": "storage"
+        },
+        {
+          "type": "readText",
+          "selector": "[data-testid='config-total']",
+          "as": "price"
+        }
+      ]
+    },
+    {
+      "name": "add_to_bag",
+      "title": "Add the configuration to the bag",
+      "description": "Put the machine as currently configured into the bag, then report what the bag holds.",
+      "capability": "WRITE",
+      "inputSchema": {
+        "type": "object",
+        "properties": {}
+      },
+      "steps": [
+        {
+          "type": "navigate",
+          "path": "/"
+        },
+        {
+          "type": "waitFor",
+          "selector": "[data-action='add-to-bag']"
         },
         {
           "type": "click",
-          "selector": "[data-testid='product-list'] li [data-action='add-to-cart']"
+          "selector": "[data-action='add-to-bag']"
         },
         {
-          "type": "assertVisible",
-          "selector": "[data-testid='cart-count']"
+          "type": "waitFor",
+          "selector": "[data-testid='bag-items'] li"
+        },
+        {
+          "type": "readList",
+          "selector": "[data-testid='bag-items'] li",
+          "as": "bag"
         },
         {
           "type": "readText",
-          "selector": "[data-testid='cart-count']",
-          "as": "cart_item_count"
+          "selector": "[data-testid='bag-total']",
+          "as": "total"
+        }
+      ]
+    },
+    {
+      "name": "view_bag",
+      "title": "View the bag",
+      "description": "Open the bag and return what is in it and what it comes to.",
+      "capability": "INTERACT",
+      "inputSchema": {
+        "type": "object",
+        "properties": {}
+      },
+      "steps": [
+        {
+          "type": "navigate",
+          "path": "/bag"
+        },
+        {
+          "type": "waitFor",
+          "selector": "[data-testid='bag-panel']"
+        },
+        {
+          "type": "readList",
+          "selector": "[data-testid='bag-items'] li",
+          "as": "items"
+        },
+        {
+          "type": "readText",
+          "selector": "[data-testid='bag-total']",
+          "as": "total"
         }
       ]
     },
     {
       "name": "apply_coupon",
       "title": "Apply a coupon",
-      "description": "Apply a coupon code to the cart and report whether it was accepted.",
+      "description": "Enter a coupon code on the bag and report whether the store accepted it, with the total that results.",
       "capability": "WRITE",
       "inputSchema": {
         "type": "object",
         "properties": {
           "code": {
             "type": "string",
-            "description": "Coupon code, for example SAVE10"
+            "description": "The coupon code to try"
           }
         },
         "required": [
           "code"
         ]
       },
-      "probeSelectors": [
-        "[data-action='view-cart']"
-      ],
       "steps": [
         {
           "type": "navigate",
-          "path": "/cart"
+          "path": "/bag"
         },
         {
           "type": "waitFor",
@@ -216,8 +331,41 @@
         },
         {
           "type": "readText",
-          "selector": "[data-testid='cart-total']",
-          "as": "cart_total"
+          "selector": "[data-testid='bag-total']",
+          "as": "total"
+        }
+      ]
+    },
+    {
+      "name": "review_order",
+      "title": "Open the order review",
+      "description": "Move the bag to the order review and report what would be ordered. It stops there: this store has no payment step, so there is nothing here to pay with.",
+      "capability": "INTERACT",
+      "inputSchema": {
+        "type": "object",
+        "properties": {}
+      },
+      "steps": [
+        {
+          "type": "navigate",
+          "path": "/bag"
+        },
+        {
+          "type": "waitFor",
+          "selector": "[data-action='review-order']"
+        },
+        {
+          "type": "click",
+          "selector": "[data-action='review-order']"
+        },
+        {
+          "type": "waitFor",
+          "selector": "[data-testid='order-review']"
+        },
+        {
+          "type": "readText",
+          "selector": "[data-testid='review-total']",
+          "as": "total"
         }
       ]
     }

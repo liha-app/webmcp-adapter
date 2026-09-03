@@ -1,14 +1,28 @@
-export interface Product {
+export type StepId = 'chip' | 'memory' | 'storage';
+
+export interface Option {
   id: string;
-  name: string;
-  category: string;
-  price: number;
+  /** What the agent and the person both call it. */
+  label: string;
+  blurb: string;
+  /** Added to the base price. The first option in each step is the base. */
+  extra: number;
 }
 
-export interface CartLine {
+export interface Step {
+  id: StepId;
+  /** "Chip." — Apple's statement heading, the word before the period. */
+  title: string;
+  lead: string;
+  options: Option[];
+}
+
+export interface BagLine {
   id: string;
-  product: Product;
-  quantity: number;
+  chip: Option;
+  memory: Option;
+  storage: Option;
+  price: number;
 }
 
 export interface Coupon {

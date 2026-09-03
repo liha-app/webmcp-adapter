@@ -139,9 +139,11 @@ async function main() {
 
     // The workflow, performed by hand.
     await shop.send('Page.bringToFront');
-    await shop.eval(clickOn('[data-action="view-products"]'));
-    await sleep(400);
-    await shop.eval(typeInto('[data-testid="product-search"]', 'cable'));
+    await shop.eval(clickOn('[data-action="view-bag"]'));
+    await sleep(500);
+    await shop.eval(typeInto('[data-testid="coupon-form"] [name="coupon"]', 'NIMBUS10'));
+    await sleep(300);
+    await shop.eval(clickOn('[data-action="apply-coupon"]'));
     await sleep(700);
     await beat(shop, 'Do the thing you want the agent to do', 'The recorder is listening to real DOM events — clicks and inputs, not keystrokes.');
 
@@ -157,9 +159,9 @@ async function main() {
     await sleep(700);
     await beat(studio, 'The Studio has the workflow', 'Selectors come from the site’s own stable attributes. Class names are never used.');
 
-    await studio.eval(typeInto('input[placeholder="create_customer"]', 'find_products'));
+    await studio.eval(typeInto('input[placeholder="create_customer"]', 'check_coupon'));
     await sleep(200);
-    await studio.eval(typeInto('textarea', 'Search the catalogue by keyword and return the matching product names.'));
+    await studio.eval(typeInto('textarea', 'Try a coupon code on the bag and report whether the store accepted it.'));
     await sleep(900);
     await beat(studio, 'Name it, and say what it does', 'That description is what an agent reads to decide when to use the tool.');
 
@@ -170,12 +172,12 @@ async function main() {
       */
     await studio.eval(`[...document.querySelectorAll('.node[data-param="1"]')][0].click()`);
     await sleep(400);
-    await studio.eval(typeInto('input[placeholder="parameter name"]', 'keyword'));
+    await studio.eval(typeInto('input[placeholder="parameter name"]', 'code'));
     await sleep(400);
     // Its description belongs to the tool, so back to the trigger node.
     await studio.eval(`document.querySelector('.node--trigger').click()`);
     await sleep(400);
-    await studio.eval(typeInto('input[placeholder="What should the agent put here?"]', 'What to search the catalogue for'));
+    await studio.eval(typeInto('input[placeholder="What should the agent put here?"]', 'The coupon code to try'));
     await sleep(700);
     await beat(studio, 'The value you typed becomes an argument', '“cable” was an example, not a constant. It is now an input the agent fills in.');
 
@@ -188,13 +190,13 @@ async function main() {
     await studio.eval(`document.querySelector('.node__add').click()`);
     await sleep(500);
     const last = await studio.eval(`document.querySelectorAll('.node[data-kind]').length`);
-    await studio.eval(setNative(`select[aria-label="Step ${last} type"]`, 'readList'));
+    await studio.eval(setNative(`select[aria-label="Step ${last} type"]`, 'readText'));
     await sleep(300);
     await studio.eval(
-      setNative(`.step input[placeholder="CSS selector"]`, "[data-testid='product-list'] [data-field='name']"),
+      setNative(`.step input[placeholder="CSS selector"]`, "[data-testid='coupon-status']"),
     );
     await sleep(200);
-    await studio.eval(setNative('.step input[placeholder="output name"]', 'products'));
+    await studio.eval(setNative('.step input[placeholder="output name"]', 'coupon_status'));
     await sleep(800);
     await beat(studio, 'Add the step the recorder could not see', 'Reading the answer back is not an interaction, so nobody clicked it. You add it here.');
 
@@ -235,14 +237,14 @@ async function main() {
     });
     await agent.send('WebMCP.enable');
     await agent.goto(`${ORIGIN}/`);
-    const registered = await waitFor(async () => watch.tools.get('find_products'), 20000);
+    const registered = await waitFor(async () => watch.tools.get('check_coupon'), 20000);
     if (!registered) throw new Error('the tool the Studio produced never registered');
-    await beat(agent, 'Reload: the tool an agent can see', 'find_products is registered with WebMCP. The site was not touched.');
+    await beat(agent, 'Reload: the tool an agent can see', 'check_coupon is registered with WebMCP. The site was not touched.');
 
     await agent.send('WebMCP.invokeTool', {
       frameId: registered.frameId,
-      toolName: 'find_products',
-      input: { keyword: 'cable' },
+      toolName: 'check_coupon',
+      input: { code: 'NIMBUS10' },
     });
     const answered = await waitFor(async () => watch.events[0] ?? null, 25000);
     if (!answered) throw new Error('the tool never answered');

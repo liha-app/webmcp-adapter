@@ -1,46 +1,63 @@
-import { useEffect, useMemo, useState } from "react";
-import { ThemeControl } from "@liha/demo-ui/theme";
-import type { CartLine, Coupon, Product } from "./types";
+import { useEffect, useMemo, useState } from 'react';
+import { ThemeControl } from '@liha/demo-ui/theme';
+import type { BagLine, Coupon, Option, Step, StepId } from './types';
 
-const PRODUCTS: Product[] = [
-  { id: "p-100", name: "Aurora Desk Lamp", category: "lighting", price: 89 },
+const BASE = 1999;
+
+const STEPS: Step[] = [
   {
-    id: "p-101",
-    name: "Nimbus Standing Desk",
-    category: "furniture",
-    price: 640,
+    id: 'chip',
+    title: 'Chip.',
+    lead: 'Start with the engine.',
+    options: [
+      { id: 'n3', label: 'Nimbus 3', blurb: '10-core CPU, 16-core GPU. Enough for most days.', extra: 0 },
+      { id: 'n3-pro', label: 'Nimbus 3 Pro', blurb: '14-core CPU, 24-core GPU. For long renders.', extra: 600 },
+      { id: 'n3-max', label: 'Nimbus 3 Max', blurb: '18-core CPU, 40-core GPU. For the heaviest work.', extra: 1400 },
+    ],
   },
-  { id: "p-102", name: "Cirrus Mesh Chair", category: "furniture", price: 410 },
   {
-    id: "p-103",
-    name: "Stratus Monitor Arm",
-    category: "accessories",
-    price: 135,
+    id: 'memory',
+    title: 'Memory.',
+    lead: 'How much you keep open at once.',
+    options: [
+      { id: '32gb', label: '32GB', blurb: 'Unified memory. The comfortable default.', extra: 0 },
+      { id: '64gb', label: '64GB', blurb: 'For large projects and many of them.', extra: 400 },
+      { id: '128gb', label: '128GB', blurb: 'For work that does not fit anywhere else.', extra: 1000 },
+    ],
   },
-  { id: "p-104", name: "Halo Ring Light", category: "lighting", price: 72 },
-  { id: "p-105", name: "Vapor Cable Tray", category: "accessories", price: 38 },
+  {
+    id: 'storage',
+    title: 'Storage.',
+    lead: 'How much you keep.',
+    options: [
+      { id: '512gb', label: '512GB SSD', blurb: 'Fast, and enough to start.', extra: 0 },
+      { id: '1tb', label: '1TB SSD', blurb: 'Room for a year of footage.', extra: 200 },
+      { id: '2tb', label: '2TB SSD', blurb: 'Room for the archive too.', extra: 600 },
+    ],
+  },
 ];
 
 const COUPONS: Coupon[] = [
-  { code: "SAVE10", label: "10% off your order", discount: 0.1 },
-  { code: "DESKWEEK", label: "15% off furniture week", discount: 0.15 },
+  { code: 'NIMBUS10', label: '10% off', discount: 0.1 },
+  { code: 'STUDIO25', label: '25% off', discount: 0.25 },
 ];
 
-/**
- * Deliberately no checkout, no payment step, and no stored payment details.
- * The demo stops at the cart.
- */
+const stepOf = (id: StepId): Step => STEPS.find((step) => step.id === id) as Step;
+const optionOf = (id: StepId, optionId: string): Option =>
+  (stepOf(id).options.find((option) => option.id === optionId) ?? stepOf(id).options[0]) as Option;
+
+/** Two routes, and the browser's own history — no router, on purpose. */
 function usePath(): [string, (next: string) => void] {
-  const [path, setPath] = useState(() => window.location.pathname);
+  const [path, setPath] = useState(window.location.pathname);
   useEffect(() => {
     const onPop = () => setPath(window.location.pathname);
-    window.addEventListener("popstate", onPop);
-    return () => window.removeEventListener("popstate", onPop);
+    window.addEventListener('popstate', onPop);
+    return () => window.removeEventListener('popstate', onPop);
   }, []);
   return [
     path,
     (next: string) => {
-      window.history.pushState({}, "", next);
+      window.history.pushState({}, '', next);
       setPath(next);
     },
   ];
@@ -48,43 +65,40 @@ function usePath(): [string, (next: string) => void] {
 
 export function App() {
   const [path, go] = usePath();
-  const [query, setQuery] = useState("");
-  const [lines, setLines] = useState<CartLine[]>([]);
-  const [couponInput, setCouponInput] = useState("");
+  const [chosen, setChosen] = useState<Record<StepId, string>>({ chip: 'n3', memory: '32gb', storage: '512gb' });
+  const [bag, setBag] = useState<BagLine[]>([]);
+  const [couponInput, setCouponInput] = useState('');
   const [coupon, setCoupon] = useState<Coupon | null>(null);
-  const [couponStatus, setCouponStatus] = useState("");
+  const [couponStatus, setCouponStatus] = useState('');
+  /* The bag page has three states, and the last one is a receipt. Nothing in
+   * any of them asks for a card: the demo stops where a real store would start
+   * collecting payment, which is the line this project does not cross. */
+  const [stage, setStage] = useState<'bag' | 'review'>('bag');
 
-  const results = useMemo(() => {
-    const needle = query.trim().toLowerCase();
-    if (!needle) return PRODUCTS;
-    return PRODUCTS.filter(
-      (product) =>
-        product.name.toLowerCase().includes(needle) ||
-        product.category.toLowerCase().includes(needle),
-    );
-  }, [query]);
-
-  const itemCount = lines.reduce((total, line) => total + line.quantity, 0);
-  const subtotal = lines.reduce(
-    (total, line) => total + line.product.price * line.quantity,
-    0,
+  const picked = useMemo(
+    () => ({
+      chip: optionOf('chip', chosen.chip),
+      memory: optionOf('memory', chosen.memory),
+      storage: optionOf('storage', chosen.storage),
+    }),
+    [chosen],
   );
-  const total = coupon
-    ? Math.round(subtotal * (1 - coupon.discount))
-    : subtotal;
+  const configured = BASE + picked.chip.extra + picked.memory.extra + picked.storage.extra;
+  const subtotal = bag.reduce((total, line) => total + line.price, 0);
+  const total = coupon ? Math.round(subtotal * (1 - coupon.discount)) : subtotal;
+  const onBag = path.startsWith('/bag');
 
-  function addToCart(product: Product) {
-    setLines((prev) => {
-      const existing = prev.find((line) => line.product.id === product.id);
-      if (existing) {
-        return prev.map((line) =>
-          line.product.id === product.id
-            ? { ...line, quantity: line.quantity + 1 }
-            : line,
-        );
-      }
-      return [...prev, { id: `line-${product.id}`, product, quantity: 1 }];
-    });
+  function choose(step: StepId, optionId: string) {
+    setChosen((prev) => ({ ...prev, [step]: optionId }));
+  }
+
+  function addToBag() {
+    setBag((prev) => [
+      ...prev,
+      { id: `line-${prev.length + 1}`, chip: picked.chip, memory: picked.memory, storage: picked.storage, price: configured },
+    ]);
+    setStage('bag');
+    go('/bag');
   }
 
   function applyCoupon(event: React.FormEvent<HTMLFormElement>) {
@@ -96,18 +110,13 @@ export function App() {
       setCouponStatus(`Coupon ${found.code} applied — ${found.label}.`);
     } else {
       setCoupon(null);
-      setCouponStatus(`Coupon ${code || "(empty)"} is not valid.`);
+      setCouponStatus(`Coupon ${code || '(empty)'} is not valid.`);
     }
   }
 
-  const onCart = path.startsWith("/cart");
 
   return (
     <>
-      {/*
-       * Apple's global bar: the store's name, and the two places you can be.
-       * The cart count rides in the button, which is where a shopper looks.
-       */}
       <header className="topbar">
         <div className="topbar__inner">
           <span className="topbar__brand">Nimbus Supply</span>
@@ -115,164 +124,146 @@ export function App() {
             <ThemeControl />
             <button
               type="button"
-              className={`btn ${onCart ? "" : "btn--primary"}`}
-              data-action="view-products"
-              onClick={() => go("/")}
+              className={`btn ${onBag ? '' : 'btn--primary'}`}
+              data-action="view-configure"
+              onClick={() => go('/')}
             >
-              Products
+              Configure
             </button>
-            <button
-              type="button"
-              className={`btn ${onCart ? "btn--primary" : ""}`}
-              data-action="view-cart"
-              onClick={() => go("/cart")}
-            >
-              Cart{" "}
-              <span className="badge" data-testid="cart-count">
-                {itemCount}
-              </span>
+            <button type="button" className={`btn ${onBag ? 'btn--primary' : ''}`} data-action="view-bag" onClick={() => go('/bag')}>
+              Bag <span className="badge" data-testid="bag-count">{bag.length}</span>
             </button>
           </nav>
         </div>
       </header>
 
       <main className="app">
-        {/*
-         * Apple's buy page opens with a coloured eyebrow, a 48/55 semibold
-         * title and a line of prices — then splits into a wide visual column
-         * and a 328px column of options. That split is the page; a full-width
-         * grid of cards is a different design wearing the same colours.
-         */}
         <div className="pagehead">
-          <p className="eyebrow">{onCart ? "Your bag" : "New"}</p>
-          <h1>{onCart ? "Review your bag." : "Choose your Nimbus."}</h1>
-          <p className="app__subtitle">
-            An ordinary storefront. Nothing in here knows what an agent is.
-          </p>
+          <p className="eyebrow">{onBag ? 'Your bag' : 'New'}</p>
+          <h1>{onBag ? 'Review your bag.' : 'Build your Nimbus Studio.'}</h1>
+          <p className="app__subtitle">An ordinary storefront. Nothing in here knows what an agent is.</p>
         </div>
 
-        {!onCart && (
-          <section className="buy" data-testid="products-panel">
-            <div className="stage">
-              <p className="stage__kicker">Nimbus Supply</p>
-              <p className="stage__line">
-                Six things for a desk that has to work. Search the catalogue, or
-                read down the column.
+        {!onBag && (
+          <section className="buy" data-testid="configure-panel">
+            {/* The stage: what you have built so far, and what it costs. */}
+            <aside className="stage" data-testid="config-summary">
+              <p className="stage__kicker">Your configuration</p>
+              <p className="stage__total" data-testid="config-total">
+                ${configured}
               </p>
-              <label className="stage__search">
-                <span className="hidden-field">Search products</span>
-                <input
-                  className="search"
-                  name="q"
-                  placeholder="Search products"
-                  aria-label="Search products"
-                  data-testid="product-search"
-                  autoComplete="off"
-                  value={query}
-                  onChange={(event) => setQuery(event.target.value)}
-                />
-              </label>
-              <p className="stage__count">
-                <span className="badge" data-testid="product-result-count">
-                  {results.length}
-                </span>{" "}
-                shown
-              </p>
-            </div>
+              <dl className="spec">
+                {STEPS.map((step) => (
+                  <div className="spec__row" key={step.id}>
+                    <dt>{step.title.replace('.', '')}</dt>
+                    <dd>
+                      <select
+                        data-testid={`config-${step.id}`}
+                        aria-label={`${step.title.replace('.', '')} choice`}
+                        value={chosen[step.id]}
+                        onChange={(event) => choose(step.id, event.target.value)}
+                      >
+                        {step.options.map((option) => (
+                          <option key={option.id} value={option.id}>
+                            {option.label}
+                          </option>
+                        ))}
+                      </select>
+                    </dd>
+                  </div>
+                ))}
+              </dl>
+              <button type="button" className="btn btn--primary btn--wide" data-action="add-to-bag" onClick={addToBag}>
+                Add to bag
+              </button>
+            </aside>
 
             <div className="options">
-              <h2 className="step">
-                Products. <span>Pick what the desk is missing.</span>
-              </h2>
-              <ul className="list" data-testid="product-list">
-                {results.map((product) => (
-                  <li
-                    key={product.id}
-                    className="list__row"
-                    data-product-id={product.id}
-                  >
-                    <span className="list__name" data-field="name">
-                      {product.name}
-                    </span>
-                    <span className="list__muted" data-field="category">
-                      {product.category}
-                    </span>
-                    <span className="list__muted" data-field="price">
-                      ${product.price}
-                    </span>
-                    <button
-                      type="button"
-                      className="btn btn--small"
-                      data-action="add-to-cart"
-                      onClick={() => addToCart(product)}
-                    >
-                      Add to cart
-                    </button>
-                  </li>
-                ))}
-              </ul>
-              {results.length === 0 && (
-                <p className="empty" data-testid="product-empty">
-                  Nothing matches that search.
-                </p>
-              )}
+              {STEPS.map((step) => (
+                <section className="step" data-step={step.id} key={step.id}>
+                  <h2 className="step__head">
+                    {step.title} <span>{step.lead}</span>
+                  </h2>
+                  <ul className="list" data-testid="option-list">
+                    {step.options.map((option) => {
+                      const selected = chosen[step.id] === option.id;
+                      return (
+                        <li
+                          key={option.id}
+                          className={`list__row ${selected ? 'list__row--on' : ''}`}
+                          data-option-id={option.id}
+                          data-selected={selected ? 'true' : 'false'}
+                        >
+                          <span className="list__name" data-field="name">
+                            {option.label}
+                          </span>
+                          <span className="list__blurb" data-field="blurb">
+                            {option.blurb}
+                          </span>
+                          <span className="list__price" data-field="price">
+                            {option.extra === 0 ? 'Included' : `+$${option.extra}`}
+                          </span>
+                          <button
+                            type="button"
+                            className="btn btn--small"
+                            data-action="select-option"
+                            aria-pressed={selected}
+                            onClick={() => choose(step.id, option.id)}
+                          >
+                            {selected ? 'Selected' : 'Select'}
+                          </button>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                </section>
+              ))}
             </div>
           </section>
         )}
 
-        {onCart && (
-          <section className="buy" data-testid="cart-panel">
-            <div className="stage stage--summary">
+        {onBag && (
+          <section className="buy" data-testid="bag-panel">
+            <aside className="stage stage--summary">
               <p className="stage__kicker">Order summary</p>
-              <p className="stage__total" data-testid="cart-total">
+              <p className="stage__total" data-testid="bag-total">
                 Total ${total}
               </p>
               <p className="stage__line list__muted">Subtotal ${subtotal}</p>
-            </div>
+              {stage === 'bag' && bag.length > 0 && (
+                <button type="button" className="btn btn--primary btn--wide" data-action="review-order" onClick={() => setStage('review')}>
+                  Review order
+                </button>
+              )}
+            </aside>
 
             <div className="options">
-              <h2 className="step">
-                Your bag.{" "}
-                <span>
-                  {lines.length === 0
-                    ? "Nothing in it yet."
-                    : "Everything you picked."}
-                </span>
+              <h2 className="step__head">
+                Your bag. <span>{bag.length === 0 ? 'Nothing in it yet.' : 'Everything you built.'}</span>
               </h2>
-              <p className="hidden-field" data-testid="cart-line-count">
-                {lines.length}
-              </p>
-              <ul className="list" data-testid="cart-items">
-                {lines.map((line) => (
-                  <li
-                    key={line.id}
-                    className="list__row"
-                    data-cart-item-id={line.id}
-                  >
+              <ul className="list" data-testid="bag-items">
+                {bag.map((line) => (
+                  <li key={line.id} className="list__row" data-bag-item-id={line.id}>
                     <span className="list__name" data-field="name">
-                      {line.product.name}
+                      Nimbus Studio
                     </span>
-                    <span className="list__muted" data-field="quantity">
-                      {line.quantity}
+                    <span className="list__blurb" data-field="spec">
+                      {line.chip.label} · {line.memory.label} · {line.storage.label}
                     </span>
-                    <span className="list__muted" data-field="price">
-                      ${line.product.price * line.quantity}
+                    <span className="list__price" data-field="price">
+                      ${line.price}
                     </span>
                   </li>
                 ))}
               </ul>
-              {lines.length === 0 && (
-                <p className="empty" data-testid="cart-empty">
-                  Your cart is empty.
+              {bag.length === 0 && (
+                <p className="empty" data-testid="bag-empty">
+                  Your bag is empty.
                 </p>
               )}
 
               <div className="cart__footer">
-                <form
-                  className="coupon"
-                  data-testid="coupon-form"
-                  onSubmit={applyCoupon}
-                >
+                <form className="coupon" data-testid="coupon-form" onSubmit={applyCoupon}>
                   <input
                     name="coupon"
                     placeholder="Coupon code"
@@ -281,11 +272,7 @@ export function App() {
                     value={couponInput}
                     onChange={(event) => setCouponInput(event.target.value)}
                   />
-                  <button
-                    type="submit"
-                    className="btn"
-                    data-action="apply-coupon"
-                  >
+                  <button type="submit" className="btn" data-action="apply-coupon">
                     Apply
                   </button>
                 </form>
@@ -295,6 +282,28 @@ export function App() {
                   {couponStatus}
                 </p>
               )}
+
+              {stage === 'review' && (
+                <section className="review" data-testid="order-review">
+                  <h2 className="step__head">
+                    Review order. <span>Confirm what you are ordering.</span>
+                  </h2>
+                  {/*
+                    * A review, and then a receipt. No card, no address, no
+                    * account — the demo stops exactly where a real store would
+                    * begin collecting them, and the runtime refuses those
+                    * fields anyway.
+                    */}
+                  <p className="review__line">
+                    {bag.length} item(s) · <strong data-testid="review-total">${total}</strong>
+                  </p>
+                  <p className="review__note">
+                    This is where a real store would ask for payment. This one never does, and never will —
+                    the runtime refuses card and password fields outright.
+                  </p>
+                </section>
+              )}
+
             </div>
           </section>
         )}

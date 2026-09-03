@@ -198,36 +198,54 @@ async function main() {
     check(outputText(updateOut).includes('Alice Chen'), 'update_customer renamed the record it located by email');
 
     /* ------------------------------------------------------------ Shop --- */
-    group('Demo Shop adapter (search, cart, coupon, same-origin navigation)');
+    group('Demo Shop adapter (configure, bag, coupon, same-origin navigation)');
     watch.tools.clear();
     await page.goto('http://localhost:5274/');
+    const shopTools = ['view_configure', 'read_configuration', 'choose_chip', 'choose_memory', 'choose_storage', 'add_to_bag', 'view_bag', 'apply_coupon', 'review_order'];
     must(
-      await waitFor(async () => ['search_products', 'add_to_cart', 'apply_coupon', 'view_cart'].every((n) => watch.tools.has(n))),
-      'all four shop tools are announced to the agent',
+      await waitFor(async () => shopTools.every((name) => watch.tools.has(name))),
+      `all ${shopTools.length} shop tools are announced to the agent`,
       [...watch.tools.keys()].join(', '),
     );
-    const products = await invoke(page, watch, 'search_products', { query: 'lighting' });
-    check(outputText(products).includes('Aurora Desk Lamp'), 'search_products finds products by category');
-    await invoke(page, watch, 'add_to_cart', { product: 'Nimbus Standing Desk' });
+
+    const before = await invoke(page, watch, 'read_configuration', {});
+    check(outputText(before).includes('1999'), 'read_configuration reports the base machine', outputText(before));
+
+    /*
+     * The configurator's choices are <select>s, so the argument reaches the
+     * page through the store's own control. That is the only shape the step
+     * vocabulary allows — an adapter cannot build a selector out of an
+     * argument — and it is why a wrong value comes back as the store's own
+     * list of what it does offer.
+     */
+    const chip = await invoke(page, watch, 'choose_chip', { chip: 'Nimbus 3 Max' });
+    check(outputText(chip).includes('3399'), 'choose_chip set the chip and the price followed', outputText(chip));
+    const wrong = await invoke(page, watch, 'choose_memory', { memory: '512GB' });
     check(
-      (await page.eval('document.querySelector("[data-testid=\\"cart-count\\"]").textContent')) === '1',
-      'add_to_cart put exactly one item in the cart',
+      (outputText(wrong).includes('32GB') || wrong?.isError === true) && !outputText(wrong).includes('512GB SSD'),
+      'an option the store does not offer is refused, with the ones it does',
+      outputText(wrong),
     );
-    const ambiguous = await invoke(page, watch, 'add_to_cart', { product: 'lighting' });
+
+    await invoke(page, watch, 'add_to_bag', {});
     check(
-      outputText(ambiguous).includes('failed') || ambiguous?.isError === true,
-      'add_to_cart refuses an ambiguous product instead of guessing',
-      outputText(ambiguous),
+      (await page.eval(`document.querySelector('[data-testid="bag-count"]').textContent`)) === '1',
+      'add_to_bag put exactly one machine in the bag',
     );
+    const coupon = await invoke(page, watch, 'apply_coupon', { code: 'NIMBUS10' });
+    check(outputText(coupon).includes('NIMBUS10 applied'), 'apply_coupon applied the discount', outputText(coupon));
     check(
-      (await page.eval('document.querySelector("[data-testid=\\"cart-count\\"]").textContent')) === '1',
-      'the refused call changed nothing',
+      (await page.eval('location.pathname')) === '/bag',
+      'the navigate step moved to the bag route without losing the tool call',
     );
-    const coupon = await invoke(page, watch, 'apply_coupon', { code: 'SAVE10' });
-    check(outputText(coupon).includes('SAVE10 applied'), 'apply_coupon applied the discount', outputText(coupon));
+
+    // The flow ends at the review. There is no tool past it, and no field on
+    // the page that could hold a card.
+    const review = await invoke(page, watch, 'review_order', {});
+    check(outputText(review).includes('3059'), 'review_order reports what would be ordered', outputText(review));
     check(
-      (await page.eval('location.pathname')) === '/cart',
-      'the navigate step moved to the cart route without losing the tool call',
+      (await page.eval(`Boolean(document.querySelector('[data-action="place-order"], input[type="password"], [autocomplete^="cc-"]'))`)) === false,
+      'and the store asks for nothing to pay with',
     );
 
     /* --------------------------------------------------------- Project --- */
@@ -364,14 +382,14 @@ async function main() {
 
     const probed = await invoke(page, watch, 'probe_selectors', {
       origin: 'http://localhost:5274',
-      selectors: "[data-testid='product-search']\n[data-action='view-products']\n[data-testid='nope']\nli",
+      selectors: "[data-testid='config-total']\n[data-action='add-to-bag']\n[data-testid='nope']\nli",
     });
     const probeText = outputText(probed);
-    check(probeText.includes("[data-testid='product-search'] → usable"), 'probe_selectors confirms a good selector', probeText.replace(/\n/g, ' | ').slice(0, 200));
+    check(probeText.includes("[data-testid='config-total'] → usable"), 'probe_selectors confirms a good selector', probeText.replace(/\n/g, ' | ').slice(0, 200));
     check(probeText.includes("[data-testid='nope'] → no match"), 'and reports one that matches nothing');
     check(/li → ambiguous \(\d+ matches\)/.test(probeText), 'and one that is ambiguous, which the runtime would refuse');
     check(
-      !/Wireless|Keyboard|\$|USD/i.test(probeText),
+      !/Nimbus 3|SSD|GB\b/i.test(probeText),
       'it returns counts and no page content — an agent cannot read the page with it',
       probeText.replace(/\n/g, ' | ').slice(0, 200),
     );
@@ -379,25 +397,24 @@ async function main() {
     // Written the way an agent would: only selectors it just checked.
     const authored = {
       id: 'agent-authored-shop',
-      name: 'Nimbus Supply search',
+      name: 'Nimbus configurator',
       version: '1.0.0',
-      description: 'Search the Nimbus Supply catalogue by keyword.',
+      description: 'Set the memory on the Nimbus configurator and read the price back.',
       origins: ['http://localhost:5274'],
       tools: [
         {
-          name: 'find_products',
-          description: 'Search the catalogue by keyword and return the matching product names.',
-          capability: 'READ',
+          name: 'pick_memory',
+          description: 'Choose how much memory the machine is configured with, and report the new price.',
+          capability: 'WRITE',
           inputSchema: {
             type: 'object',
-            properties: { keyword: { type: 'string', description: 'Search text' } },
-            required: ['keyword'],
+            properties: { memory: { type: 'string', description: 'How much memory to fit' } },
+            required: ['memory'],
           },
           steps: [
-            { type: 'click', selector: "[data-action='view-products']" },
-            { type: 'fill', selector: "[data-testid='product-search']", value: '{{keyword}}' },
-            { type: 'waitFor', selector: "[data-testid='product-list']" },
-            { type: 'readList', selector: "[data-testid='product-list'] [data-field='name']", as: 'products' },
+            { type: 'waitFor', selector: "[data-testid='config-memory']" },
+            { type: 'select', selector: "[data-testid='config-memory']", value: '{{memory}}' },
+            { type: 'readText', selector: "[data-testid='config-total']", as: 'price' },
           ],
         },
       ],
@@ -436,12 +453,12 @@ async function main() {
     watch.tools.clear();
     await shopTab.close?.();
     await page.goto('http://localhost:5274/');
-    const authoredTool = await waitFor(async () => watch.tools.get('find_products'), 20000);
+    const authoredTool = await waitFor(async () => watch.tools.get('pick_memory'), 20000);
     must(Boolean(authoredTool), 'reloading the site registers the tool the agent wrote, with no recording involved');
-    const answer = await invoke(page, watch, 'find_products', { keyword: 'cable' });
+    const answer = await invoke(page, watch, 'pick_memory', { memory: '128GB' });
     check(
-      outputText(answer).toLowerCase().includes('cable'),
-      'and calling it drives the site and answers from the real catalogue',
+      outputText(answer).includes('2999'),
+      'and calling it drives the site — the store recomputed the price',
       outputText(answer).slice(0, 160),
     );
 

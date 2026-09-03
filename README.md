@@ -47,7 +47,7 @@ same surface a Tool Inspector or agent uses.
 
 ```
 pnpm acceptance            10/10 Phase 0 criteria
-pnpm acceptance:full       65/65 checks — three demo adapters, the portal's
+pnpm acceptance:full       67/67 checks — three demo adapters, the portal's
                            native WebMCP tools, the destructive confirmation gate,
                            an agent writing and installing an adapter of its own,
                            and a browser with the WebMCP flag off, where the
@@ -58,8 +58,8 @@ pnpm acceptance:recorder   37/37 checks — record a workflow, get a valid adapt
 pnpm acceptance:csp        4/4 sites load under the policy they ship
 pnpm acceptance:icons      6/6 checks — Chrome parses the extension's icons and
                            can resolve every path it was given
-pnpm verify                457 unit + integration tests, typecheck, lint, build
-pnpm e2e                   45 Playwright tests
+pnpm verify                463 unit + integration tests, typecheck, lint, build
+pnpm e2e                   50 Playwright tests
 ```
 
 The demo apps contain no WebMCP code at all — asserted against their sources,
@@ -327,8 +327,8 @@ Full model, including the MAIN-world limitation this cannot engineer away:
 ## Verifying it yourself
 
 ```bash
-pnpm verify           # typecheck, lint, 457 unit + integration tests, build
-pnpm e2e              # 45 Playwright tests against the portal and the demo apps
+pnpm verify           # typecheck, lint, 463 unit + integration tests, build
+pnpm e2e              # 50 Playwright tests against the portal and the demo apps
 pnpm acceptance:all   # four real-browser runs through the WebMCP protocol
 pnpm acceptance:prod  # 36 checks against the deployed sites, not a local build
                       # LIHA_EXTENSION=<unzipped release> to check the artifact
