@@ -146,6 +146,34 @@ export function App() {
 
         {!onBag && (
           <section className="buy" data-testid="configure-panel">
+            <div className="left">
+              {/*
+                * The gallery, which is most of what a buy page is: the thing
+                * you are configuring, large, on its own ground. Two renders
+                * rather than one, because the product is photographed against
+                * the page and the page has two.
+                */}
+              <figure className="gallery">
+                <img
+                  className="gallery__light"
+                  src="/product/studio-light.webp"
+                  width={1100}
+                  height={825}
+                  alt="The Nimbus Studio: a compact aluminium desktop computer, seen from above and to one side."
+                />
+                <img
+                  className="gallery__dark"
+                  src="/product/studio-dark.webp"
+                  width={1100}
+                  height={825}
+                  alt=""
+                  aria-hidden="true"
+                />
+                <figcaption>
+                  Nimbus Studio · <span data-field="configured-chip">{picked.chip.label}</span>
+                </figcaption>
+              </figure>
+
             {/* The stage: what you have built so far, and what it costs. */}
             <aside className="stage" data-testid="config-summary">
               <p className="stage__kicker">Your configuration</p>
@@ -177,6 +205,7 @@ export function App() {
                 Add to bag
               </button>
             </aside>
+            </div>
 
             <div className="options">
               {STEPS.map((step) => (
@@ -243,7 +272,9 @@ export function App() {
               </h2>
               <ul className="list" data-testid="bag-items">
                 {bag.map((line) => (
-                  <li key={line.id} className="list__row" data-bag-item-id={line.id}>
+                  <li key={line.id} className="list__row list__row--withthumb" data-bag-item-id={line.id}>
+                    <img className="thumb thumb--light" src="/product/studio-thumb.webp" width={180} height={180} alt="" aria-hidden="true" />
+                    <img className="thumb thumb--dark" src="/product/studio-thumb-dark.webp" width={180} height={180} alt="" aria-hidden="true" />
                     <span className="list__name" data-field="name">
                       Nimbus Studio
                     </span>
