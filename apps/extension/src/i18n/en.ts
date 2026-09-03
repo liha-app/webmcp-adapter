@@ -22,6 +22,8 @@ export const en = {
   'health.degraded': 'degraded',
   'health.broken': 'broken',
   'health.unknown': 'not checked',
+  'health.not-applicable': 'not on this page',
+  'card.checkedOn': 'checked on {0}',
 
   /* ------------------------------------------------------------ popup ---- */
   'popup.page': 'Page',
@@ -139,6 +141,8 @@ export const en = {
     'Chrome is the primary target. The Firefox build ships the same adapter management, storage and diagnostics; it registers tools as soon as Firefox supports MAIN-world injection and WebMCP.',
 
   /* ----------------------------------------------------------- studio ---- */
+  'recorder.indicator': 'Liha is recording',
+  'recorder.stop': 'Stop',
   'studio.flowEmpty': 'Nothing recorded. Add a step, or record the workflow from the Liha popup on the site.',
   'studio.kindClick': 'Click',
   'studio.kindFill': 'Fill',
@@ -195,6 +199,14 @@ export const en = {
   'studio.noSteps': 'No steps yet.',
   'studio.valid': 'valid',
   'studio.notValid': 'not valid yet',
+  'studio.matchOne': '1 match',
+  'studio.matchNone': 'no match',
+  'studio.matchMany': '{0} matches',
+  'studio.matchUnreached': 'not on this screen yet',
+  'studio.checkedReachable':
+    'Checked the {0} step(s) reachable on this page — {1} resolved to exactly one element. The rest appear once an earlier step has run.',
+  'studio.duplicateSubmit':
+    'Step {0} clicks a button that submits the form step {1} then submits. Running both clicks Create, which closes the form, and the submit finds nothing. Keep the submit.',
   'studio.checking': 'Checking selectors against the page…',
   'studio.checked': 'Checked {0} selector(s): {1} resolve to exactly one element.',
   'studio.exportedNative': 'Exported a native WebMCP implementation for the site to ship itself.',

@@ -9,7 +9,9 @@ import {
   VALUE_STEPS,
   draftFromRecording,
   draftToAdapter,
+  duplicateSubmits,
   emptyStep,
+  reachableNow,
   parametersOf,
   type Draft,
   type DraftStep,
@@ -32,10 +34,18 @@ function Field(props: { label: string; children: React.ReactNode }) {
   );
 }
 
-function MatchBadge({ count }: { count: number | undefined }) {
+/*
+ * What a check found, per step — and "not reached" is one of the answers.
+ *
+ * A step after the first click has no business existing yet, so reporting it as
+ * "no match" sent people looking for a selector that was never wrong.
+ */
+function MatchBadge({ count, reached }: { count: number | undefined; reached?: boolean }) {
+  if (reached === false) return <span className="matches matches--later">{t('studio.matchUnreached')}</span>;
   if (count === undefined) return null;
   const kind = count === 1 ? 'one' : count === 0 ? 'none' : 'many';
-  const text = count === 1 ? '1 match' : count === 0 ? 'no match' : `${count} matches`;
+  const text =
+    count === 1 ? t('studio.matchOne') : count === 0 ? t('studio.matchNone') : t('studio.matchMany', [count]);
   return <span className={`matches matches--${kind}`}>{text}</span>;
 }
 
@@ -71,11 +81,13 @@ function StepEditor(props: {
   step: DraftStep;
   index: number;
   probe: Probe;
+  /** How many steps the last check covered. Beyond it, nothing was looked for. */
+  checked: number;
   onChange: (step: DraftStep) => void;
   onRemove: () => void;
   onMove: (delta: number) => void;
 }) {
-  const { step, index, probe } = props;
+  const { step, index, probe, checked } = props;
   const set = (patch: Partial<DraftStep>) => props.onChange({ ...step, ...patch });
 
   return (
@@ -93,7 +105,7 @@ function StepEditor(props: {
             </option>
           ))}
         </select>
-        <MatchBadge count={probe[step.selector]} />
+        <MatchBadge count={probe[step.selector]} reached={checked === 0 || index < checked} />
         <span className="spacer" />
         <button type="button" className="iconbtn" onClick={() => props.onMove(-1)} aria-label={t('studio.moveUp')}>
           ↑
@@ -209,6 +221,8 @@ function Studio() {
   const [draft, setDraft] = useState<Draft | null>(null);
   const [descriptions, setDescriptions] = useState<Record<string, string>>({});
   const [probe, setProbe] = useState<Probe>({});
+  /** How many steps the last check covered; the rest were not reached. */
+  const [checked, setChecked] = useState(0);
   const [status, setStatus] = useState<string | null>(null);
   /*
    * What the right-hand panel is showing: one step, or the tool itself. A flow
@@ -234,10 +248,21 @@ function Studio() {
   const parameters = draft ? parametersOf(draft) : [];
   const selectedStep = draft?.steps.find((step) => step.id === selected);
   const effects = validation?.adapter?.tools[0] ? summarizeEffects(validation.adapter.tools[0]) : null;
+  const doubled = draft ? duplicateSubmits(draft) : [];
 
+  /*
+   * Only the steps this page can be expected to have.
+   *
+   * Checking all of them at once against the page at rest is what made a
+   * healthy dynamic workflow look broken: on the customer list the fields of
+   * the Add Customer dialog do not exist until the button is pressed. The check
+   * covers the prefix up to the first step that changes the page; the rest are
+   * reported as not reached rather than as missing.
+   */
   const runProbe = useCallback(() => {
     if (!draft) return;
-    const selectors = [...new Set(draft.steps.map((step) => step.selector).filter(Boolean))];
+    const reach = reachableNow(draft.steps);
+    const selectors = [...new Set(draft.steps.slice(0, reach).map((step) => step.selector).filter(Boolean))];
     setStatus(t('studio.checking'));
     void ext.runtime
       .sendMessage({ type: 'liha/probe-selectors', origin: draft.origin, selectors })
@@ -247,8 +272,9 @@ function Studio() {
           return;
         }
         setProbe(response?.probe ?? {});
+        setChecked(reach);
         const unique = Object.values(response?.probe ?? {}).filter((count) => count === 1).length;
-        setStatus(t('studio.checked', [selectors.length, unique]));
+        setStatus(t('studio.checkedReachable', [selectors.length, unique]));
       })
       .catch((error: unknown) => setStatus(t('studio.unreachable', [String(error)])));
   }, [draft]);
@@ -431,7 +457,7 @@ function Studio() {
                   {step.parameterized && step.parameter && (
                     <span className="node__detail">{t('studio.usesInput', [step.parameter])}</span>
                   )}
-                  <MatchBadge count={probe[step.selector]} />
+                  <MatchBadge count={probe[step.selector]} reached={checked === 0 || index < checked} />
                 </button>
               </Fragment>
             );
@@ -466,6 +492,7 @@ function Studio() {
                   step={selectedStep}
                   index={draft.steps.indexOf(selectedStep)}
                   probe={probe}
+                  checked={checked}
                   onChange={(next) => updateStep(selectedStep.id, next)}
                   onMove={(delta) => moveStep(draft.steps.indexOf(selectedStep), delta)}
                   onRemove={() => {
@@ -576,13 +603,28 @@ function Studio() {
             </>
           )}
 
-          {validation && !validation.ok && (
+          {(doubled.length > 0 || (validation && !validation.ok)) && (
             <div className="inspector__problems">
-              {validation.errors.map((error) => (
-                <p key={error} className="problem">
-                  {error}
+              {/*
+               * The pair the recorder no longer produces, but a hand-edited or
+               * agent-written draft still can: the click submits the form and
+               * closes what it was in, and the submit then matches nothing.
+               */}
+              {doubled.map((step) => (
+                <p key={step.id} className="problem problem--warn">
+                  {t('studio.duplicateSubmit', [
+                    draft.steps.indexOf(step) + 1,
+                    draft.steps.indexOf(step) + 2,
+                  ])}
                 </p>
               ))}
+              {validation &&
+                !validation.ok &&
+                validation.errors.map((error) => (
+                  <p key={error} className="problem">
+                    {error}
+                  </p>
+                ))}
             </div>
           )}
 

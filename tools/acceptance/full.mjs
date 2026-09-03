@@ -270,6 +270,51 @@ async function main() {
       'and the store asks for nothing to pay with',
     );
 
+    /* ---------------------------------------------------------- health --- */
+    /*
+     * The verdict has to be about the page it was taken on.
+     *
+     * An adapter covers more than one kind of page, and a tool for the bag is
+     * not on the configurator. Reporting that as "broken" made the store's own
+     * adapter call itself degraded on whichever page you happened to be on —
+     * the reader sees a warning about an adapter that is working perfectly.
+     * `appliesWhen` is how a tool says which pages it is for, and this checks
+     * that the answer moves with the page.
+     */
+    group('Health is a fact about the page it was checked on');
+    const healthOf = async () =>
+      JSON.parse(
+        (await page.eval(
+          `JSON.stringify(window.__LIHA_WEBMCP_ADAPTER__.checkHealth().find(h => h.adapterId === 'demo-shop'))`,
+        )) ?? 'null',
+      );
+
+    await page.goto('http://localhost:5274/bag');
+    await sleep(1200);
+    const onBag = await healthOf();
+    const bagStatus = Object.fromEntries((onBag?.tools ?? []).map((tool) => [tool.name, tool.status]));
+    check(bagStatus.apply_coupon === 'healthy', 'on the bag, the bag tools are healthy', bagStatus.apply_coupon);
+    check(
+      bagStatus.choose_top === 'not-applicable',
+      'the configurator tools report that they are not on this page, not that they are broken',
+      bagStatus.choose_top,
+    );
+    check(onBag?.status === 'healthy', 'so the adapter is healthy here rather than degraded', onBag?.status);
+    check((onBag?.url ?? '').endsWith('/bag'), 'and the verdict says which page it is about', onBag?.url);
+
+    await page.goto('http://localhost:5274/');
+    await sleep(1200);
+    const onConfigure = await healthOf();
+    const configureStatus = Object.fromEntries((onConfigure?.tools ?? []).map((tool) => [tool.name, tool.status]));
+    check(configureStatus.choose_top === 'healthy', 'on the configurator, its own tools are healthy', configureStatus.choose_top);
+    check(configureStatus.apply_coupon === 'not-applicable', 'and the bag tools step aside', configureStatus.apply_coupon);
+    check(onConfigure?.status === 'healthy', 'the adapter is healthy on this page too', onConfigure?.status);
+    check(
+      configureStatus.view_bag === 'healthy' && configureStatus.view_configure === 'healthy',
+      'the two tools that move between pages work from either',
+      `${configureStatus.view_bag} / ${configureStatus.view_configure}`,
+    );
+
     /* --------------------------------------------------------- Project --- */
     group('Demo Project adapter and the destructive confirmation gate');
     watch.tools.clear();

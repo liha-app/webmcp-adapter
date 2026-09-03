@@ -81,6 +81,12 @@ export interface RecordedAction {
   value?: string;
   label?: string;
   path?: string;
+  /**
+   * For a click on a form's submit control: the selector of the form it
+   * submits. One human action raises a click and then a submit, and this is
+   * what lets the pair be recognised as one after the fact, with no DOM.
+   */
+  submitsForm?: string;
 }
 
 export interface RecordingState {

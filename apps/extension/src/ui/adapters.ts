@@ -72,6 +72,22 @@ export function renderAdapterCard(entry: CatalogEntry, options: CardOptions): HT
   const meta = el('div', { class: 'row row--meta' });
   meta.append(el('span', { class: 'muted' }, `v${entry.adapter.version} · ${entry.source}`));
   if (live?.health) meta.append(healthBadge(live.health.status));
+  /*
+   * Which page this verdict is about. Health changes from page to page — a tool
+   * for a product page is not on a search page — and a badge with no page
+   * attached invites the reader to take it as a fact about the adapter.
+   */
+  if (live?.health?.url) {
+    const where = (() => {
+      try {
+        const url = new URL(live.health.url);
+        return `${url.hostname}${url.pathname}`.replace(/\/$/, '') || url.hostname;
+      } catch {
+        return live.health.url;
+      }
+    })();
+    meta.append(el('span', { class: 'muted' }, t('card.checkedOn', [where])));
+  }
   card.append(meta);
 
   if (showOrigins) card.append(el('div', { class: 'origins' }, entry.adapter.origins.join('  ')));

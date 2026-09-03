@@ -24,6 +24,8 @@ export const ja: Record<MessageKey, string> = {
   'health.degraded': '一部劣化',
   'health.broken': '不動作',
   'health.unknown': '未検査',
+  'health.not-applicable': 'このページでは利用不可',
+  'card.checkedOn': '{0} で検査',
 
   /* ------------------------------------------------------------ popup ---- */
   'popup.page': 'ページ',
@@ -142,6 +144,8 @@ export const ja: Record<MessageKey, string> = {
     '主対象は Chrome です。Firefox 版も同じ Adapter 管理・ストレージ・診断を備えており、Firefox が MAIN world への注入と WebMCP に対応し次第、ツールを登録します。',
 
   /* ----------------------------------------------------------- studio ---- */
+  'recorder.indicator': 'Liha が記録中',
+  'recorder.stop': '停止',
   'studio.flowEmpty': '記録がありません。ステップを追加するか、サイト上の Liha ポップアップから操作を記録してください。',
   'studio.kindClick': 'クリック',
   'studio.kindFill': '入力',
@@ -198,6 +202,14 @@ export const ja: Record<MessageKey, string> = {
   'studio.noSteps': 'ステップがまだありません。',
   'studio.valid': '妥当',
   'studio.notValid': 'まだ妥当ではありません',
+  'studio.matchOne': '1 件',
+  'studio.matchNone': '0 件',
+  'studio.matchMany': '{0} 件',
+  'studio.matchUnreached': 'この画面にはまだありません',
+  'studio.checkedReachable':
+    'この画面で到達できる {0} ステップを検査しました。うち {1} 件がちょうど 1 要素に解決します。残りは前のステップを実行すると現れます。',
+  'studio.duplicateSubmit':
+    'ステップ {0} は、ステップ {1} が送信するフォームの送信ボタンを押しています。両方を実行すると、クリックでフォームが閉じたあと送信先が見つかりません。送信だけを残してください。',
   'studio.checking': 'ページに対してセレクタを検査しています…',
   'studio.checked': '{0} 件のセレクタを検査: {1} 件がちょうど1要素に解決しました。',
   'studio.exportedNative': 'サイト自身が実装するための native WebMCP を書き出しました。',

@@ -1,7 +1,7 @@
 {
   "id": "demo-shop",
   "name": "Nimbus Supply",
-  "version": "2.1.0",
+  "version": "2.2.0",
   "description": "Configure a Nimbus Desk, page through its photos, put it in the bag, apply a coupon and review the order — by driving the store's own controls. The site itself implements no WebMCP.",
   "category": "commerce",
   "author": "Liha WebMCP Adapter",
@@ -21,6 +21,9 @@
         "type": "object",
         "properties": {}
       },
+      "probeSelectors": [
+        "[data-action='view-configure']"
+      ],
       "steps": [
         {
           "type": "navigate",
@@ -46,6 +49,9 @@
         "type": "object",
         "properties": {}
       },
+      "appliesWhen": [
+        "[data-testid='configure-panel']"
+      ],
       "steps": [
         {
           "type": "waitFor",
@@ -82,6 +88,9 @@
         "type": "object",
         "properties": {}
       },
+      "appliesWhen": [
+        "[data-testid='configure-panel']"
+      ],
       "steps": [
         {
           "type": "navigate",
@@ -128,6 +137,9 @@
           "top"
         ]
       },
+      "appliesWhen": [
+        "[data-testid='configure-panel']"
+      ],
       "steps": [
         {
           "type": "navigate",
@@ -176,6 +188,9 @@
           "size"
         ]
       },
+      "appliesWhen": [
+        "[data-testid='configure-panel']"
+      ],
       "steps": [
         {
           "type": "navigate",
@@ -224,6 +239,9 @@
           "base"
         ]
       },
+      "appliesWhen": [
+        "[data-testid='configure-panel']"
+      ],
       "steps": [
         {
           "type": "navigate",
@@ -259,6 +277,9 @@
         "type": "object",
         "properties": {}
       },
+      "appliesWhen": [
+        "[data-testid='configure-panel']"
+      ],
       "steps": [
         {
           "type": "navigate",
@@ -297,6 +318,9 @@
         "type": "object",
         "properties": {}
       },
+      "probeSelectors": [
+        "[data-action='view-bag']"
+      ],
       "steps": [
         {
           "type": "navigate",
@@ -335,6 +359,9 @@
           "code"
         ]
       },
+      "appliesWhen": [
+        "[data-testid='bag-panel']"
+      ],
       "steps": [
         {
           "type": "navigate",
@@ -378,6 +405,9 @@
         "type": "object",
         "properties": {}
       },
+      "appliesWhen": [
+        "[data-testid='bag-items'] li"
+      ],
       "steps": [
         {
           "type": "navigate",

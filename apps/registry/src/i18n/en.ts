@@ -352,6 +352,7 @@ export const en = {
   'health.degraded': 'degraded',
   'health.broken': 'broken',
   'health.unknown': 'not checked',
+  'health.notApplicable': 'not on this page',
   'health.title': 'Reported by your browser extension against the live site',
 
   /* -------------------------------------------- the guided build ---- */

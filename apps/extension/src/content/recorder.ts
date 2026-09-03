@@ -33,6 +33,23 @@ function describe(element: Element): Pick<RecordedAction, 'selector' | 'candidat
 
 const CLICKABLE = 'button, a, [role="button"], [data-action], input[type="submit"], input[type="button"]';
 
+/**
+ * The form this control submits, if it submits one.
+ *
+ * A `<button>` inside a form submits it unless it says otherwise — `type`
+ * defaults to `submit`, which is the case people forget and the case the demo
+ * CRM's Create button is. Knowing this at record time is what lets the click
+ * and the submit that follows it be recognised as one action later, in the
+ * service worker, where there is no page to ask.
+ */
+function submittedForm(element: Element): HTMLFormElement | null {
+  const control = element.closest('button, input');
+  if (!(control instanceof HTMLButtonElement) && !(control instanceof HTMLInputElement)) return null;
+  const type = (control.getAttribute('type') ?? (control instanceof HTMLButtonElement ? 'submit' : '')).toLowerCase();
+  if (type !== 'submit') return null;
+  return control.form;
+}
+
 export function createRecorder(sink: ActionSink): { start(): void; stop(): void } {
   let active = false;
 
@@ -40,12 +57,22 @@ export function createRecorder(sink: ActionSink): { start(): void; stop(): void 
     if (!active) return;
     const target = event.target;
     if (!(target instanceof Element)) return;
+    // The recording indicator is the extension's, not the page's. Pressing Stop
+    // is how a take ends, and it must not be the last step of the take.
+    if (target.closest('[data-liha-ui]')) return;
     // Checkboxes, radios and selects are captured through `change`, which
     // reports the resulting state rather than the fact that a click happened.
     if (target.matches('input[type="checkbox"], input[type="radio"], option, select')) return;
     const actionable = target.closest(CLICKABLE);
     if (!actionable) return;
-    sink({ at: Date.now(), kind: 'click', ...describe(actionable) });
+    const form = submittedForm(actionable);
+    const submitsForm = form ? bestSelector(buildSelectorCandidates(form))?.selector : undefined;
+    sink({
+      at: Date.now(),
+      kind: 'click',
+      ...describe(actionable),
+      ...(submitsForm ? { submitsForm } : {}),
+    });
   };
 
   const onChange = (event: Event) => {

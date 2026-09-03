@@ -152,11 +152,14 @@ textarea { min-height: 70px; }
 .matches--one { background: light-dark(rgba(36, 138, 61, 0.12), rgba(48, 209, 88, 0.22)); color: var(--ok); }
 .matches--none { background: light-dark(rgba(215, 0, 21, 0.1), rgba(255, 69, 58, 0.22)); color: var(--red); }
 .matches--many { background: light-dark(rgba(192, 76, 0, 0.12), rgba(255, 159, 10, 0.22)); color: var(--orange); }
+/* Not looked for, rather than not found. */
+.matches--later { background: var(--fill); color: var(--secondary); }
 
 .row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; padding: 0; }
 .muted { color: var(--secondary); font-size: 12px; }
 .actions { display: flex; gap: 10px; flex-wrap: wrap; }
 .problem { color: var(--red); font-size: 12.5px; margin: 3px 0; }
+.problem--warn { color: var(--orange); }
 .ok { color: var(--ok); font-size: 12.5px; }
 .empty { padding: 22px 16px; color: var(--secondary); font-size: 13px; }
 .banner { border: 0; background: light-dark(rgba(192, 76, 0, 0.1), rgba(255, 159, 10, 0.18)); color: var(--orange); border-radius: var(--radius-group); padding: 10px 13px; font-size: 12.5px; margin: 0 0 14px; }

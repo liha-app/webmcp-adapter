@@ -358,6 +358,7 @@ export const ja: Record<MessageKey, string> = {
   'health.degraded': '一部劣化',
   'health.broken': '故障',
   'health.unknown': '未確認',
+  'health.notApplicable': 'このページでは利用不可',
   'health.title': 'お使いのブラウザ拡張機能が、実際のサイトに対して報告した結果です',
 
   /* -------------------------------------------- the guided build ---- */

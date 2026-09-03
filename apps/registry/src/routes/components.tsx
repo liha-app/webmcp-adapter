@@ -44,6 +44,7 @@ const HEALTH_KEY: Record<HealthStatus, MessageKey> = {
   degraded: 'health.degraded',
   broken: 'health.broken',
   unknown: 'health.unknown',
+  'not-applicable': 'health.notApplicable',
 };
 
 export function HealthBadge({ status }: { status: HealthStatus }) {

@@ -34,6 +34,12 @@ export interface DraftStep {
   attribute: string;
   binding: string;
   waitState: 'present' | 'absent';
+  /**
+   * For a click: the form pressing it submits. Carried from the recording so
+   * the draft can still tell that a click and a submit are the same gesture
+   * after someone has added one of them back by hand.
+   */
+  submitsForm?: string;
 }
 
 export interface DraftParameter {
@@ -87,6 +93,7 @@ export function draftFromRecording(actions: readonly RecordedAction[], origin: s
       attribute: '',
       binding: '',
       waitState: 'present',
+      ...(action.submitsForm ? { submitsForm: action.submitsForm } : {}),
     };
   });
 
@@ -113,6 +120,34 @@ export function draftFromRecording(actions: readonly RecordedAction[], origin: s
   };
 }
 
+/**
+ * The steps a check can expect to find on the page as it stands.
+ *
+ * A workflow is a sequence, and most of it does not exist yet. The fields of a
+ * dialog appear when something opens it, so counting every step's selector
+ * against the page at rest reported a healthy dynamic flow as broken: on the
+ * customer list, "Add Customer" resolves and everything after it is zero.
+ *
+ * The prefix ends at the first step that changes what is on screen — that step
+ * included, since it is there to be clicked. Everything after it has not been
+ * reached, which is a different fact from not being found, and the two are
+ * worth telling apart before someone goes looking for a selector that was
+ * never wrong.
+ */
+export const CHANGES_THE_PAGE = new Set<StepKind>([
+  'click',
+  'submit',
+  'navigate',
+  'check',
+  'uncheck',
+  'select',
+]);
+
+export function reachableNow(steps: readonly DraftStep[]): number {
+  const at = steps.findIndex((step) => CHANGES_THE_PAGE.has(step.kind));
+  return at === -1 ? steps.length : at + 1;
+}
+
 export function emptyStep(kind: StepKind = 'click'): DraftStep {
   return {
     id: nextId(),
@@ -126,6 +161,25 @@ export function emptyStep(kind: StepKind = 'click'): DraftStep {
     binding: '',
     waitState: 'present',
   };
+}
+
+/**
+ * A click on a submit button, followed by a submit of the form it belongs to.
+ *
+ * The recorder no longer produces this pair, but a draft can still hold one:
+ * someone adds the click back by hand, or an agent writes the JSON from a
+ * description of the workflow. Running both is the failure this warns about —
+ * the click submits the form and closes what it was in, and the submit then
+ * matches nothing.
+ */
+export function duplicateSubmits(draft: Draft): DraftStep[] {
+  const doubled: DraftStep[] = [];
+  draft.steps.forEach((step, index) => {
+    if (step.kind !== 'click' || !step.submitsForm) return;
+    const next = draft.steps[index + 1];
+    if (next?.kind === 'submit' && next.selector === step.submitsForm) doubled.push(step);
+  });
+  return doubled;
 }
 
 export function parametersOf(draft: Draft): DraftParameter[] {

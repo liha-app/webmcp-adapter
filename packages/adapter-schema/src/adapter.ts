@@ -120,6 +120,17 @@ export const toolSchema = z.object({
    * checks; defaults to the first step's selector when omitted.
    */
   probeSelectors: z.array(selectorSchema).max(10).optional(),
+  /**
+   * Where on the site this tool applies. Every selector must resolve for the
+   * tool to be checked at all.
+   *
+   * An adapter usually covers more than one kind of page. A tool that reads a
+   * package's version list belongs on a package page and finds nothing on the
+   * registry's front page — which is not a fault, but was reported as one, and
+   * dragged the whole adapter to `degraded` on the site's most-visited page.
+   * Declaring this is how a tool says "not here" instead of "broken".
+   */
+  appliesWhen: z.array(selectorSchema).max(10).optional(),
   steps: z.array(stepSchema).min(1).max(50),
 });
 export type ToolDefinition = z.infer<typeof toolSchema>;

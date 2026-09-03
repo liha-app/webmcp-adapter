@@ -47,6 +47,7 @@ way to express one. Everything below follows from that.
     "required": ["name", "email"]
   },
   "probeSelectors": ["[data-action='add-customer']"],
+  "appliesWhen": ["[data-testid='customer-list']"],
   "steps": [ /* … */ ]
 }
 ```
@@ -61,6 +62,18 @@ browser does not (see [webmcp-api.md](webmcp-api.md)).
 
 `probeSelectors` are elements expected to exist while the page is idle, used for
 health checks. Omitted, the first step's selector is used.
+
+`appliesWhen` says which pages the tool is for: every selector must resolve for
+the tool to be health-checked at all, and where they do not it reports
+`not-applicable` instead of `broken` and is left out of the adapter's own
+verdict.
+
+Declare it on any tool that belongs to one part of a site. An adapter usually
+covers several kinds of page, and a tool that reads a product's price finds
+nothing on a search page — which is not a fault, but without this the check
+cannot tell that from a selector that has gone stale, and it must assume the
+worse of the two. One undeclared tool for another page is enough to report a
+working adapter as `degraded` everywhere else.
 
 ## Capabilities
 

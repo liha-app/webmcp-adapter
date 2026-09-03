@@ -1,7 +1,17 @@
 import { describe, expect, it } from 'vitest';
 import { validateAdapter } from '@liha/adapter-schema';
 import type { RecordedAction } from '@liha/shared';
-import { draftFromRecording, draftToAdapter, parametersOf } from './draft';
+import {
+  draftFromRecording,
+  draftToAdapter,
+  duplicateSubmits,
+  emptyStep,
+  parametersOf,
+  reachableNow,
+  type Draft,
+  type DraftStep,
+  type StepKind,
+} from './draft';
 
 const recording: RecordedAction[] = [
   { at: 1, kind: 'click', selector: "[data-action='add-customer']", candidates: [], label: 'Add customer' },
@@ -76,5 +86,72 @@ describe('draftToAdapter', () => {
     const adapter = draftToAdapter(complete()) as { tools: Array<{ steps: Array<{ type: string }> }> };
     const allowed = new Set(['click', 'fill', 'select', 'check', 'uncheck', 'submit', 'waitFor', 'assertVisible', 'assertText', 'readText', 'readAttribute', 'readList', 'navigate']);
     for (const step of adapter.tools[0]?.steps ?? []) expect(allowed.has(step.type)).toBe(true);
+  });
+});
+
+describe('what a check can expect to find', () => {
+  const step = (kind: StepKind, selector: string): DraftStep => ({
+    ...emptyStep(kind),
+    selector,
+  });
+
+  it('stops at the step that opens something', () => {
+    // The dialog's fields do not exist until Add Customer is pressed, so
+    // counting them against the list page reported a working flow as broken.
+    const steps = [
+      step('click', "[data-action='add-customer']"),
+      step('fill', "input[name='name']"),
+      step('fill', "input[name='email']"),
+      step('submit', "[data-testid='customer-form']"),
+    ];
+    expect(reachableNow(steps)).toBe(1);
+  });
+
+  it('covers a whole workflow that never changes the page', () => {
+    const steps = [step('readText', 'h1'), step('readAttribute', 'a'), step('assertVisible', '#x')];
+    expect(reachableNow(steps)).toBe(steps.length);
+  });
+
+  it('includes the step that does the changing, because it is there to be found', () => {
+    const steps = [step('waitFor', '#ready'), step('click', '#go'), step('fill', '#after')];
+    expect(reachableNow(steps)).toBe(2);
+  });
+
+  it('says nothing is reachable in an empty draft', () => {
+    expect(reachableNow([])).toBe(0);
+  });
+});
+
+describe('a click and a submit of the same form', () => {
+  const FORM = "[data-testid='customer-form']";
+  const draft = (steps: DraftStep[]): Draft => ({
+    adapterId: 'x',
+    adapterName: 'x',
+    version: '0.1.0',
+    description: '',
+    origin: 'https://example.com',
+    toolName: 't',
+    toolTitle: '',
+    toolDescription: 'd',
+    capability: 'WRITE',
+    steps,
+  });
+
+  it('is reported when both survive into the draft', () => {
+    const click = { ...emptyStep('click'), selector: '#create', submitsForm: FORM };
+    const submit = { ...emptyStep('submit'), selector: FORM };
+    expect(duplicateSubmits(draft([click, submit]))).toEqual([click]);
+  });
+
+  it('is not reported for a click that opens the form', () => {
+    const open = { ...emptyStep('click'), selector: '#add' };
+    const submit = { ...emptyStep('submit'), selector: FORM };
+    expect(duplicateSubmits(draft([open, submit]))).toEqual([]);
+  });
+
+  it('is not reported when the submit is of a different form', () => {
+    const click = { ...emptyStep('click'), selector: '#create', submitsForm: '#other' };
+    const submit = { ...emptyStep('submit'), selector: FORM };
+    expect(duplicateSubmits(draft([click, submit]))).toEqual([]);
   });
 });

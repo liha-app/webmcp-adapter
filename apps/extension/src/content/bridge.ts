@@ -13,6 +13,8 @@
  */
 import { BRIDGE_REQUEST_EVENT, BRIDGE_RESPONSE_EVENT, type PageReadyMessage, type RecordedAction } from '@liha/shared';
 import { ext } from '../platform';
+import { createIndicator } from './indicator';
+import { t, loadLocale } from '../i18n';
 import { createRecorder } from './recorder';
 
 function announce(): void {
@@ -60,14 +62,45 @@ document.addEventListener(BRIDGE_REQUEST_EVENT, (event) => {
 /* Recorder                                                                     */
 /* -------------------------------------------------------------------------- */
 
+const indicator = createIndicator();
+
+/*
+ * The count is the service worker's, not a tally kept here.
+ *
+ * Pressing a form's submit button raises a click and a submit, which the
+ * session merges into the one action they are. A badge counting locally would
+ * say 5 where the Studio said 4, and a recorder whose own numbers disagree is
+ * not one anybody trusts.
+ */
 const recorder = createRecorder((action: RecordedAction) => {
-  void ext.runtime.sendMessage({ type: 'liha/recorded-action', action }).catch(() => {
-    /* recording session already ended */
-  });
+  void ext.runtime
+    .sendMessage({ type: 'liha/recorded-action', action })
+    .then((response: { count?: number } | undefined) => {
+      if (typeof response?.count === 'number') indicator.count(response.count);
+    })
+    .catch(() => {
+      /* recording session already ended */
+    });
 });
+
+function startIndicator(): void {
+  void loadLocale().then(() =>
+    indicator.show(t('recorder.indicator'), t('recorder.stop'), () => {
+      void ext.runtime.sendMessage({ type: 'liha/stop-recording' }).catch(() => undefined);
+    }),
+  );
+}
 
 ext.runtime.onMessage.addListener((message: { type?: string; active?: boolean }) => {
   if (message?.type !== 'liha/recorder-mode') return;
-  if (message.active) recorder.start();
-  else recorder.stop();
+  if (message.active) {
+    recorder.start();
+    startIndicator();
+  } else {
+    recorder.stop();
+    indicator.hide();
+  }
 });
+
+// A take that ends by the page going away still ends. Nothing here outlives it.
+window.addEventListener('pagehide', () => indicator.hide());

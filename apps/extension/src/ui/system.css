@@ -301,7 +301,7 @@ textarea { resize: vertical; }
 .health--healthy, .state--yes { background: light-dark(rgba(36, 138, 61, 0.12), rgba(48, 209, 88, 0.22)); color: var(--ok); }
 .health--degraded, .state--partial { background: light-dark(rgba(192, 76, 0, 0.12), rgba(255, 159, 10, 0.22)); color: var(--orange); }
 .health--broken, .state--no { background: light-dark(rgba(215, 0, 21, 0.1), rgba(255, 69, 58, 0.22)); color: var(--red); }
-.health--unknown { background: var(--fill); color: var(--secondary); }
+.health--unknown, .health--not-applicable { background: var(--fill); color: var(--secondary); }
 
 .status { color: var(--secondary); }
 .status--ok { color: var(--ok); }

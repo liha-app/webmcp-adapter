@@ -130,6 +130,22 @@ async function main() {
       'recording starts against the site, not against the popup',
     );
 
+    /*
+     * The page says it is being recorded.
+     *
+     * The popup closes the moment you click into the page — which is the moment
+     * the demonstration starts — so without this there is nothing on screen for
+     * the whole of the part that matters.
+     */
+    check(
+      await waitFor(async () => crm.eval(`Boolean(document.getElementById('liha-recording-indicator'))`)),
+      'the page being recorded says so, on the page',
+    );
+    check(
+      (await crm.eval(`(document.getElementById('liha-recording-indicator') || {}).shadowRoot`)) === null,
+      'and it is out of the page\'s reach, in a closed shadow root',
+    );
+
     // Perform the workflow by hand.
     await crm.eval(clickOn('[data-action="add-customer"]'));
     await sleep(250);
@@ -143,6 +159,48 @@ async function main() {
     const state = await popup.eval("chrome.runtime.sendMessage({ type: 'liha/get-state' })");
     const actions = state?.recording?.actions ?? [];
     must(actions.length >= 4, 'every interaction was recorded', JSON.stringify(actions.map((a) => a.kind)));
+    /*
+     * Four steps, not five.
+     *
+     * Pressing Create raises a click and then the form's submit, and recording
+     * both produced a tool that clicked Create — which closed the dialog — and
+     * then looked for the same form to submit, by which point it was gone. The
+     * two events are one action and are recorded as one.
+     */
+    check(
+      actions.map((action) => action.kind).join(',') === 'click,fill,fill,submit',
+      'a click on a submit button and the submit it causes are one step, not two',
+      actions.map((action) => action.kind).join(','),
+    );
+    check(
+      actions.at(-1)?.selector === "[data-testid='customer-form']",
+      'and the step that survives is the submit, which still resolves after the click has landed',
+      actions.at(-1)?.selector,
+    );
+    /*
+     * The popup was open through all of that. It used to keep the count it was
+     * rendered with and read "Stop recording (0)" over a take with actions in
+     * it, which looks exactly like a recorder that is not working.
+     */
+    check(
+      ((await popup.eval(`(document.querySelector('[data-action="toggle-recording"]') || {}).textContent`)) ?? '').includes(
+        String(actions.length),
+      ),
+      'a popup left open through the take shows the count it has now',
+      await popup.eval(`(document.querySelector('[data-action="toggle-recording"]') || {}).textContent`),
+    );
+    /*
+     * Still on screen, and where it said it would be. The host element itself
+     * has no size — everything it draws is fixed-position inside its shadow —
+     * so what is asked here is what a person would see: is that the thing at
+     * the bottom left corner.
+     */
+    check(
+      (await crm.eval(
+        `document.elementFromPoint(40, innerHeight - 30) === document.getElementById('liha-recording-indicator')`,
+      )) === true,
+      'and the indicator is still on the page, in the corner, out of the way',
+    );
     check(
       actions.map((action) => action.kind).join(',').startsWith('click,fill,fill'),
       'the recorder captured intent, not keystrokes',
@@ -250,11 +308,36 @@ async function main() {
     await studio.eval(`[...document.querySelectorAll('button')].find((b) => b.textContent.includes('Test selectors')).click()`);
     const banner = await waitFor(async () => {
       const text = await studio.eval('document.body.innerText');
-      return text.includes('resolve to exactly one element') ? text : null;
+      return text.includes('resolved to exactly one element') ? text : null;
     }, 15000);
     must(Boolean(banner), 'the Studio can check its selectors against the open page');
-    const line = (banner ?? '').split('\n').find((entry) => entry.includes('resolve to exactly one element')) ?? '';
-    check(/Checked \d+ selector\(s\): [1-9]\d* resolve/.test(line), 'the selectors it generated actually resolve', line);
+    /*
+     * Only what this page can be expected to have.
+     *
+     * The customer list has the Add Customer button and nothing else from the
+     * workflow: the dialog's fields do not exist until it is pressed. Checking
+     * all four selectors at once reported three of them as missing, on a
+     * recording that had just been made successfully.
+     */
+    check(
+      banner.includes('1 step') || banner.includes('1 ステップ'),
+      'and it checks the one step this page can be expected to have, not all four',
+      (banner.split('\n').find((line) => line.includes('resolved')) ?? '').slice(0, 120),
+    );
+    check(
+      (await studio.eval(
+        `[...document.querySelectorAll('.matches')].filter((badge) => badge.className.includes('matches--none')).length`,
+      )) === 0,
+      'so nothing on a working recording is reported as missing',
+    );
+    check(
+      (await studio.eval(
+        `[...document.querySelectorAll('.matches--later')].length`,
+      )) >= 3,
+      'the steps behind the dialog say they have not been reached yet',
+    );
+    const line = (banner ?? '').split('\n').find((entry) => entry.includes('resolved to exactly one element')) ?? '';
+    check(/[1-9]\d* resolved to exactly one element/.test(line), 'the selectors it generated actually resolve', line);
 
     /* ------------------------------------------------------------ native -- */
     /*

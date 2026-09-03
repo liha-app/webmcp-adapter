@@ -212,15 +212,39 @@ async function buildPopupState(): Promise<PopupState> {
   };
 }
 
+/**
+ * Tell whoever is listening how many actions are in the take.
+ *
+ * Nothing is listening most of the time — the popup is closed — and a message
+ * with no receiver rejects, which is not an error worth having.
+ */
+function announceRecording(count: number | null): void {
+  void ext.runtime.sendMessage({ type: 'liha/recording-changed', count }).catch(() => undefined);
+}
+
 async function buildStoreState(): Promise<StoreStateResponse> {
   const catalogue = await readCatalogue();
+  /*
+   * Health is a fact about a page, so it is read from one page.
+   *
+   * This used to walk every tab and let each overwrite the last, so with two
+   * tabs of the same site open the popup showed whichever the enumeration
+   * happened to reach last — a report that changed under the reader for no
+   * reason they could see. The page in front of them is the one they are asking
+   * about; only if that tab is not one an adapter covers does this fall back to
+   * another, and the answer carries its own URL either way.
+   */
   const healthByAdapter = new Map<string, AdapterHealth>();
-  const tabs = await ext.tabs.query({});
-  for (const tab of tabs) {
-    if (tab.id === undefined || !tab.url) continue;
+  const covered = (tab: chrome.tabs.Tab) => {
+    if (tab.id === undefined || !tab.url) return false;
     const origin = originOf(tab.url);
-    if (!origin || !catalogue.some((entry) => entry.adapter.origins.includes(origin))) continue;
-    for (const health of await readHealth(tab.id)) healthByAdapter.set(health.adapterId, health);
+    return Boolean(origin && catalogue.some((entry) => entry.adapter.origins.includes(origin)));
+  };
+  const [active] = await ext.tabs.query({ active: true, currentWindow: true });
+  const candidates = (await ext.tabs.query({})).filter(covered);
+  const chosen = active && covered(active) ? active : candidates[0];
+  if (chosen?.id !== undefined) {
+    for (const health of await readHealth(chosen.id)) healthByAdapter.set(health.adapterId, health);
   }
   /*
    * What the Store page is allowed to know about the adapters on this machine.
@@ -443,16 +467,36 @@ ext.runtime.onMessage.addListener((message: ExtensionMessage, sender, sendRespon
       return false;
 
     case 'liha/start-recording':
-      void setRecording(true).then(() => sendResponse({ ok: true }));
+      void setRecording(true).then(() => {
+        announceRecording(0);
+        sendResponse({ ok: true });
+      });
       return true;
 
     case 'liha/stop-recording':
-      void setRecording(false).then(() => sendResponse({ ok: true }));
+      void setRecording(false).then(() => {
+        announceRecording(null);
+        sendResponse({ ok: true });
+      });
       return true;
 
     case 'liha/recorded-action': {
       const tabId = sender.tab?.id;
       if (tabId !== undefined) addAction(tabId, message.action);
+      /*
+       * The count goes back to the page that sent the action, and out to
+       * anything else listening.
+       *
+       * A popup left open while the demonstration happens used to keep showing
+       * the count it was rendered with — "Stop recording (0)" while three
+       * actions had been captured, which reads as a recorder that is not
+       * working. It is the same number in both places now, and it is this one:
+       * the session's, after a click and the submit it caused have been merged
+       * into the single action they are.
+       */
+      const count = getRecording()?.actions.length ?? 0;
+      announceRecording(count);
+      sendResponse({ count });
       return false;
     }
 

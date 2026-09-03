@@ -323,10 +323,17 @@ export function createRuntime(deps: RuntimeDeps): LihaRuntime {
     return { ok: true, adapterId: definition.id, registered };
   }
 
+  const pageUrl = (): string | undefined => {
+    const location = (deps.doc as Document).location;
+    return location ? location.href : undefined;
+  };
+
   function checkHealth(adapterId?: string): AdapterHealth[] {
     return [...installed.values()]
       .filter((entry) => !adapterId || entry.definition.id === adapterId)
-      .map((entry) => checkAdapterHealth(entry.definition, deps.doc, deps.now));
+      // The page the answer is about, so a report cannot be read as being
+      // about whichever tab the reader happens to be looking at.
+      .map((entry) => checkAdapterHealth(entry.definition, deps.doc, deps.now, pageUrl()));
   }
 
   function status(): RuntimeStatus {
@@ -341,7 +348,7 @@ export function createRuntime(deps: RuntimeDeps): LihaRuntime {
         name: entry.definition.name,
         version: entry.definition.version,
         tools: entry.tools,
-        health: checkAdapterHealth(entry.definition, deps.doc, deps.now),
+        health: checkAdapterHealth(entry.definition, deps.doc, deps.now, pageUrl()),
       })),
       log: [...log],
     };

@@ -182,6 +182,19 @@ void loadLocale().then(() => {
   load();
 });
 
+/*
+ * A popup that is open while the demonstration happens.
+ *
+ * It closes the instant you click into the page, so for most of a take it is
+ * not there — but an inspected popup, or one on a second screen, stays. It used
+ * to keep the count it was first rendered with and showed "Stop recording (0)"
+ * over a take that had three actions in it, which reads as a recorder that is
+ * not working.
+ */
+ext.runtime.onMessage.addListener((message: { type?: string }) => {
+  if (message?.type === 'liha/recording-changed') load();
+});
+
 
 /* The badge used to read "Phase 0 PoC", which stopped being true a long time
  * before anyone noticed. A version number cannot go stale in the same way. */
