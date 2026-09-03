@@ -16,11 +16,12 @@ import { useI18n } from '../i18n';
  */
 export const PROMPT_PATH = '/agent-setup/prompt.md';
 
-export function onboardingPrompt(origin: string): string {
-  return `Fetch and execute the appropriate instructions to set me up for Liha WebMCP Adapter from ${origin}${PROMPT_PATH}`;
+export function onboardingPrompt(origin: string, task?: string): string {
+  const sentence = `Fetch and execute the appropriate instructions to set me up for Liha WebMCP Adapter from ${origin}${PROMPT_PATH}`;
+  return task ? `${sentence}\n\n${task}` : sentence;
 }
 
-export function AgentOnboard() {
+export function AgentOnboard({ label, task }: { label?: string; task?: string } = {}) {
   const { t } = useI18n();
   const [copied, setCopied] = useState(false);
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -28,7 +29,9 @@ export function AgentOnboard() {
   useEffect(() => () => (timer.current ? clearTimeout(timer.current) : undefined), []);
 
   const origin = typeof location === 'undefined' ? '' : location.origin;
-  const prompt = onboardingPrompt(origin);
+  // On the Studio the same sentence carries the job as well, so what a visitor
+  // pastes is one thing rather than two.
+  const prompt = onboardingPrompt(origin, task);
 
   async function copy() {
     try {
@@ -48,7 +51,7 @@ export function AgentOnboard() {
   return (
     <div className="onboard">
       <button type="button" className="onboard__chip" onClick={copy} data-action="copy-agent-prompt">
-        <span className="onboard__label">{t('onboard.chip')}</span>
+        <span className="onboard__label">{label ?? t('onboard.chip')}</span>
         {/*
           * Which agents. The real marks, not drawings of them — the files and
           * where they came from are recorded in public/brand/agents/README.md,

@@ -15,6 +15,16 @@ describe('the sentence that goes to the clipboard', () => {
     );
   });
 
+  it('carries the job as well, when the page has one', () => {
+    // The Studio hands over setup and task together, so a visitor pastes one
+    // thing into an agent rather than two.
+    const withTask = onboardingPrompt('https://x.test', 'Then build me an adapter.');
+    expect(withTask).toContain('https://x.test/agent-setup/prompt.md');
+    expect(withTask).toContain('Then build me an adapter.');
+    expect(withTask.split('\n\n')).toHaveLength(2);
+    expect(onboardingPrompt('https://x.test')).not.toContain('\n');
+  });
+
   it('reads as an instruction rather than as a link', () => {
     // Pasted into an agent it has to be a thing to do, not a URL to look at.
     expect(onboardingPrompt('https://x.test')).toMatch(/^Fetch and execute /);

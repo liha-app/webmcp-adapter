@@ -42,23 +42,17 @@ export const ja: Record<MessageKey, string> = {
   'footer.disclaimer':
     'Apple Inc. およびApp Storeとは一切関係がなく、承認も受けていません。レイアウトはAppleが公開しているデザイン上の慣習に倣っていますが、名称・図版・文章はすべて本プロジェクト独自のものです。',
 
+  'create.onboardChip': 'エージェントに Adapter Studio を教える',
   'create.recorderTitle': 'あるいは、自分で記録する。',
   'create.recorderLede':
     'Studioがページ上の操作を見て、同じJSONを書きます。7ステップで、最初の2つはブラウザの準備です。',
 
   /* ------------------------------------------------- build with an agent -- */
-  'agent.title': 'あるいは、エージェントに書いてもらう。',
-  'agent.lede':
-    'WebMCP非対応のサイトで「何を頼めるようにしたいか」を伝えるだけです。エージェントがページを読み、Adapterを書き、ここで検証します。検証ツール自体がWebMCPツールなので、人を介さずに実行できます。',
   'agent.s1': '頼む',
   'agent.s1Body':
-    'サイトを開いて、セレクタではなく「やりたいこと」を伝えます。下のプロンプトが下準備をします。',
-  'agent.example1': '「このアプリから最新の課題をチェックして」',
-  'agent.example2': '「この課題のステータスを変更して」',
+    'サイトを開いて、セレクタではなく「やりたいこと」を伝えます。上のプロンプトが下準備をします。',
   'agent.starterTask':
     'そのうえで、いま開いているサイト向けのAdapterを作ってください。必要なツールはこれから伝えるので、聞いてください。',
-  'agent.copyStarter': 'スタータープロンプトをコピー',
-  'agent.copied': 'コピーしました',
   'agent.s2': '書く',
   'agent.s2Body':
     '1タスク1ツール。人が使うのと同じコントロールを通します。コードは書けません — この形式にコードを載せられるステップは存在しないからです。',
@@ -350,7 +344,7 @@ export const ja: Record<MessageKey, string> = {
   'create.eyebrow': 'Adapter Studio',
   'create.headline': 'WebMCP を持たないサイトに、WebMCP ツールを作る。',
   'create.lede':
-    '道は二つ、行き着くJSONは同じです。エージェントに書いてもらうか、自分で操作を記録するか。どちらもコードは書かず、サイトにも一切手を入れません。このページは進み具合を見ていて、判定できるステップは自動で埋まります。',
+    '道は二つ、行き着くJSONは同じです。エージェントに頼むか、自分で操作を記録するか。どちらもコードは書かず、サイトにも手を入れません。',
   'create.copy': 'コピー',
   'create.copied': 'コピーしました',
   'create.copyFailed': 'コピーできませんでした',

@@ -37,23 +37,17 @@ export const en = {
   'footer.disclaimer':
     'Not affiliated with, endorsed by or connected to Apple Inc. or the App Store. The layout follows Apple’s public design conventions; all names, artwork and copy here are this project’s own.',
 
+  'create.onboardChip': 'Onboard your agent to Adapter Studio',
   'create.recorderTitle': 'Or record it yourself.',
   'create.recorderLede':
     'The Studio watches what you do on the page and writes the same JSON. Seven steps, and the first two are about the browser.',
 
   /* ------------------------------------------------- build with an agent -- */
-  'agent.title': 'Or ask an agent to write it.',
-  'agent.lede':
-    'Describe what you want to be able to ask for on a site that has no WebMCP. The agent reads the page, writes the adapter, and checks it here — the validator is itself a WebMCP tool, so it can do that without you in the middle.',
   'agent.s1': 'Ask',
   'agent.s1Body':
-    'Open the site, and tell your agent the tasks — not the selectors. The prompt below sets it up first.',
-  'agent.example1': '“Check the latest issues in this app.”',
-  'agent.example2': '“Change this issue’s status.”',
+    'Open the site and tell your agent the tasks — not the selectors. The prompt above sets it up first.',
   'agent.starterTask':
     'Then, for the site I have open, build me an adapter with tools for the tasks I am about to list. Ask me for them.',
-  'agent.copyStarter': 'Copy the starter prompt',
-  'agent.copied': 'Copied',
   'agent.s2': 'Write',
   'agent.s2Body':
     'One tool per task, driven through the controls a person would use. It cannot write code: the format has no step that carries any.',
@@ -344,7 +338,7 @@ export const en = {
   'create.eyebrow': 'Adapter Studio',
   'create.headline': 'Build a WebMCP tool for a site that has none.',
   'create.lede':
-    'Two ways, and they end in the same JSON. Ask an agent to write it, or record yourself using the site. Neither writes code, and neither touches the site. This page watches as you go — the steps it can check tick themselves.',
+    'Two ways, and they end in the same JSON. Ask an agent, or record yourself using the site. Neither writes code, and neither touches the site.',
   'create.copy': 'Copy',
   'create.copied': 'Copied',
   'create.copyFailed': 'Copy failed',

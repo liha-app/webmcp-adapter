@@ -7,6 +7,7 @@ import { RELEASES_URL } from '../lib/links';
 import { useI18n } from '../i18n';
 import type { MessageKey } from '../i18n/en';
 import { AgentBuild } from './agentbuild';
+import { AgentOnboard } from './onboard';
 
 const FLAG_URL = 'chrome://flags/#enable-webmcp-testing';
 
@@ -131,11 +132,15 @@ export function Create() {
           <h1 className="headline">{t('create.headline')}</h1>
           <p className="lede lede--narrow">{t('create.lede')}</p>
 
+          {/* The same sentence the landing hands out, carrying this page's job
+            * with it — so what a visitor pastes into an agent is one thing. */}
+          <AgentOnboard label={t('create.onboardChip')} task={t('agent.starterTask')} />
+
           {/* The route that scales, before the one that demonstrates. */}
           <AgentBuild />
 
-          <h2 className="agentbuild__title agentbuild__title--second">{t('create.recorderTitle')}</h2>
-          <p className="muted agentbuild__lede">{t('create.recorderLede')}</p>
+          <h2 className="secondroute">{t('create.recorderTitle')}</h2>
+          <p className="muted secondroute__lede">{t('create.recorderLede')}</p>
 
           <ol className="buildlist">
             <Step index={1} title={t('create.step1')} done={webmcp === true} waiting={webmcp === false}>

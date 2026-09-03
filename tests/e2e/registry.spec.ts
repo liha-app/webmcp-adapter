@@ -607,3 +607,28 @@ test.describe('The Studio bench', () => {
     expect(box!.height).toBeLessThan(3);
   });
 });
+
+test.describe('The Studio’s own onboarding chip', () => {
+  test.use({ permissions: ['clipboard-read', 'clipboard-write'] });
+
+  test('hands over the setup and the job in one paste', async ({ page }) => {
+    await page.goto('http://localhost:5280/create');
+    const chip = page.locator('[data-action="copy-agent-prompt"]');
+    await expect(chip).toBeVisible();
+    await expect(chip).toContainText('Adapter Studio');
+
+    await chip.click();
+    const clipboard = await page.evaluate(() => navigator.clipboard.readText());
+    // The same sentence the landing hands out, plus what to do with it — one
+    // control rather than the two this page used to carry.
+    expect(clipboard).toContain('http://localhost:5280/agent-setup/prompt.md');
+    expect(clipboard).toContain('build me an adapter');
+    expect(clipboard.split('\n\n')).toHaveLength(2);
+  });
+
+  test('is the only copy control on the page', async ({ page }) => {
+    await page.goto('http://localhost:5280/create');
+    await expect(page.locator('[data-action="copy-starter"]')).toHaveCount(0);
+    await expect(page.locator('[data-action="copy-agent-prompt"]')).toHaveCount(1);
+  });
+});

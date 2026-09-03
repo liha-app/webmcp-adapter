@@ -270,6 +270,7 @@ code, pre { font-family: var(--mono); }
  * for the visitor who has an agent open, not the page's argument.
  */
 .onboard { display: flex; flex-direction: column; align-items: center; gap: 8px; margin-bottom: 22px; }
+.page .onboard { align-items: flex-start; margin: 26px 0 0; }
 .onboard__chip {
   appearance: none; cursor: pointer;
   display: inline-flex; align-items: center; gap: 10px;
@@ -707,12 +708,17 @@ details pre { margin-top: 10px; }
   clip: rect(0 0 0 0); white-space: nowrap;
 }
 
-.bench { margin-top: 46px; }
-.bench__head { display: flex; align-items: baseline; gap: 16px; flex-wrap: wrap; }
-.bench__title { margin: 0; font-size: 28px; line-height: 1.1429; font-weight: 600; letter-spacing: 0.007em; }
-.bench__lede { margin: 10px 0 0; max-width: 46em; }
+/* The second route, kept clearly second: its own rule and its own air. */
+.secondroute {
+  margin: 64px 0 0; padding-top: 46px; border-top: 1px solid var(--hairline);
+  font-size: 28px; line-height: 1.1429; font-weight: 600; letter-spacing: 0.007em;
+}
+.secondroute__lede { margin: 10px 0 0; max-width: 46em; }
 
-.rail { display: flex; gap: 14px; margin-left: auto; }
+.bench { margin-top: 8px; }
+.bench__head { display: flex; justify-content: flex-end; margin-bottom: 2px; }
+
+.rail { display: flex; gap: 14px; }
 .lamp {
   display: inline-flex; align-items: center; gap: 7px;
   font-size: 12px; line-height: 1.3334; color: var(--ink-2); white-space: nowrap;
@@ -726,7 +732,7 @@ details pre { margin-top: 10px; }
 @keyframes lamp-search { 0%, 100% { opacity: 0.28; } 50% { opacity: 1; } }
 
 /* The pipeline: where the work is, not what the work would be. */
-.agentflow { list-style: none; margin: 26px 0 0; padding: 0; display: grid; gap: 10px; }
+.agentflow { list-style: none; margin: 14px 0 0; padding: 0; display: grid; gap: 10px; }
 @media (min-width: 820px) { .agentflow { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 0; } }
 /* A stepper: the rail of pips on one line, the labels beneath them. Drawn with
  * the label on the pip's own line, the connector struck straight through the

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import {
   highestCapability,
   summarizeEffects,
@@ -9,7 +9,6 @@ import {
 import { detectModelContext } from '@liha/adapter-runtime';
 import { extensionPresent, requestInstall } from '../lib/extension';
 import { useI18n } from '../i18n';
-import { onboardingPrompt } from './onboard';
 
 /**
  * The Studio: a bench rather than a page about a bench.
@@ -73,12 +72,8 @@ export function AgentBuild() {
   const [checked, setChecked] = useState<Checked>({ state: 'empty' });
   const [installing, setInstalling] = useState(false);
   const [installed, setInstalled] = useState<{ ok: boolean; message: string } | null>(null);
-  const [copied, setCopied] = useState(false);
   const download = useRef<HTMLAnchorElement>(null);
   const gutter = useRef<HTMLDivElement>(null);
-
-  const origin = typeof location === 'undefined' ? '' : location.origin;
-  const starter = useMemo(() => `${onboardingPrompt(origin)}\n\n${t('agent.starterTask')}`, [origin, t]);
 
   /* Checked as you type. A validator you have to ask is a form; one that
    * answers while you work is an instrument. */
@@ -102,16 +97,6 @@ export function AgentBuild() {
     return result.ok && result.adapter
       ? { state: 'good', adapter: result.adapter }
       : { state: 'bad', errors: result.errors };
-  }
-
-  async function copyStarter() {
-    try {
-      await navigator.clipboard.writeText(starter);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2400);
-    } catch {
-      window.prompt(t('onboard.fallback'), starter);
-    }
   }
 
   function save(adapter: AdapterDefinition) {
@@ -158,13 +143,11 @@ export function AgentBuild() {
   return (
     <section className="bench" data-testid="agent-build">
       <header className="bench__head">
-        <h2 className="bench__title">{t('agent.title')}</h2>
         <div className="rail" data-testid="bench-rail">
           <Lamp on={webmcp} label={t('agent.railWebmcp')} />
           <Lamp on={extension} label={t('agent.railExtension')} />
         </div>
       </header>
-      <p className="muted bench__lede">{t('agent.lede')}</p>
 
       <ol className="agentflow" data-stage={stage}>
         {(['agent.s1', 'agent.s2', 'agent.s3', 'agent.s4'] as const).map((key, index) => (
@@ -177,16 +160,6 @@ export function AgentBuild() {
       <p className="agentflow__hint" key={stage}>
         {t(`${(['agent.s1', 'agent.s2', 'agent.s3', 'agent.s4'] as const)[stage]}Body` as 'agent.s1Body')}
       </p>
-
-      <div className="asklane">
-        <ul className="plainlist asklane__examples">
-          <li>{t('agent.example1')}</li>
-          <li>{t('agent.example2')}</li>
-        </ul>
-        <button type="button" className="btn" data-action="copy-starter" onClick={copyStarter}>
-          {copied ? t('agent.copied') : t('agent.copyStarter')}
-        </button>
-      </div>
 
       <div className="editor" data-state={checked.state}>
         <div className="editor__bar">
