@@ -74,16 +74,24 @@ function render(state: PopupState): void {
   }
 
   /*
-   * One action, and three ways out. Recording is the thing a person came here to
-   * start; the other three open pages, and four buttons of equal weight in a
-   * 380px column wrapped into a second row that read like more choices than
-   * there are.
+   * One action, and three ways out.
+   *
+   * Recording is what a person came here to start, so it is a prominent button
+   * across the width of the popup. The other three only open a page, and a page
+   * you open is a row in a list, not a button: as three tinted words in a line
+   * they read as one sentence broken into pieces, and none of them looked like
+   * it led anywhere. They are a group now, each with the chevron that says so
+   * and its count on the right.
    */
   const actions = el('div', { class: 'actions' });
   const recording = state.recording !== null;
   const record = el(
     'button',
-    { class: `btn btn--primary ${recording ? 'btn--danger' : ''}`, type: 'button', 'data-action': 'toggle-recording' },
+    {
+      class: `btn btn--block ${recording ? 'btn--danger' : 'btn--primary'}`,
+      type: 'button',
+      'data-action': 'toggle-recording',
+    },
     recording ? t('popup.stopRecording', [state.recording?.actions.length ?? 0]) : t('popup.record'),
   );
   record.addEventListener('click', () => {
@@ -95,13 +103,14 @@ function render(state: PopupState): void {
   actions.append(record);
   app.append(actions);
 
-  const elsewhere = el('div', { class: 'elsewhere' });
-  for (const [label, page] of [
-    [t('popup.adapters', [state.catalog.length]), 'manage/manage.html'],
-    [t('popup.studio'), 'studio/studio.html'],
-    [t('popup.compatibility'), 'diagnostics/diagnostics.html'],
-  ] as Array<[string, string]>) {
-    const link = el('button', { class: 'btn btn--link', type: 'button' }, label);
+  const elsewhere = el('div', { class: 'group elsewhere' });
+  for (const [label, page, value] of [
+    [t('popup.adapters'), 'manage/manage.html', String(state.catalog.length)],
+    [t('popup.studio'), 'studio/studio.html', ''],
+    [t('popup.compatibility'), 'diagnostics/diagnostics.html', ''],
+  ] as Array<[string, string, string]>) {
+    const link = el('button', { class: 'linkrow', type: 'button' }, el('span', { class: 'linkrow__label' }, label));
+    if (value) link.append(el('span', { class: 'linkrow__value' }, value));
     link.addEventListener('click', () => void ext.tabs.create({ url: ext.runtime.getURL(page) }));
     elsewhere.append(link);
   }

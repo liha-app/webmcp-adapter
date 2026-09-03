@@ -102,19 +102,21 @@ export function renderAdapterCard(entry: CatalogEntry, options: CardOptions): HT
     row.append(el('div', { class: 'muted' }, tool.description));
 
     const status = el('div', { class: 'row row--meta' });
-    // Registration is a fact about the open page. The listing is not looking at
-    // one, so it says nothing rather than saying "not registered" about every
-    // tool on every site the reader is not currently visiting.
-    if (!showOrigins) {
-      status.append(
-        el(
-          'span',
-          { class: `status ${liveTool?.registered ? 'status--ok' : 'status--warn'}` },
-          t(liveTool?.registered ? 'card.registered' : 'card.notRegistered'),
-        ),
-      );
+    /*
+     * A tool that is doing its job says nothing.
+     *
+     * Registration is a fact about the open page, so the listing — which is not
+     * looking at one — says nothing rather than reporting "not registered"
+     * about every tool on every site the reader is not currently visiting. And
+     * where it is looking at one, only disagreement is worth a line: every tool
+     * carrying "registered" and "healthy" made a wall of green down the popup,
+     * and the one tool that had failed had nothing to stand out against. The
+     * adapter's own badge already says the adapter is live.
+     */
+    if (!showOrigins && !liveTool?.registered) {
+      status.append(el('span', { class: 'status status--warn' }, t('card.notRegistered')));
     }
-    if (health) status.append(healthBadge(health.status));
+    if (health && health.status !== 'healthy') status.append(healthBadge(health.status));
     if (tool.capability === 'DESTRUCTIVE') status.append(el('span', { class: 'muted' }, t('card.alwaysConfirmed')));
     if (status.childElementCount > 0) row.append(status);
     card.append(row);

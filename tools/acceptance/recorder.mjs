@@ -66,10 +66,24 @@ const clickOn = (selector) => `(() => {
   return true;
 })()`;
 
+/*
+ * A target exists before the page behind it does.
+ *
+ * `waitForTarget` returns as soon as the window is there, which is a moment
+ * before the extension page has an extension API to talk to — and the first
+ * thing this suite does with the Studio is read `chrome.storage` to pin the
+ * language. That raced, rarely and only on a loaded machine, and reported
+ * itself as a TypeError in the middle of a passing run. Wait for the API, not
+ * for the window.
+ */
 async function openExtensionPage(browser, url) {
   const target = await browser.waitForTarget((candidate) => candidate.type === 'page' && candidate.url.includes(url));
   if (!target) return null;
-  return await new Session(target.webSocketDebuggerUrl).open();
+  const session = await new Session(target.webSocketDebuggerUrl).open();
+  const ready = await waitFor(async () =>
+    session.eval('Boolean(globalThis.chrome && chrome.storage && chrome.storage.local)').catch(() => false),
+  );
+  return ready ? session : null;
 }
 
 async function main() {

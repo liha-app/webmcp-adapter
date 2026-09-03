@@ -42,17 +42,22 @@ body { width: 380px; background: var(--grouped); }
   overflow: hidden;
   font-size: 12.5px;
 }
-.kv dt { padding: 9px 0 9px 14px; color: var(--secondary); }
-.kv dd { padding: 9px 14px 9px 0; margin: 0; overflow-wrap: anywhere; text-align: right; }
+.kv dt { padding: 9px 0 9px 16px; color: var(--secondary); }
+.kv dd { padding: 9px 16px 9px 0; margin: 0; overflow-wrap: anywhere; text-align: right; }
 /* The hairline starts where the label starts, so it is drawn inside the cell
  * rather than across the whole grid. */
 .kv dt:nth-of-type(n + 2), .kv dt:nth-of-type(n + 2) + dd { position: relative; }
-.kv dt:nth-of-type(n + 2)::before { content: ''; position: absolute; inset: 0 -300% auto 14px; height: 1px; background: var(--separator); }
+.kv dt:nth-of-type(n + 2)::before { content: ''; position: absolute; inset: 0 -300% auto 16px; height: 1px; background: var(--separator); }
 
-h4 { margin: 20px 4px 7px; font-size: 12px; font-weight: 400; color: var(--secondary); }
+/*
+ * A section's name and any note under a group line up with the text inside it,
+ * not with the group's edge. The popup's own padding is 12; the group's is 16.
+ */
+h4 { margin: 20px 16px 7px; font-size: 12px; font-weight: 400; color: var(--secondary); }
+.app > p.muted { margin: 10px 16px 0; font-size: 12px; }
 
-.actions { display: flex; gap: 8px; margin-bottom: 14px; }
-.elsewhere { display: flex; gap: 16px; margin: 0 4px 16px; font-size: 12.5px; }
+.actions { margin-bottom: 14px; }
+.elsewhere { margin: 0 0 18px; }
 
 /*
  * The call log. Monospace on a recessed fill, which is how Apple shows a
