@@ -6,6 +6,7 @@ import { demoApps } from '../lib/demos';
 import { RELEASES_URL } from '../lib/links';
 import { useI18n } from '../i18n';
 import type { MessageKey } from '../i18n/en';
+import { AgentBuild } from './agentbuild';
 
 const FLAG_URL = 'chrome://flags/#enable-webmcp-testing';
 
@@ -129,6 +130,12 @@ export function Create() {
           <p className="eyebrow">{t('create.eyebrow')}</p>
           <h1 className="headline">{t('create.headline')}</h1>
           <p className="lede lede--narrow">{t('create.lede')}</p>
+
+          {/* The route that scales, before the one that demonstrates. */}
+          <AgentBuild />
+
+          <h2 className="agentbuild__title agentbuild__title--second">{t('create.recorderTitle')}</h2>
+          <p className="muted agentbuild__lede">{t('create.recorderLede')}</p>
 
           <ol className="buildlist">
             <Step index={1} title={t('create.step1')} done={webmcp === true} waiting={webmcp === false}>

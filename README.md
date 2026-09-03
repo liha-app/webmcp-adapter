@@ -263,6 +263,26 @@ The step table in that document is checked against `stepSchema` by a test. An
 agent that follows a doc listing a step the runtime does not have writes an
 adapter that fails validation after it has told someone the work is finished.
 
+### Building an adapter by asking for one
+
+`/create` leads with the route that scales rather than the one that
+demonstrates. You describe what you want to be able to ask for on a site with no
+WebMCP — "check the latest issues", "change this issue's status" — and the agent
+reads the page and writes the adapter.
+
+The step that makes it a loop rather than a hand-off is the third one:
+`validate_adapter` is one of the portal's own WebMCP tools, so the agent that
+wrote the draft calls it, gets the errors back as text, and fixes them without a
+person in the middle. The page carries the same validator behind a textarea, so
+you can look at what it is looking at. It catches the rules that are not just
+shape — a `READ` tool that navigates, a placeholder nothing declares — which is
+exactly the class of mistake an agent cannot see from the format alone.
+
+A draft that validates can be downloaded as JSON or installed. Installing goes
+through the extension, which asks in its own window and names every origin and
+capability first: the page cannot install anything on its own, and says so when
+the extension is not there rather than waiting three minutes to find out.
+
 ### The Adapter Registry
 
 A public catalogue with search, categories, per-adapter origins, tools, input

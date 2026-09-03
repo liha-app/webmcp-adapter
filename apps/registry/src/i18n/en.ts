@@ -37,6 +37,45 @@ export const en = {
   'footer.disclaimer':
     'Not affiliated with, endorsed by or connected to Apple Inc. or the App Store. The layout follows Apple’s public design conventions; all names, artwork and copy here are this project’s own.',
 
+  'create.recorderTitle': 'Or record it yourself.',
+  'create.recorderLede':
+    'The Studio watches what you do on the page and writes the same JSON. Seven steps, and the first two are about the browser.',
+
+  /* ------------------------------------------------- build with an agent -- */
+  'agent.title': 'Or ask an agent to write it.',
+  'agent.lede':
+    'Describe what you want to be able to ask for on a site that has no WebMCP. The agent reads the page, writes the adapter, and checks it here — the validator is itself a WebMCP tool, so it can do that without you in the middle.',
+  'agent.s1': 'Say what you want to be able to ask for',
+  'agent.s1Body':
+    'Open the site, and tell your agent the tasks — not the selectors. The prompt below sets it up first.',
+  'agent.example1': '“Check the latest issues in this app.”',
+  'agent.example2': '“Change this issue’s status.”',
+  'agent.starterTask':
+    'Then, for the site I have open, build me an adapter with tools for the tasks I am about to list. Ask me for them.',
+  'agent.copyStarter': 'Copy the starter prompt',
+  'agent.copied': 'Copied',
+  'agent.s2': 'It reads the page and writes the JSON',
+  'agent.s2Body':
+    'One tool per task, driven through the controls a person would use. It cannot write code: the format has no step that carries any.',
+  'agent.s3': 'It validates here',
+  'agent.s3Body':
+    'validate_adapter is one of this page’s WebMCP tools, so the agent calls it directly and gets the errors back as text. The box below is the same validator, for when you want to look yourself.',
+  'agent.s4': 'You download it, or install it',
+  'agent.s4Body':
+    'Installing goes through the extension, which asks in its own window and names every origin and capability first. Nothing here can install anything on its own.',
+  'agent.paste': 'Paste an adapter to check it',
+  'agent.validate': 'Validate',
+  'agent.download': 'Download JSON',
+  'agent.install': 'Install',
+  'agent.installing': 'Waiting for the extension…',
+  'agent.installed': 'Installed. Reload the site and its tools are there.',
+  'agent.noExtension':
+    'The extension is not in this browser. Install it first, then come back — or download the JSON and load it from the extension.',
+  'agent.notJson': 'That is not JSON:',
+  'agent.rejected': 'Not valid yet:',
+  'agent.accepted': '{0} — {1} tool(s), up to {2}.',
+  'agent.effects': '{0} click(s), {1} input(s), {2} read(s) across all tools.',
+
   /* --------------------------------------------------------------- hero -- */
   'onboard.chip': 'Onboard your agent to Liha WebMCP Adapter',
   'onboard.agentsTitle': 'Any agent that can fetch a URL',

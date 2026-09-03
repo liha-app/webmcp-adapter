@@ -217,12 +217,14 @@ code, pre { font-family: var(--mono); }
 
 /* ═══════════════════════════════════════════════════════════ layout ═════ */
 .section { padding: 160px 0; }
+.section--compact { padding: 104px 0; }
 .section--tiles { background: var(--sunken); }
 .section-content { width: var(--content); max-width: calc(100% - 48px); margin: 0 auto; }
 .section--tiles .section-content { width: var(--grid); }
 @media (max-width: 1068px) { .section { padding: 100px 0; } }
 @media (max-width: 734px) {
   .section { padding: 64px 0; }
+  .section--compact { padding: 56px 0; }
   .section-content { max-width: calc(100% - 32px); }
 }
 
@@ -251,6 +253,7 @@ code, pre { font-family: var(--mono); }
 
 /* A fact tile: a big number, one line of explanation, nothing else. */
 .fact { display: flex; flex-direction: column; justify-content: space-between; min-height: 320px; }
+.fact--compact { min-height: 240px; }
 .fact__figure { font-variant-numeric: tabular-nums; }
 .fact__label { margin-top: 24px; font-size: 17px; line-height: 1.4706; }
 @media (max-width: 734px) { .fact { min-height: 0; } .fact__label { margin-top: 14px; } }
@@ -417,6 +420,21 @@ pre {
   border-left: 2px solid var(--blue); border-bottom: 2px solid var(--blue); transform: rotate(-45deg);
 }
 .tile--dark .checklist li::before, .tile--blue .checklist li::before { border-color: var(--elevated); }
+.checklist--columns { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px 40px; }
+.security-note {
+  margin-top: 28px; padding-top: 20px; border-top: 1px solid var(--hairline);
+  color: var(--ink-2); font-size: 14px; line-height: 1.4286;
+}
+.proof-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 1px; margin: 0; }
+.proof-grid > div { border-left: 1px solid rgba(255, 255, 255, 0.18); padding: 4px 24px; }
+.proof-grid > div:first-child { border-left: 0; padding-left: 0; }
+.proof-grid dt { color: rgba(245, 245, 247, 0.68); font-size: 12px; line-height: 1.3334; }
+.proof-grid dd { margin: 8px 0 0; color: var(--elevated); font-size: 40px; line-height: 1; font-weight: 600; }
+@media (max-width: 734px) {
+  .checklist--columns { grid-template-columns: minmax(0, 1fr); }
+  .proof-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 24px 0; }
+  .proof-grid > div:nth-child(3) { border-left: 0; padding-left: 0; }
+}
 
 .excerpt { display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr); gap: 40px; align-items: start; }
 .excerpt pre { max-height: none; white-space: pre-wrap; overflow-wrap: anywhere; }
@@ -671,3 +689,41 @@ details pre { margin-top: 10px; }
 .buildlist { margin-top: 44px; }
 .buildfoot { max-width: 62ch; margin-top: 36px; }
 .build .notice { border: 1px solid light-dark(#b45309, #e0a458); color: light-dark(#b45309, #e0a458); background: light-dark(rgba(180,83,9,.07), rgba(224,164,88,.1)); border-radius: 9px; padding: 10px 13px; font-size: 14px; }
+
+/* ══════════════════════════════════════════════ build with an agent ═══ */
+/*
+ * The route that scales, above the recorder that demonstrates. The panel is
+ * plain rather than a card: it is part of the page's argument, not an aside.
+ */
+.agentbuild { margin-top: 46px; }
+.agentbuild__title { margin: 0; font-size: 28px; line-height: 1.1429; font-weight: 600; letter-spacing: 0.007em; }
+.agentbuild__title--second { margin-top: 64px; padding-top: 46px; border-top: 1px solid var(--hairline); }
+.agentbuild__lede { margin: 10px 0 0; max-width: 46em; }
+
+.agentflow { list-style: none; counter-reset: agentstep; margin: 30px 0 0; padding: 0; display: grid; gap: 24px; }
+@media (min-width: 900px) { .agentflow { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 22px; } }
+.agentflow > li { counter-increment: agentstep; padding-top: 34px; position: relative; }
+.agentflow > li::before {
+  content: counter(agentstep);
+  position: absolute; top: 0; left: 0;
+  display: grid; place-items: center; width: 24px; height: 24px; border-radius: 50%;
+  background: var(--sunken); color: var(--ink-2);
+  font-size: 12px; font-weight: 600; font-variant-numeric: tabular-nums;
+}
+.agentflow h3 { margin: 0 0 6px; font-size: 17px; line-height: 1.2353; font-weight: 600; }
+.agentflow p { margin: 0; font-size: 14px; line-height: 1.4286; }
+.agentflow__examples { margin: 10px 0 14px; font-size: 14px; line-height: 1.5714; color: var(--ink-2); }
+
+.drafter { margin-top: 34px; padding: 22px; border: 1px solid var(--hairline); border-radius: 12px; background: var(--tile); }
+.drafter__label { display: block; font-size: 14px; font-weight: 600; margin-bottom: 10px; }
+.drafter__input {
+  width: 100%; resize: vertical; box-sizing: border-box;
+  font: 400 13px/1.5 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  color: var(--ink); background: var(--code-bg);
+  border: 1px solid var(--hairline); border-radius: 8px; padding: 12px 14px;
+}
+.drafter__input:focus-visible { outline: none; border-color: var(--blue); box-shadow: 0 0 0 4px rgba(0, 113, 227, 0.22); }
+.drafter__actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 14px; align-items: center; }
+.drafter__result { margin-top: 16px; font-size: 14px; line-height: 1.4286; }
+.drafter__result p { margin: 0 0 6px; }
+.drafter__result .plainlist { font-variant-numeric: tabular-nums; }

@@ -155,6 +155,14 @@ test.describe('Appearance and language', () => {
   });
 
   test('a Japanese browser gets Japanese without being asked', async ({ browser }) => {
+    /*
+     * This one opens a second browser context on top of the one the fixture
+     * already gave it, so the worker is rendering two copies of the landing
+     * page — hero canvas and all — while every other worker renders its own.
+     * It is the test that tips over first under a full parallel run, and it is
+     * doing genuinely more work than the others rather than being flaky.
+     */
+    test.slow();
     const context = await browser.newContext({ locale: 'ja-JP' });
     const page = await context.newPage();
     await page.goto('http://localhost:5280/');
@@ -405,5 +413,129 @@ test.describe('the tab icon', () => {
     await page.getByTestId('theme-control').locator('[data-theme-option="dark"]').click();
     await expect(page.locator('.onboard__agent--dark')).toBeVisible();
     await expect(page.locator('.onboard__agent--light')).toBeHidden();
+  });
+});
+
+test.describe('Building an adapter by asking for one', () => {
+  test.beforeEach(async ({ page }) => {
+    await page.goto('http://localhost:5280/create');
+  });
+
+  test('lays out the agent route above the recorder', async ({ page }) => {
+    const panel = page.getByTestId('agent-build');
+    await expect(panel).toBeVisible();
+    await expect(panel.locator('.agentflow > li')).toHaveCount(4);
+    const agent = (await panel.boundingBox())!;
+    const recorder = (await page.locator('.buildlist').boundingBox())!;
+    expect(agent.y).toBeLessThan(recorder.y);
+  });
+
+  test('rejects a draft and says exactly why', async ({ page }) => {
+    // The errors are the product here: an agent fixes what it is told about.
+    await page.getByTestId('draft-json').fill(
+      JSON.stringify({
+        id: 'Bad Id',
+        name: 'x',
+        version: '1',
+        origins: ['https://*.example.com'],
+        tools: [],
+      }),
+    );
+    await page.locator('[data-action="validate-draft"]').click();
+    const result = page.getByTestId('draft-result');
+    await expect(result).toContainText('kebab-case');
+    await expect(result).toContainText('semver');
+    await expect(result).toContainText('no wildcards');
+    await expect(page.locator('[data-action="download-draft"]')).toBeDisabled();
+    await expect(page.locator('[data-action="install-draft"]')).toBeDisabled();
+  });
+
+  test('catches the rules that are not just shape', async ({ page }) => {
+    await page.getByTestId('draft-json').fill(
+      JSON.stringify({
+        id: 'demo',
+        name: 'Demo',
+        version: '1.0.0',
+        origins: ['https://app.example.com'],
+        tools: [
+          {
+            name: 'go_home',
+            description: 'Reads the page.',
+            capability: 'READ',
+            inputSchema: { type: 'object', properties: {} },
+            steps: [{ type: 'navigate', path: '/home' }],
+          },
+        ],
+      }),
+    );
+    await page.locator('[data-action="validate-draft"]').click();
+    // A READ tool may not navigate, and an agent has no way to know that from
+    // the shape alone — which is exactly why it validates here.
+    await expect(page.getByTestId('draft-result')).toContainText('declared READ');
+  });
+
+  test('accepts a good draft, and offers it back as a file', async ({ page }) => {
+    await page.getByTestId('draft-json').fill(
+      JSON.stringify({
+        id: 'example-site',
+        name: 'Example',
+        version: '1.0.0',
+        origins: ['https://app.example.com'],
+        tools: [
+          {
+            name: 'find_issue',
+            description: 'Search the issue list and return what matches.',
+            capability: 'READ',
+            inputSchema: {
+              type: 'object',
+              properties: { query: { type: 'string', description: 'What to search for' } },
+              required: ['query'],
+            },
+            steps: [
+              { type: 'fill', selector: "[data-testid='q']", value: '{{query}}' },
+              { type: 'readList', selector: "[data-testid='issues'] li", as: 'issues' },
+            ],
+          },
+        ],
+      }),
+    );
+    await page.locator('[data-action="validate-draft"]').click();
+    await expect(page.getByTestId('draft-result')).toContainText('Example — 1 tool(s), up to READ.');
+    await expect(page.getByTestId('draft-result')).toContainText('https://app.example.com');
+
+    const [saved] = await Promise.all([
+      page.waitForEvent('download'),
+      page.locator('[data-action="download-draft"]').click(),
+    ]);
+    expect(saved.suggestedFilename()).toBe('example-site.json');
+    const stream = await saved.createReadStream();
+    const chunks: Buffer[] = [];
+    for await (const chunk of stream) chunks.push(chunk as Buffer);
+    expect(JSON.parse(Buffer.concat(chunks).toString()).tools[0].name).toBe('find_issue');
+  });
+
+  test('says the extension is missing rather than pretending to install', async ({ page }) => {
+    await page.getByTestId('draft-json').fill(
+      JSON.stringify({
+        id: 'example-site',
+        name: 'Example',
+        version: '1.0.0',
+        origins: ['https://app.example.com'],
+        tools: [
+          {
+            name: 'read_it',
+            description: 'Reads the page.',
+            capability: 'READ',
+            inputSchema: { type: 'object', properties: {} },
+            steps: [{ type: 'readText', selector: 'h1', as: 'title' }],
+          },
+        ],
+      }),
+    );
+    await page.locator('[data-action="validate-draft"]').click();
+    await page.locator('[data-action="install-draft"]').click();
+    // No extension in this browser, so the honest answer is that, not a spinner
+    // that never resolves and not a claim that it worked.
+    await expect(page.getByTestId('draft-install-result')).toContainText(/extension/i, { timeout: 20_000 });
   });
 });
