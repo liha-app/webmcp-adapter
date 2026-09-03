@@ -4,6 +4,7 @@ import {
   type AdapterHealth,
   type Capability,
   type ToolDefinition,
+  summarizeEffects,
 } from '@liha/adapter-schema';
 import { executeSteps, type ExecutorDeps, type StepExecutionError } from './executor';
 import { checkAdapterHealth } from './health';
@@ -32,9 +33,40 @@ export interface ConfirmationRequest {
 export interface RuntimePolicy {
   /** DESTRUCTIVE always confirms. WRITE confirms only when this is on. */
   confirmWrite: boolean;
+  /**
+   * Confirm anything whose *steps* can change the page, whatever capability it
+   * claims to be.
+   *
+   * Capability is an author's declaration and validation can only check the
+   * narrowest invariant about it. An adapter is free to call the click that
+   * deletes an account READ, and until this existed that call went through
+   * without asking anyone. This looks at what the steps do instead.
+   */
+  confirmMutating: boolean;
 }
 
-export const DEFAULT_POLICY: RuntimePolicy = { confirmWrite: false };
+/**
+ * Where an adapter came from, and therefore how much its own word is worth.
+ *
+ * Official adapters are in this repository and reviewed here. Verified ones
+ * were reviewed by the registry's owners. Community ones are a stranger's JSON,
+ * and a stranger does not get to turn confirmations off.
+ */
+export type AdapterTrust = 'official' | 'verified' | 'community';
+
+export const DEFAULT_POLICY: RuntimePolicy = { confirmWrite: false, confirmMutating: false };
+
+/** The strictest policy the trust level allows, applied to what was asked for. */
+export function policyFor(trust: AdapterTrust, requested?: Partial<RuntimePolicy>): RuntimePolicy {
+  if (trust === 'community') {
+    // Nothing a community adapter asks for can loosen this.
+    return { confirmWrite: true, confirmMutating: true };
+  }
+  const base: RuntimePolicy = trust === 'verified'
+    ? { confirmWrite: true, confirmMutating: false }
+    : { ...DEFAULT_POLICY };
+  return { ...base, ...requested };
+}
 
 export interface RuntimeLogEntry {
   at: number;
@@ -95,21 +127,43 @@ interface InstalledAdapter {
   definition: AdapterDefinition;
   controller: AbortController;
   tools: ToolStatus[];
+  /*
+   * Each adapter's own policy.
+   *
+   * This used to be one variable for the whole page, so the last adapter to
+   * install decided how every other adapter on that origin would behave: a
+   * careful adapter's WRITE confirmations disappeared the moment a second one
+   * installed asking for none. Multiple adapters per origin are allowed, so it
+   * was reachable rather than theoretical.
+   */
+  policy: RuntimePolicy;
+  trust: AdapterTrust;
+}
+
+export interface InstallOptions {
+  policy?: Partial<RuntimePolicy>;
+  /** Defaults to the strictest, because an unlabelled adapter is a stranger's. */
+  trust?: AdapterTrust;
 }
 
 export interface LihaRuntime {
   readonly version: string;
-  install(definition: unknown, policy?: Partial<RuntimePolicy>): Promise<InstallResult>;
+  install(definition: unknown, options?: InstallOptions | Partial<RuntimePolicy>): Promise<InstallResult>;
   uninstall(adapterId: string): Promise<boolean>;
   setPolicy(policy: Partial<RuntimePolicy>): RuntimePolicy;
   checkHealth(adapterId?: string): AdapterHealth[];
   status(): RuntimeStatus;
 }
 
-export function needsConfirmation(capability: Capability, policy: RuntimePolicy): boolean {
+export function needsConfirmation(
+  capability: Capability,
+  policy: RuntimePolicy,
+  /** True when no step in the tool can change anything on the page. */
+  readOnlySteps = true,
+): boolean {
   if (capability === 'DESTRUCTIVE') return true;
   if (capability === 'WRITE') return policy.confirmWrite;
-  return false;
+  return policy.confirmMutating && !readOnlySteps;
 }
 
 export function createRuntime(deps: RuntimeDeps): LihaRuntime {
@@ -139,13 +193,13 @@ export function createRuntime(deps: RuntimeDeps): LihaRuntime {
       .map((key) => ({ key, value: (context[key] ?? '').slice(0, 120) }));
   }
 
-  function buildExecute(definition: AdapterDefinition, tool: ToolDefinition) {
+  function buildExecute(definition: AdapterDefinition, tool: ToolDefinition, toolPolicy: RuntimePolicy) {
     return async (rawInput: Record<string, unknown>): Promise<ToolResult> => {
       record(tool.name, 'info', `invoked (${tool.capability})`);
       try {
         const context = buildInputContext(tool.inputSchema, rawInput);
 
-        if (needsConfirmation(tool.capability, policy)) {
+        if (needsConfirmation(tool.capability, toolPolicy, summarizeEffects(tool).readOnly)) {
           record(tool.name, 'info', `awaiting user confirmation (${tool.capability})`);
           const approved = await deps.requestConfirmation({
             adapterId: definition.id,
@@ -198,8 +252,19 @@ export function createRuntime(deps: RuntimeDeps): LihaRuntime {
     return true;
   }
 
-  async function install(input: unknown, overrides?: Partial<RuntimePolicy>): Promise<InstallResult> {
-    if (overrides) policy = { ...policy, ...overrides };
+  async function install(
+    input: unknown,
+    options?: InstallOptions | Partial<RuntimePolicy>,
+  ): Promise<InstallResult> {
+    /* The old signature took a bare policy. Both shapes are accepted so a
+     * caller that has not been updated still installs — at the stricter of the
+     * two, because an install with no stated provenance is a stranger's. */
+    const asOptions: InstallOptions =
+      options && ('policy' in options || 'trust' in options)
+        ? (options as InstallOptions)
+        : { policy: options as Partial<RuntimePolicy> | undefined };
+    const trust: AdapterTrust = asOptions.trust ?? 'community';
+    const adapterPolicy = policyFor(trust, asOptions.policy);
 
     const validation = validateAdapter(input);
     if (!validation.ok || !validation.adapter) {
@@ -238,7 +303,7 @@ export function createRuntime(deps: RuntimeDeps): LihaRuntime {
             ...(tool.title ? { title: tool.title } : {}),
             description: tool.description,
             inputSchema: tool.inputSchema,
-            execute: buildExecute(definition, tool),
+            execute: buildExecute(definition, tool, adapterPolicy),
           },
           { signal: controller.signal },
         );
@@ -253,7 +318,7 @@ export function createRuntime(deps: RuntimeDeps): LihaRuntime {
       return { ok: false, adapterId: definition.id, registered: [], reason: message };
     }
 
-    installed.set(definition.id, { definition, controller, tools });
+    installed.set(definition.id, { definition, controller, tools, policy: adapterPolicy, trust });
     record(definition.id, 'info', `registered ${registered.length} tool(s): ${registered.join(', ')}`);
     return { ok: true, adapterId: definition.id, registered };
   }

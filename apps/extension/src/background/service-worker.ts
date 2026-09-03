@@ -102,7 +102,7 @@ async function handlePageReady(href: string, tabId: number, frameId: number): Pr
   // silently withhold the other.
   for (const record of findEnabledForUrl(catalogue, href)) {
     try {
-      const result = await injectAdapter(tabId, frameId, record.adapter, record.policy);
+      const result = await injectAdapter(tabId, frameId, record.adapter, record.policy, record.source);
       if (!result.ok) console.warn(`[liha] ${record.adapter.id} not installed:`, result.reason);
     } catch (error) {
       console.error(`[liha] injecting ${record.adapter.id} failed`, error);
@@ -126,7 +126,7 @@ async function applyToOpenTabs(adapterId: string, enabled: boolean): Promise<voi
     if (tab.id === undefined) continue;
     if (enabled) {
       try {
-        await injectAdapter(tab.id, 0, record.adapter, record.policy);
+        await injectAdapter(tab.id, 0, record.adapter, record.policy, record.source);
       } catch (error) {
         console.warn('[liha] enable injection failed', error);
       }

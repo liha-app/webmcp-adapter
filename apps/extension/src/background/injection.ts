@@ -1,6 +1,7 @@
 import type { AdapterDefinition } from '@liha/adapter-schema';
-import type { InstallResult, RuntimePolicy, RuntimeStatus } from '@liha/adapter-runtime';
+import type { AdapterTrust, InstallResult, RuntimePolicy, RuntimeStatus } from '@liha/adapter-runtime';
 import type { AdapterHealth } from '@liha/adapter-schema';
+import type { AdapterSource } from '@liha/shared';
 import { ext } from '../platform';
 
 const RUNTIME_FILE = 'main-world/runtime.js';
@@ -15,19 +16,22 @@ const RUNTIME_FILE = 'main-world/runtime.js';
  * as JSON arguments.
  */
 type RuntimeHandle = {
-  install(definition: unknown, policy?: Partial<RuntimePolicy>): Promise<InstallResult>;
+  install(
+    definition: unknown,
+    options?: { policy?: Partial<RuntimePolicy>; trust?: string },
+  ): Promise<InstallResult>;
   uninstall(adapterId: string): Promise<boolean>;
   setPolicy(policy: Partial<RuntimePolicy>): RuntimePolicy;
   checkHealth(adapterId?: string): AdapterHealth[];
   status(): RuntimeStatus;
 };
 
-function installInMainWorld(definition: unknown, policy: unknown): Promise<InstallResult> {
+function installInMainWorld(definition: unknown, options: unknown): Promise<InstallResult> {
   const runtime = (globalThis as Record<string, unknown>)['__LIHA_WEBMCP_ADAPTER__'] as RuntimeHandle | undefined;
   if (!runtime) {
     return Promise.resolve({ ok: false, adapterId: 'unknown', registered: [], reason: 'runtime-not-loaded' });
   }
-  return runtime.install(definition, policy as Partial<RuntimePolicy>);
+  return runtime.install(definition, options as { policy?: Partial<RuntimePolicy>; trust?: string });
 }
 
 function uninstallInMainWorld(adapterId: string): Promise<boolean> {
@@ -45,11 +49,24 @@ function healthFromMainWorld(): AdapterHealth[] {
   return runtime ? runtime.checkHealth() : [];
 }
 
+/*
+ * Where an adapter came from decides how much its own settings are worth.
+ *
+ * Only what ships in this extension is `official`. Anything a user installed —
+ * from the Store, from the Studio, from a file — is a stranger's JSON as far as
+ * the runtime is concerned, and a stranger does not get to turn confirmations
+ * off for the origin it lands on.
+ */
+export function trustOf(source: AdapterSource): AdapterTrust {
+  return source === 'builtin' ? 'official' : 'community';
+}
+
 export async function injectAdapter(
   tabId: number,
   frameId: number,
   adapter: AdapterDefinition,
   policy: RuntimePolicy,
+  source: AdapterSource = 'installed',
 ): Promise<InstallResult> {
   await ext.scripting.executeScript({
     target: { tabId, frameIds: [frameId] },
@@ -60,7 +77,7 @@ export async function injectAdapter(
     target: { tabId, frameIds: [frameId] },
     world: 'MAIN',
     func: installInMainWorld,
-    args: [adapter, policy],
+    args: [adapter, { policy, trust: trustOf(source) }],
   });
   return (
     (result?.result as InstallResult | undefined) ?? {

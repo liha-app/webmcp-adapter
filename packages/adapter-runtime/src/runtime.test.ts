@@ -4,6 +4,7 @@ import { createMockModelContext } from './mock-model-context';
 import {
   createRuntime,
   needsConfirmation,
+  policyFor,
   type ConfirmationRequest,
   type LihaRuntime,
   type RuntimeDeps,
@@ -197,27 +198,77 @@ describe('tool execution', () => {
 });
 
 describe('capability confirmation', () => {
+  const loose = { confirmWrite: false, confirmMutating: false };
+  const tight = { confirmWrite: true, confirmMutating: true };
+
   it('decides which capabilities need confirmation', () => {
-    expect(needsConfirmation('READ', { confirmWrite: true })).toBe(false);
-    expect(needsConfirmation('INTERACT', { confirmWrite: true })).toBe(false);
-    expect(needsConfirmation('WRITE', { confirmWrite: false })).toBe(false);
-    expect(needsConfirmation('WRITE', { confirmWrite: true })).toBe(true);
+    expect(needsConfirmation('READ', { ...loose, confirmWrite: true })).toBe(false);
+    expect(needsConfirmation('INTERACT', { ...loose, confirmWrite: true })).toBe(false);
+    expect(needsConfirmation('WRITE', loose)).toBe(false);
+    expect(needsConfirmation('WRITE', { ...loose, confirmWrite: true })).toBe(true);
     // Not configurable: destructive always asks.
-    expect(needsConfirmation('DESTRUCTIVE', { confirmWrite: false })).toBe(true);
+    expect(needsConfirmation('DESTRUCTIVE', loose)).toBe(true);
   });
 
-  it('does not ask for a WRITE tool by default', async () => {
+  it('asks about a tool whose steps can change the page, whatever it claims', () => {
+    /*
+     * The hole this closes: capability is the author's word, and validation can
+     * only check the narrowest invariant about it. An adapter may call the
+     * click that deletes an account READ. Under confirmMutating the steps
+     * decide, not the label.
+     */
+    expect(needsConfirmation('READ', tight, false)).toBe(true);
+    expect(needsConfirmation('INTERACT', tight, false)).toBe(true);
+    // A tool that genuinely only reads is still not worth interrupting for.
+    expect(needsConfirmation('READ', tight, true)).toBe(false);
+    // And it is off unless the trust level turns it on.
+    expect(needsConfirmation('READ', loose, false)).toBe(false);
+  });
+
+  it('gives a stranger’s adapter the strictest policy, whatever it asks for', () => {
+    expect(policyFor('community', { confirmWrite: false, confirmMutating: false })).toEqual(tight);
+    expect(policyFor('verified').confirmWrite).toBe(true);
+    expect(policyFor('verified', { confirmWrite: false }).confirmWrite).toBe(false);
+    expect(policyFor('official')).toEqual(loose);
+  });
+
+  it('asks for a WRITE tool unless the caller says where the adapter came from', async () => {
+    // An install with no stated provenance is a stranger's, and a stranger's
+    // WRITE asks. Only the extension's own bundled adapters say `official`.
     const mc = createMockModelContext();
     const { runtime, confirm } = makeRuntime(mc);
     await runtime.install(crmAdapter);
     await invoke(mc, 'create_customer', { name: 'A', email: 'a@b.test' });
+    expect(confirm).toHaveBeenCalledOnce();
+  });
+
+  it('does not ask for an official adapter’s WRITE tool', async () => {
+    const mc = createMockModelContext();
+    const { runtime, confirm } = makeRuntime(mc);
+    await runtime.install(crmAdapter, { trust: 'official' });
+    await invoke(mc, 'create_customer', { name: 'A', email: 'a@b.test' });
     expect(confirm).not.toHaveBeenCalled();
+  });
+
+  it('keeps each adapter on its own policy', async () => {
+    /*
+     * The bug this covers: policy used to be one variable for the whole page,
+     * so installing a second adapter that asked for no confirmations silently
+     * removed the first one's. Multiple adapters per origin are allowed, so it
+     * was reachable rather than theoretical.
+     */
+    const mc = createMockModelContext();
+    const { runtime, confirm } = makeRuntime(mc);
+    await runtime.install(crmAdapter, { trust: 'community' });
+    await runtime.install(PROJECT_FIXTURE, { trust: 'official' });
+    await invoke(mc, 'create_customer', { name: 'A', email: 'a@b.test' });
+    expect(confirm).toHaveBeenCalledOnce();
   });
 
   it('asks for every WRITE tool once the policy is turned on', async () => {
     const mc = createMockModelContext();
     const { runtime, confirm } = makeRuntime(mc);
-    await runtime.install(crmAdapter, { confirmWrite: true });
+    await runtime.install(crmAdapter, { trust: 'official', policy: { confirmWrite: true } });
     await invoke(mc, 'create_customer', { name: 'A', email: 'a@b.test' });
     expect(confirm).toHaveBeenCalledOnce();
     expect(confirm.mock.calls[0]?.[0]).toMatchObject({ toolName: 'create_customer', capability: 'WRITE' });
@@ -226,7 +277,7 @@ describe('capability confirmation', () => {
   it('shows the values in the confirmation without logging them', async () => {
     const mc = createMockModelContext();
     const { runtime, confirm } = makeRuntime(mc);
-    await runtime.install(crmAdapter, { confirmWrite: true });
+    await runtime.install(crmAdapter, { trust: 'official', policy: { confirmWrite: true } });
     await invoke(mc, 'create_customer', { name: 'Alice Smith', email: 'alice@example.com' });
     expect(confirm.mock.calls[0]?.[0].preview).toEqual([
       { key: 'name', value: 'Alice Smith' },
@@ -239,7 +290,7 @@ describe('capability confirmation', () => {
     const mc = createMockModelContext();
     const confirm = confirmMock(false);
     const { runtime } = makeRuntime(mc, { requestConfirmation: confirm });
-    await runtime.install(crmAdapter, { confirmWrite: true });
+    await runtime.install(crmAdapter, { trust: 'official', policy: { confirmWrite: true } });
     const before = document.body.innerHTML;
     const result = await invoke(mc, 'create_customer', { name: 'Alice', email: 'a@b.test' });
     expect(result.isError).toBe(true);
@@ -254,7 +305,7 @@ describe('capability confirmation', () => {
   ])('denies when the confirmation path is broken (%s)', async (_label, behaviour) => {
     const mc = createMockModelContext();
     const { runtime } = makeRuntime(mc, { requestConfirmation: behaviour });
-    await runtime.install(crmAdapter, { confirmWrite: true });
+    await runtime.install(crmAdapter, { trust: 'official', policy: { confirmWrite: true } });
     const before = document.body.innerHTML;
     const result = await invoke(mc, 'create_customer', { name: 'Alice', email: 'a@b.test' });
     expect(result.isError).toBe(true);

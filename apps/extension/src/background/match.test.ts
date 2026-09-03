@@ -25,7 +25,7 @@ function record(id: string, origins: string[], enabled = true): AdapterRecord {
     source: 'installed',
     enabled,
     installedAt: 0,
-    policy: { confirmWrite: false },
+    policy: { confirmWrite: false, confirmMutating: false },
   };
 }
 

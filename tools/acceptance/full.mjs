@@ -477,11 +477,34 @@ async function main() {
     await page.goto('http://localhost:5274/');
     const authoredTool = await waitFor(async () => watch.tools.get('pick_base'), 20000);
     must(Boolean(authoredTool), 'reloading the site registers the tool the agent wrote, with no recording involved');
-    const answer = await invoke(page, watch, 'pick_base', { base: 'Adjustable + memory' });
+    /*
+     * An adapter a page asked to install is a stranger's, so its WRITE asks
+     * before it writes — the runtime does not take the author's word for the
+     * capability, and it does not let a stranger's adapter turn confirmations
+     * off for the origin it lands on. So this call has a gate on it now.
+     */
+    const authoredCall = page.send('WebMCP.invokeTool', {
+      frameId: authoredTool.frameId,
+      toolName: 'pick_base',
+      input: { base: 'Adjustable + memory' },
+    });
+    const authoredPrompt = await answerConfirmation(browser, 'allow');
+    must(authoredPrompt.shown, 'a community adapter asks before it writes, whatever its policy said');
     check(
-      outputText(answer).includes('1459'),
+      (authoredPrompt.summary ?? '').includes('pick_base'),
+      'and the confirmation names the tool that is about to run',
+      (authoredPrompt.summary ?? '').split('\n').slice(0, 2).join(' | '),
+    );
+    await authoredCall.catch(() => undefined);
+    const answer = await waitFor(async () => {
+      const last = [...watch.events].reverse().find((event) => event.method === 'WebMCP.toolResponded');
+      const text = outputText(toolOutput(last?.params?.output));
+      return text.includes('1459') ? last.params.output : null;
+    }, 20000);
+    check(
+      outputText(toolOutput(answer)).includes('1459'),
       'and calling it drives the site — the store recomputed the price',
-      outputText(answer).slice(0, 160),
+      outputText(toolOutput(answer)).slice(0, 160),
     );
 
     /* ----------------------------------------------------- Store install -- */
