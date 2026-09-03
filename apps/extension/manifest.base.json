@@ -2,7 +2,7 @@
   "$comment": "Base manifest. The origin-derived arrays — content_scripts[].matches and host_permissions — are filled in at build time from packages/config/origins.json, so the sites this extension may touch are declared in exactly one place. See build.mjs.",
   "manifest_version": 3,
   "name": "Liha WebMCP Adapter",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "description": "Make websites agent-ready without changing them: add WebMCP tools to sites that never implemented WebMCP.",
   "minimum_chrome_version": "111",
   "background": {

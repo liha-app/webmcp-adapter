@@ -152,9 +152,16 @@ The portal's "Download extension" button points at `/releases/latest`, so a
 release has to exist for it to resolve. Build, package each browser's output as
 a folder a user can hand to *Load unpacked*, and publish the checksums:
 
+A release build asks for the deployed origins only. `pnpm build` keeps
+`localhost` in `host_permissions` so development and the acceptance runners
+work; shipping that would hand every install standing access to whatever the
+user runs on their own machine.
+
 ```bash
-pnpm build
+pnpm build                                              # tests and CI run against this
+pnpm --filter @liha/extension build:release             # then overwrite dist/
 cp -R apps/extension/dist         liha-webmcp-adapter-chrome
+pnpm --filter @liha/extension build:release:firefox
 cp -R apps/extension/dist-firefox liha-webmcp-adapter-firefox
 zip -qr liha-webmcp-adapter-chrome-vX.Y.Z.zip  liha-webmcp-adapter-chrome
 zip -qr liha-webmcp-adapter-firefox-vX.Y.Z.zip liha-webmcp-adapter-firefox
