@@ -1,111 +1,126 @@
 /*
- * Nimbus Supply — Apple's Store.
+ * Nimbus Supply — Apple's buy flow.
  *
- * Measured off apple.com/jp/shop/buy-mac/mac-mini rather than approximated: the
- * white ground with #f5f5f7 fills, SF Pro at 17/23, the 48/55 semibold page
- * title, the buy flow's option card at 12px radius over a 1px #86868b border,
- * and the CTA that is not a pill — the store uses an 8px rounded rect at 14/18,
- * which is the detail people get wrong when they copy Apple from memory.
+ * Measured off apple.com/jp/shop/buy-mac/mac-studio, and the measurements are
+ * the point, because the shape is what people get wrong. It is not a grid of
+ * product cards: it is a wide visual column beside a **328px** column of
+ * options. Inside that column, a 24/30 semibold statement heading ending in a
+ * period, then selection cards at 12px radius over a 1px #86868b border with
+ * 15px padding — title 17/21 semibold, price 12/17 regular stacked at the
+ * right. The eyebrow is 17/600 in #b64400. The title is 48/55 semibold with
+ * letter-spacing left alone.
  */
 :root {
   color-scheme: light dark;
 
   --page: light-dark(#ffffff, #000000);
-  --raised: light-dark(#f5f5f7, #1d1d1f);
+  --stage: light-dark(#f5f5f7, #1d1d1f);
   --card: light-dark(#ffffff, #1d1d1f);
   --ink: light-dark(#1d1d1f, #f5f5f7);
-  --muted: light-dark(#86868b, #86868b);
+  --muted: light-dark(#6e6e73, #86868b);
+  --raised: light-dark(#f5f5f7, #2a2a2c);
   --hairline: light-dark(#d2d2d7, #424245);
+  --edge: light-dark(#86868b, #6e6e73);
   --blue: light-dark(#0071e3, #2997ff);
   --blue-ink: light-dark(#ffffff, #000000);
+  --new: light-dark(#b64400, #ff8c4c);
   --font: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'SF Pro JP', 'Helvetica Neue', Helvetica, Arial,
     'Hiragino Sans', 'Noto Sans JP', sans-serif;
 }
 
-body { background: var(--page); color: var(--ink); font: 400 17px/1.35 var(--font); letter-spacing: -0.022em; }
+body { background: var(--page); color: var(--ink); font: 400 17px/1.353 var(--font); }
 
 .topbar {
-  position: sticky; top: 0; z-index: 20; height: 44px;
-  display: flex; align-items: center;
-  background: light-dark(rgba(255, 255, 255, 0.72), rgba(29, 29, 31, 0.72));
+  position: sticky; top: 0; z-index: 20; height: 44px; display: flex; align-items: center;
+  background: light-dark(rgba(255,255,255,.72), rgba(29,29,31,.72));
   backdrop-filter: saturate(180%) blur(20px); -webkit-backdrop-filter: saturate(180%) blur(20px);
   border-bottom: 1px solid var(--hairline);
 }
-.topbar__inner { width: 980px; max-width: calc(100% - 44px); margin: 0 auto; display: flex; align-items: center; gap: 14px; }
-.topbar__brand { font-size: 14px; font-weight: 600; letter-spacing: -0.01em; margin-right: auto; }
+.topbar__inner { width: 1160px; max-width: calc(100% - 44px); margin: 0 auto; display: flex; align-items: center; gap: 14px; }
+.topbar__brand { font-size: 14px; font-weight: 600; margin-right: auto; }
 .topbar__actions { display: flex; align-items: center; gap: 8px; }
 
-.app { width: 980px; max-width: calc(100% - 44px); margin: 0 auto; padding: 52px 0 96px; }
-.pagehead { margin-bottom: 30px; }
-h1 { margin: 0; font-size: 48px; line-height: 1.146; font-weight: 600; letter-spacing: -0.003em; }
-.app__subtitle { margin: 8px 0 0; font-size: 17px; line-height: 1.353; color: var(--muted); }
+.app { width: 1160px; max-width: calc(100% - 44px); margin: 0 auto; padding: 48px 0 96px; }
 
-h2 { margin: 0; font-size: 24px; line-height: 1.167; font-weight: 600; letter-spacing: 0.009em; }
+.pagehead { margin-bottom: 40px; }
+.eyebrow { margin: 0 0 6px; font-size: 17px; line-height: 1.176; font-weight: 600; color: var(--new); }
+h1 { margin: 0; font-size: 48px; line-height: 1.146; font-weight: 600; }
+.app__subtitle { margin: 10px 0 0; font-size: 17px; line-height: 1.353; color: var(--muted); }
 
-/* The catalogue is a grid of buy-page option cards, not a table of rows. */
-.panel { margin-bottom: 34px; }
-.panel__head { display: flex; align-items: center; gap: 12px; margin-bottom: 18px; }
-.badge {
-  min-width: 22px; padding: 2px 9px; border-radius: 980px;
-  background: var(--raised); color: var(--muted);
-  font-size: 12px; font-weight: 400; letter-spacing: 0; text-align: center;
+/* 792 + 328, the buy page's own split. */
+.buy { display: grid; grid-template-columns: minmax(0, 792px) 328px; gap: 40px; align-items: start; }
+
+.stage {
+  background: var(--stage); border-radius: 18px; padding: 40px;
+  display: flex; flex-direction: column; gap: 16px;
+  position: sticky; top: 76px;
 }
+.stage__kicker { margin: 0; font-size: 14px; font-weight: 600; color: var(--muted); letter-spacing: 0.01em; }
+.stage__line { margin: 0; font-size: 21px; line-height: 1.381; font-weight: 600; letter-spacing: 0.011em; max-width: 22em; }
+.stage__search { display: block; margin-top: 10px; max-width: 340px; }
+.stage__count { margin: 0; font-size: 14px; color: var(--muted); }
+.stage--summary .stage__total { margin: 0; font-size: 40px; line-height: 1.1; font-weight: 600; letter-spacing: 0; font-variant-numeric: tabular-nums; }
+.stage--summary .stage__line { font-size: 17px; font-weight: 400; }
+
 .search {
-  margin-left: auto; width: 260px; max-width: 100%;
-  font: inherit; font-size: 14px; letter-spacing: -0.016em; color: var(--ink);
-  background: var(--card); border: 1px solid var(--hairline); border-radius: 8px; padding: 8px 12px;
+  width: 100%; font: inherit; font-size: 17px; color: var(--ink);
+  background: var(--card); border: 1px solid var(--hairline); border-radius: 12px; padding: 11px 14px;
 }
 .search::placeholder { color: var(--muted); }
-.search:focus-visible { outline: none; border-color: var(--blue); box-shadow: 0 0 0 3px light-dark(rgba(0,113,227,.2), rgba(41,151,255,.28)); }
+.search:focus-visible { outline: none; border-color: var(--blue); box-shadow: 0 0 0 4px light-dark(rgba(0,113,227,.22), rgba(41,151,255,.3)); }
 
-.list { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
+/* The 328px option column. */
+.options { display: flex; flex-direction: column; gap: 12px; }
+.step { margin: 0 0 6px; font-size: 24px; line-height: 1.25; font-weight: 600; }
+.step span { color: var(--muted); font-weight: 600; }
+
+.list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 12px; }
 .list__row {
-  display: flex; flex-direction: column; gap: 4px;
-  background: var(--card); border: 1px solid var(--hairline); border-radius: 12px; padding: 20px;
+  display: grid; grid-template-columns: 1fr auto; column-gap: 14px;
+  background: var(--card); border: 1px solid var(--edge); border-radius: 12px; padding: 15px;
 }
-.list__name { font-size: 17px; line-height: 1.29; font-weight: 600; }
-.list__muted { font-size: 12px; line-height: 1.33; color: var(--muted); letter-spacing: -0.01em; }
-.list__row [data-field='price'] { margin-top: 10px; font-size: 17px; font-weight: 600; color: var(--ink); letter-spacing: -0.022em; }
-.btn--small { margin-top: 14px; }
-.empty { margin: 0; padding: 56px 0; text-align: center; color: var(--muted); font-size: 17px; }
+.list__name { font-size: 17px; line-height: 1.235; font-weight: 600; }
+.list__row [data-field='category'] { grid-column: 1; font-size: 12px; line-height: 1.417; color: var(--muted); }
+.list__row [data-field='price'] { grid-row: 1 / span 2; grid-column: 2; align-self: start; text-align: right; font-size: 12px; line-height: 1.417; font-variant-numeric: tabular-nums; }
+.list__row [data-field='quantity'] { grid-column: 1; font-size: 12px; line-height: 1.417; color: var(--muted); }
+/* Small enough that six of them down a column do not shout. */
+.btn--small { grid-column: 1 / -1; justify-self: start; margin-top: 12px; font-size: 13px; padding: 6px 13px; }
 
-/* The cart is the order summary: rows, then the total. */
-[data-testid='cart-panel'] .list { display: block; }
-[data-testid='cart-panel'] .list__row {
-  flex-direction: row; align-items: baseline; justify-content: space-between; gap: 16px;
-  border: 0; border-bottom: 1px solid var(--hairline); border-radius: 0; padding: 18px 0;
-}
-[data-testid='cart-panel'] .list__row [data-field='price'] { margin-top: 0; }
-[data-testid='cart-panel'] { border: 1px solid var(--hairline); border-radius: 18px; padding: 8px 28px 0; }
+.empty { margin: 0; padding: 40px 15px; text-align: center; color: var(--muted); font-size: 17px; }
 
-.cart__footer { display: flex; align-items: flex-end; justify-content: space-between; gap: 24px; flex-wrap: wrap; padding: 24px 0 28px; }
-.coupon { display: flex; gap: 10px; }
+.cart__footer { margin-top: 18px; }
+.coupon { display: flex; gap: 8px; }
 .coupon input {
-  width: 190px; font: inherit; font-size: 14px; color: var(--ink);
+  flex: 1; min-width: 0; font: inherit; font-size: 14px; color: var(--ink);
   background: var(--card); border: 1px solid var(--hairline); border-radius: 8px; padding: 8px 12px;
 }
-.totals { display: flex; flex-direction: column; align-items: flex-end; gap: 2px; font-variant-numeric: tabular-nums; }
-.totals .list__muted { font-size: 14px; }
-.totals strong { font-size: 24px; font-weight: 600; letter-spacing: 0.009em; }
-.status { margin: 0; padding: 0 0 26px; color: var(--muted); font-size: 14px; }
+.coupon input:focus-visible { outline: none; border-color: var(--blue); }
+.status { margin: 12px 0 0; color: var(--muted); font-size: 14px; }
+.list__muted { color: var(--muted); }
 
-/* Apple's store button: a rounded rect, not the marketing pill. */
+/* Apple's store button: an 8px rounded rect at 14/18, not the marketing pill. */
 .btn {
   appearance: none; border: 1px solid var(--hairline); background: var(--card); color: var(--ink);
   border-radius: 8px; padding: 8px 15px; font: inherit; font-size: 14px; line-height: 1.286;
-  letter-spacing: -0.016em; cursor: pointer; transition: background-color 100ms ease, border-color 100ms ease;
+  cursor: pointer; transition: background-color 100ms ease, border-color 100ms ease;
 }
 .btn:hover { border-color: var(--ink); }
 .btn:focus-visible { outline: 3px solid var(--blue); outline-offset: 2px; }
 .btn--primary, .btn--small { background: var(--blue); border-color: var(--blue); color: var(--blue-ink); }
 .btn--primary:hover, .btn--small:hover { background: light-dark(#0077ed, #47a9ff); border-color: light-dark(#0077ed, #47a9ff); }
-.btn--small { width: 100%; }
+.btn .badge { margin-left: 4px; }
+.badge {
+  display: inline-block; min-width: 20px; padding: 0 7px; border-radius: 980px;
+  background: var(--raised); color: var(--muted); font-size: 12px; text-align: center;
+}
+.btn--primary .badge { background: rgba(255, 255, 255, 0.22); color: inherit; }
 
-@media (max-width: 900px) { .list { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width: 1100px) {
+  .buy { grid-template-columns: 1fr; }
+  .stage { position: static; min-height: 0; padding: 32px 28px; }
+  .options { max-width: 520px; }
+}
 @media (max-width: 640px) {
   .app { padding: 32px 0 64px; }
   h1 { font-size: 32px; }
-  .list { grid-template-columns: 1fr; }
-  .panel__head { flex-wrap: wrap; }
-  .search { margin-left: 0; width: 100%; }
 }

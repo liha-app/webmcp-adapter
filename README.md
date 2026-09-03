@@ -208,7 +208,7 @@ things, not approximated:
 
 | Demo | After | Tells |
 |---|---|---|
-| Nimbus Supply | [Apple Store](https://www.apple.com/jp/shop/buy-mac/mac-mini) | white ground, SF Pro 17/23, 12px option cards on a 1px `#86868b` border, and the buy button that is an 8px rounded rect — not the marketing pill |
+| Nimbus Supply | [Apple Store](https://www.apple.com/jp/shop/buy-mac/mac-studio) | the buy flow's own split — a wide visual column beside a **328px** option column — a 24/30 statement heading ending in a period, 12px cards on a 1px `#86868b` border with the price at 12/17, and the 8px rounded-rect buy button that is not the marketing pill |
 | Acme CRM | [Attio](https://attio.com) | `#266df0`, 4/6/8 radii, initials chips, and a base weight of **500** at 16/22, which is why their tables read firm rather than airy |
 | Kite Project Manager | [Linear](https://linear.app) | `#08090a` over `#1c1c1f`, `#5e6ad2`, Inter at their variable **510** "medium", 44px rows on hairlines, no cards |
 
