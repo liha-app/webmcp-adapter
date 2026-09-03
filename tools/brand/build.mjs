@@ -15,6 +15,7 @@
  *   the sparkle is a smudge rather than a sparkle, so the icon drops it and
  *   reverses the mark out of a filled squircle. That is also the shape the
  *   store's product slots want at 64 and 128px.
+ * - builds the toolbar glyph, which is the third form and the smallest.
  */
 import { readFileSync, writeFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
@@ -70,10 +71,39 @@ function icon() {
 `;
 }
 
+/**
+ * The toolbar glyph: the jellyfish in the ink, framed on itself.
+ *
+ * A browser toolbar gives an icon 16 to 32 transparent pixels, and neither of
+ * the other two forms spends them well. The mark carries the sparkle, which
+ * pushes the jellyfish off-centre and down to about two thirds of the tile —
+ * and at 16px the sparkle is one dim pixel doing nothing for it. The app icon
+ * does fill the tile, but by reversing the figure out of a solid teal square,
+ * which at that size reads as a coloured tile someone pasted in rather than as
+ * a mark. Reversing it out is also the thing this project has been asked twice
+ * not to do.
+ *
+ * So: the jellyfish alone, in the ink, on nothing, framed on its own box. The
+ * face stays a hole, which is what lets it sit on a light or a dark toolbar
+ * without a second file.
+ */
+function glyph() {
+  const side = Math.max(BODY_BOX.w, BODY_BOX.h) * 1.10;   // a little air at the edges
+  const x = BODY_BOX.x + BODY_BOX.w / 2 - side / 2;
+  const y = BODY_BOX.y + BODY_BOX.h / 2 - side / 2;
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="${x.toFixed(2)} ${y.toFixed(2)} ${side.toFixed(2)} ${side.toFixed(2)}" width="64" height="64" role="img" aria-label="Liha WebMCP Adapter">
+  <path fill="${TEAL}" d="${BODY}"/>
+  <path fill="${TEAL}" d="${EYE_R}"/>
+  <path fill="${TEAL}" d="${EYE_L}"/>
+</svg>
+`;
+}
+
 const dir = process.argv[2] ?? '.';
 writeFileSync(join(dir, 'liha-adapter-mark.svg'), mark(TEAL));
 writeFileSync(join(dir, 'liha-adapter-mark-mono.svg'), mark('currentColor'));
 writeFileSync(join(dir, 'liha-adapter-icon.svg'), icon());
+writeFileSync(join(dir, 'liha-adapter-glyph.svg'), glyph());
 /*
  * The tab icon is the mark, not the app icon.
  *
@@ -84,6 +114,6 @@ writeFileSync(join(dir, 'liha-adapter-icon.svg'), icon());
  */
 const favicon = process.argv[3] ?? join(dir, '../favicon.svg');
 writeFileSync(favicon, mark(TEAL));
-console.log(`wrote three assets to ${dir} and the favicon to ${favicon}  (viewBox ${viewBox}, ink ${TEAL})`);
+console.log(`wrote four assets to ${dir} and the favicon to ${favicon}  (viewBox ${viewBox}, ink ${TEAL})`);
 
-export { BODY, EYE_R, EYE_L, SPARKLE, icon };
+export { BODY, EYE_R, EYE_L, SPARKLE, icon, glyph };

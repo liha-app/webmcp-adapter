@@ -104,16 +104,18 @@ describe.each(SIZES)('icon-%dpx', (size) => {
     expect([icon.width, icon.height]).toEqual([size, size]);
   });
 
-  it('leaves the squircle corners transparent', () => {
-    // An opaque icon sits in a visible box on the toolbar.
+  it('leaves the corners transparent', () => {
+    // An opaque icon sits in a visible box on the toolbar. The glyph is framed
+    // with a little air for exactly this reason: at 16px one pixel covers 37
+    // units of the drawing, and a tighter crop bled the hem into two of them.
     for (const [x, y] of [[0, 0], [size - 1, 0], [0, size - 1], [size - 1, size - 1]]) {
       expect(pixel(icon, x!, y!).a).toBe(0);
     }
   });
 
   it('is drawn in the ink of the master drawing', () => {
-    // The squircle is two thirds of the icon, so the commonest opaque colour is
-    // its fill — and it must still be the colour source.svg is drawn in.
+    // The glyph is the figure and nothing else, so every opaque pixel in it is
+    // the ink — and it must still be the colour source.svg is drawn in.
     const seen = new Map<string, number>();
     for (let y = 0; y < size; y++) {
       for (let x = 0; x < size; x++) {
@@ -125,18 +127,20 @@ describe.each(SIZES)('icon-%dpx', (size) => {
     expect(commonest).toBe(TEAL);
   });
 
-  it('actually has the jellyfish reversed out of it', () => {
-    // A blank squircle — the svg failing to load during rasterisation — would
-    // pass every check above.
-    let light = 0;
+  it('actually has the jellyfish drawn in it', () => {
+    // An empty file — the svg failing to load during rasterisation — passes
+    // every check above, because nothing above insists on a pixel being there.
+    // Measured at 0.39 to 0.45 across the four sizes; the bounds are wide
+    // enough for the rasteriser to disagree and narrow enough to notice a
+    // figure that vanished or one that grew into a filled tile.
+    let ink = 0;
     for (let y = 0; y < size; y++) {
       for (let x = 0; x < size; x++) {
-        const p = pixel(icon, x, y);
-        if (p.a > 200 && p.r > 240 && p.g > 240 && p.b > 240) light++;
+        if (pixel(icon, x, y).a > 200) ink++;
       }
     }
-    expect(light / (size * size)).toBeGreaterThan(0.1);
-    expect(light / (size * size)).toBeLessThan(0.35);
+    expect(ink / (size * size)).toBeGreaterThan(0.25);
+    expect(ink / (size * size)).toBeLessThan(0.6);
   });
 });
 
@@ -148,7 +152,10 @@ describe('the eyes', () => {
    *   squircle · body · face · eye · face · eye · face · body · squircle
    *
    * so it changes colour eight times. Lose the eyes — the bug this project has
-   * already shipped once — and the most that row can manage is four.
+   * already shipped once — and the most that row can manage is four. The glyph
+   * is the figure on nothing rather than a figure in a tile, so the run reads
+   * clear · body · face · eye · face · eye · face · body · clear instead, and
+   * the count is the same.
    *
    * Only the top half is counted, and that is not tidiness. The first version
    * of this scanned the whole icon, and an eyeless icon passed it: the hem's
@@ -172,15 +179,15 @@ describe('the eyes', () => {
     return most;
   };
 
-  it.each([32, 48, 128])('are separate from the face at %dpx', (size) => {
-    expect(runsAcross(icons.get(size as (typeof SIZES)[number])!)).toBeGreaterThanOrEqual(9);
+  it.each(SIZES)('are separate from the face at %dpx', (size) => {
+    expect(runsAcross(icons.get(size)!)).toBeGreaterThanOrEqual(9);
   });
 
-  it('merges into the face at 16px, which is the size where that is allowed', () => {
-    // Recorded rather than wished away: the eyes are 44x65 units in a 598 unit
-    // drawing, so at 16px they are under a pixel and no rasteriser saves them.
-    // The icon reads as its silhouette there. If this ever starts failing the
-    // mark got simpler, and the note above it is out of date.
-    expect(runsAcross(icons.get(16)!)).toBeLessThan(9);
-  });
+  /*
+   * 16px included, which it was not while the icon was the mark reversed out
+   * of a squircle. The eyes are 44x65 units in a 598 unit drawing, and inside
+   * that squircle they landed under a pixel and merged; the note here used to
+   * record that as the size where losing them was allowed. Framed on its own
+   * box the figure is about a third larger at the same 16px, and they survive.
+   */
 });

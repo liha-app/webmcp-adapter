@@ -1,5 +1,5 @@
 /*
- * Rasterise the app icon for the extension.
+ * Rasterise the toolbar glyph for the extension.
  *
  *   node tools/brand/icons.mjs apps/extension/icons
  *
@@ -12,6 +12,10 @@
  * The PNGs are committed. `pnpm build` must not need a browser — Playwright is
  * here for the tests, not for packaging — so this runs when the mark changes,
  * not on every build. `icons.test.ts` is what notices if it did not.
+ *
+ * The glyph rather than the app icon: what the extension wears in the toolbar
+ * is the mark in the ink, not the mark reversed out of a teal square. See
+ * build.mjs for why the toolbar gets its own form at all.
  *
  * Chromium rasterises the vector at each target size rather than downsampling
  * one large render; both were compared side by side. At 32px the direct raster
@@ -32,7 +36,7 @@ export const SIZES = [16, 32, 48, 128];
 
 const out = process.argv[2] ?? '.';
 const svg = readFileSync(
-  process.argv[3] ?? join(here, '../../apps/registry/public/brand/liha-adapter-icon.svg'),
+  process.argv[3] ?? join(here, '../../apps/registry/public/brand/liha-adapter-glyph.svg'),
   'utf8',
 );
 

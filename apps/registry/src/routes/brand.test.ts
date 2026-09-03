@@ -13,6 +13,7 @@ import { describe, expect, it } from 'vitest';
 const root = join(import.meta.dirname, '../../../..');
 const brand = (name: string) => readFileSync(join(root, 'apps/registry/public/brand', name), 'utf8');
 const icon = brand('liha-adapter-icon.svg');
+const glyph = brand('liha-adapter-glyph.svg');
 const mark = brand('liha-adapter-mark.svg');
 const favicon = readFileSync(join(root, 'apps/registry/public/favicon.svg'), 'utf8');
 
@@ -48,6 +49,32 @@ describe('the app icon', () => {
     expect(page).toContain('<link rel="apple-touch-icon" href="/brand/liha-adapter-icon.svg" />');
     expect(page).toContain('<link rel="icon" href="/favicon.svg" type="image/svg+xml" />');
     expect(favicon).not.toBe(icon);
+  });
+});
+
+describe('the toolbar glyph', () => {
+  it('is the figure in the ink, not the figure reversed out of a ground', () => {
+    // The whole point of the third form. A `rect` here means the extension went
+    // back to wearing a filled teal tile in the toolbar.
+    expect(glyph).not.toMatch(/<rect/);
+    const teal = mark.match(/fill="(#[0-9a-fA-F]{6})"/)![1]!;
+    expect(fills(glyph)).toEqual([teal, teal, teal]);
+  });
+
+  it('drops the sparkle and frames on the figure', () => {
+    // Three paths, not four: at 16px the sparkle is one dim pixel, and the room
+    // it takes comes out of the figure.
+    expect(paths(glyph)).toHaveLength(3);
+    const [x, y, w, h] = glyph.match(/viewBox="([^"]+)"/)![1]!.split(/\s+/).map(Number);
+    expect(w).toBe(h);
+    expect(x).toBeGreaterThan(0);
+    expect(y).toBeGreaterThan(0);
+  });
+
+  it('is what the extension rasterises', () => {
+    const generator = readFileSync(join(root, 'tools/brand/icons.mjs'), 'utf8');
+    expect(generator).toContain('liha-adapter-glyph.svg');
+    expect(generator).not.toContain('liha-adapter-icon.svg');
   });
 });
 
