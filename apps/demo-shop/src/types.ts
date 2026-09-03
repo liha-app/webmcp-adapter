@@ -23,6 +23,7 @@ export interface BagLine {
   size: Option;
   base: Option;
   price: number;
+  quantity: number;
 }
 
 export interface Coupon {

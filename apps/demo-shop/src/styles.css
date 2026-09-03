@@ -22,6 +22,7 @@
   --hairline: light-dark(#d2d2d7, #424245);
   --edge: light-dark(#86868b, #6e6e73);
   --blue: light-dark(#0071e3, #2997ff);
+  --link: light-dark(#0066cc, #2997ff);
   --blue-ink: light-dark(#ffffff, #000000);
   --new: light-dark(#b64400, #ff8c4c);
   --font: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'SF Pro JP', 'Helvetica Neue', Helvetica, Arial,
@@ -106,19 +107,6 @@ h1 { margin: 0; font-size: 48px; line-height: 1.146; font-weight: 600; }
 .summary { display: flex; flex-direction: column; gap: 14px; padding-top: 8px; }
 .summary__price { margin: 0; font-size: 32px; line-height: 1.125; font-weight: 600; font-variant-numeric: tabular-nums; }
 
-.thumb { width: 64px; height: auto; border-radius: 8px; background: var(--stage); }
-
-/* Only the bag uses a panel: it is a summary of an order, not a step. */
-.stage {
-  background: var(--stage); border-radius: 18px; padding: 40px;
-  display: flex; flex-direction: column; gap: 16px;
-  position: sticky; top: 76px;
-}
-.stage__kicker { margin: 0; font-size: 14px; font-weight: 600; color: var(--muted); letter-spacing: 0.01em; }
-.stage__line { margin: 0; font-size: 21px; line-height: 1.381; font-weight: 600; letter-spacing: 0.011em; max-width: 22em; }
-.stage__total { margin: 0; font-size: 40px; line-height: 1.1; font-weight: 600; font-variant-numeric: tabular-nums; }
-.stage--summary .stage__line { font-size: 17px; font-weight: 400; }
-
 .search {
   width: 100%; font: inherit; font-size: 17px; color: var(--ink);
   background: var(--card); border: 1px solid var(--hairline); border-radius: 12px; padding: 11px 14px;
@@ -148,14 +136,6 @@ h1 { margin: 0; font-size: 48px; line-height: 1.146; font-weight: 600; }
 .btn--small { grid-column: 1 / -1; justify-self: start; margin-top: 12px; font-size: 13px; padding: 6px 13px; }
 .list__row--on .btn--small { background: transparent; border-color: var(--edge); color: var(--muted); }
 
-/* The bag's row, which carries a thumbnail. It has to sit after `.list__row`:
- * same specificity, so the later rule is the one the grid actually uses. */
-.list__row--withthumb { grid-template-columns: 64px 1fr auto; column-gap: 14px; align-items: center; }
-.list__row--withthumb .thumb { grid-row: 1 / span 2; grid-column: 1; }
-.list__row--withthumb .list__name { grid-column: 2; }
-.list__row--withthumb [data-field='spec'] { grid-column: 2; }
-.list__row--withthumb [data-field='price'] { grid-column: 3; grid-row: 1 / span 2; align-self: center; }
-
 .empty { margin: 0; padding: 40px 15px; text-align: center; color: var(--muted); font-size: 17px; }
 
 /* The configuration read-out on the stage. */
@@ -171,20 +151,99 @@ h1 { margin: 0; font-size: 48px; line-height: 1.146; font-weight: 600; }
 }
 .spec select:focus-visible { outline: none; border-color: var(--blue); box-shadow: 0 0 0 4px light-dark(rgba(0,113,227,.22), rgba(41,151,255,.3)); }
 
-.cart__footer { margin-top: 4px; }
-.coupon { display: flex; gap: 8px; }
-.coupon input {
-  flex: 1; min-width: 0; font: inherit; font-size: 14px; color: var(--ink);
-  background: var(--card); border: 1px solid var(--hairline); border-radius: 8px; padding: 8px 12px;
-}
-.coupon input:focus-visible { outline: none; border-color: var(--blue); }
-.status { margin: 12px 0 0; color: var(--muted); font-size: 14px; }
-.list__muted { color: var(--muted); }
 
-.review { border-top: 1px solid var(--hairline); padding-top: 26px; display: flex; flex-direction: column; gap: 10px; }
-.review__line { margin: 0; font-size: 17px; }
+/*
+ * The bag, measured off apple.com/jp/shop/bag — rs-checkout's own stylesheet
+ * rather than a screenshot. It is not the buy page's split: it is a single
+ * 980px row, the photo in the first three columns (245px, image capped at
+ * 203px) and everything else in the last nine, so the summary and the buttons
+ * hang off the same left edge as the product title. Titles and prices are
+ * 24/28 semibold; every label under them is 17/25 or 14/20. The total sits
+ * above a 1px #d2d2d7 rule at margin-top 16 / padding-top 19, and the action
+ * button is 360px wide at the end of the column.
+ */
+.bag { width: 980px; max-width: 100%; margin: 0 auto; padding-top: 50px; }
+.bag__head { }
+.bag__title { margin: 0; font-size: 40px; line-height: 1.1; font-weight: 600; }
+.bag__lede { margin: 0; padding-top: 13px; font-size: 17px; line-height: 1.471; letter-spacing: -0.022em; color: var(--muted); }
+
+.notice {
+  margin: 56px 0 0; padding: 20px 17px; border-radius: 12px; background: var(--stage);
+  font-size: 17px; line-height: 1.471; letter-spacing: -0.022em; text-align: center;
+}
+
+.items { list-style: none; margin: 71px 0 20px; padding: 0; }
+.item {
+  display: grid; grid-template-columns: 245px minmax(0, 1fr);
+  border-bottom: 1px solid var(--hairline); margin-bottom: 78px; padding-bottom: 76px;
+}
+.item:last-child { margin-bottom: 0; padding-bottom: 72px; }
+.item__shot { text-align: center; }
+.item__shot img { width: 203px; max-width: 100%; height: auto; }
+
+.item__head { display: flex; align-items: flex-start; gap: 19px; }
+.item__title, .item__price, .item__qty select {
+  font-size: 24px; line-height: 1.167; font-weight: 600; letter-spacing: 0.009em;
+}
+.item__title { margin: 0; flex: 1; padding-right: 20px; }
+.item__price { margin: 0; text-align: right; font-variant-numeric: tabular-nums; }
+.item__qty select {
+  -webkit-appearance: none; appearance: none; font-family: inherit; color: inherit;
+  background: transparent; border: 0; padding: 0 18px 0 0; cursor: pointer;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='11' height='7' viewBox='0 0 11 7'%3E%3Cpath d='M1 1l4.5 4.5L10 1' fill='none' stroke='%236e6e73' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat; background-position: right center;
+}
+.item__spec { margin: 10px 0 0; font-size: 14px; line-height: 1.429; letter-spacing: -0.016em; color: var(--muted); }
+.item__remove { margin-top: 11px; }
+
+/* Apple carries delivery and pickup side by side under a rule. */
+.item__ways {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 26px;
+  margin-top: 21px; padding-top: 21px; border-top: 1px solid var(--hairline);
+}
+.item__ways p { margin: 0; display: flex; gap: 11px; font-size: 14px; line-height: 1.429; letter-spacing: -0.016em; color: var(--muted); }
+.item__ways strong { color: var(--ink); font-weight: 400; }
+.item__ways svg { flex: none; width: 22px; height: 22px; fill: none; stroke: var(--ink); stroke-width: 1.3; }
+
+/* Everything after the items hangs off the same 245px offset. */
+.summary2 { margin: 41px 0 0 245px; }
+.sums { margin: 26px 0 0; }
+.sums__row { display: flex; justify-content: space-between; gap: 20px; margin-bottom: 5px; font-size: 17px; line-height: 1.471; letter-spacing: -0.022em; }
+.sums__row dt, .sums__row dd { margin: 0; }
+.sums__row dd { font-variant-numeric: tabular-nums; }
+.sums__row--off { color: var(--new); }
+.sums__total {
+  display: flex; justify-content: space-between; gap: 20px;
+  margin: 16px 0 0; padding-top: 19px; border-top: 1px solid var(--hairline);
+  font-size: 24px; line-height: 1.167; font-weight: 600; letter-spacing: 0.009em;
+}
+.sums__total span:last-child { font-variant-numeric: tabular-nums; }
+.sums__note { margin: 12px 0 0; font-size: 14px; line-height: 1.429; letter-spacing: -0.016em; color: var(--muted); }
+
+.actions { display: flex; justify-content: flex-end; gap: 16px; margin-top: 35px; }
+.actions .btn { flex: 1 1 0; max-width: 360px; }
+
+.link {
+  -webkit-appearance: none; appearance: none; border: 0; background: none; padding: 0;
+  font: inherit; font-size: 14px; line-height: 1.429; letter-spacing: -0.016em;
+  color: var(--link); cursor: pointer;
+}
+.link:hover { text-decoration: underline; }
+
+.review { margin-top: 40px; padding-top: 26px; border-top: 1px solid var(--hairline); }
+.review__head { margin: 0; font-size: 24px; line-height: 1.167; font-weight: 600; letter-spacing: 0.009em; }
+.review__line { margin: 12px 0 0; font-size: 17px; line-height: 1.471; letter-spacing: -0.022em; }
 .review__line strong { font-weight: 600; font-variant-numeric: tabular-nums; }
-.review__note { margin: 0; font-size: 12px; line-height: 1.417; color: var(--muted); }
+.review__note { margin: 8px 0 0; font-size: 14px; line-height: 1.429; letter-spacing: -0.016em; color: var(--muted); }
+
+.coupon { display: flex; gap: 8px; max-width: 480px; }
+.coupon input {
+  flex: 1; min-width: 0; font: inherit; font-size: 17px; letter-spacing: -0.022em; color: var(--ink);
+  background: var(--card); border: 1px solid var(--hairline); border-radius: 12px; padding: 12px 16px;
+}
+.coupon input::placeholder { color: var(--muted); }
+.coupon input:focus-visible { outline: none; border-color: var(--blue); }
+.status { margin: 12px 0 0; color: var(--muted); font-size: 14px; line-height: 1.429; }
 
 /* Apple's store button: an 8px rounded rect at 14/18, not the marketing pill. */
 .btn {
@@ -199,12 +258,22 @@ h1 { margin: 0; font-size: 48px; line-height: 1.146; font-weight: 600; }
 .btn--small { background: var(--blue); border-color: var(--blue); color: var(--blue-ink); }
 .btn--small:hover { background: light-dark(#0077ed, #47a9ff); border-color: light-dark(#0077ed, #47a9ff); }
 .btn--wide { width: 100%; margin-top: 8px; padding: 11px 15px; font-size: 15px; }
+/* The bag's actions are Apple's elevated block button: 10px radius, 12/22. */
+.actions .btn--wide { margin-top: 0; border-radius: 10px; padding: 12px 22px; font-size: 17px; line-height: 1.294; letter-spacing: -0.022em; }
+.btn--out { background: transparent; border-color: var(--link); color: var(--link); }
+.btn--out:hover { background: var(--link); border-color: var(--link); color: light-dark(#ffffff, #000000); }
 .btn .badge { margin-left: 4px; }
 .badge {
   display: inline-block; min-width: 20px; padding: 0 7px; border-radius: 980px;
   background: var(--raised); color: var(--muted); font-size: 12px; text-align: center;
 }
 .btn--primary .badge { background: rgba(255, 255, 255, 0.22); color: inherit; }
+
+@media (max-width: 1040px) {
+  .item { grid-template-columns: 1fr; row-gap: 24px; }
+  .item__ways { grid-template-columns: 1fr; gap: 14px; }
+  .summary2 { margin-left: 0; }
+}
 
 @media (max-width: 1100px) {
   .buy { grid-template-columns: 1fr; }

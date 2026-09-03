@@ -130,6 +130,8 @@ function usePath(): [string, (next: string) => void] {
     (next: string) => {
       window.history.pushState({}, "", next);
       setPath(next);
+      // A route change is a new page, so it starts at the top of it.
+      window.scrollTo(0, 0);
     },
   ];
 }
@@ -174,7 +176,10 @@ export function App() {
   );
   const configured =
     BASE + picked.top.extra + picked.size.extra + picked.base.extra;
-  const subtotal = bag.reduce((total, line) => total + line.price, 0);
+  const subtotal = bag.reduce(
+    (running, line) => running + line.price * line.quantity,
+    0,
+  );
   const total = coupon
     ? Math.round(subtotal * (1 - coupon.discount))
     : subtotal;
@@ -194,10 +199,21 @@ export function App() {
         size: picked.size,
         base: picked.base,
         price: configured,
+        quantity: 1,
       },
     ]);
     setStage("bag");
     go("/bag");
+  }
+
+  function setQuantity(id: string, quantity: number) {
+    setBag((prev) =>
+      prev.map((line) => (line.id === id ? { ...line, quantity } : line)),
+    );
+  }
+
+  function removeLine(id: string) {
+    setBag((prev) => prev.filter((line) => line.id !== id));
   }
 
   function applyCoupon(event: React.FormEvent<HTMLFormElement>) {
@@ -256,13 +272,16 @@ export function App() {
       )}
 
       <main className="app">
-        <div className="pagehead">
-          <p className="eyebrow">{onBag ? "Your bag" : "New"}</p>
-          <h1>{onBag ? "Review your bag." : "Build your Nimbus Desk."}</h1>
-          <p className="app__subtitle">
-            An ordinary storefront. Nothing in here knows what an agent is.
-          </p>
-        </div>
+        {/* The bag carries its own header, at the bag page's own scale. */}
+        {!onBag && (
+          <div className="pagehead">
+            <p className="eyebrow">New</p>
+            <h1>Build your Nimbus Desk.</h1>
+            <p className="app__subtitle">
+              An ordinary storefront. Nothing in here knows what an agent is.
+            </p>
+          </div>
+        )}
 
         {!onBag && (
           <section className="buy" data-testid="configure-panel">
@@ -424,113 +443,207 @@ export function App() {
         )}
 
         {onBag && (
-          <section className="buy" data-testid="bag-panel">
-            <div className="options">
-              <h2 className="step__head">
-                Your bag.{" "}
-                <span>
-                  {bag.length === 0
-                    ? "Nothing in it yet."
-                    : "Everything you built."}
-                </span>
-              </h2>
-              <ul className="list" data-testid="bag-items">
-                {bag.map((line) => (
-                  <li
-                    key={line.id}
-                    className="list__row list__row--withthumb"
-                    data-bag-item-id={line.id}
-                  >
+          /*
+           * Apple's bag page, measured off rs-checkout's own stylesheet: a
+           * 980px row, the product photo in the first three columns and
+           * everything else in the last nine, item titles and prices at 24/28
+           * w600, a summary whose total sits above a 1px #d2d2d7 rule, and a
+           * 360px action button floated to the end of the column.
+           */
+          <section className="bag" data-testid="bag-panel">
+            <header className="bag__head">
+              <h1 className="bag__title">Review your bag.</h1>
+              <p className="bag__lede">Everything in here ships free.</p>
+            </header>
+
+            {/* Apple runs a financing promo in this slot. This store has
+             * nothing to finance, and says the more useful thing instead. */}
+            <p className="notice">
+              Nothing on this page can take a payment — the review is where it
+              stops.
+            </p>
+
+            <ul className="items" data-testid="bag-items">
+              {bag.map((line) => (
+                <li className="item" key={line.id} data-bag-item-id={line.id}>
+                  <div className="item__shot">
+                    {/* The same render as the gallery's first shot, which
+                      * the browser already has. */}
                     <img
-                      className="thumb"
-                      src="/product/desk-thumb.webp"
-                      width={200}
-                      height={136}
+                      src="/product/desk-1.webp"
+                      width={1000}
+                      height={681}
                       alt=""
                       aria-hidden="true"
                     />
-                    <span className="list__name" data-field="name">
-                      Nimbus Desk
-                    </span>
-                    <span className="list__blurb" data-field="spec">
+                  </div>
+                  <div className="item__body">
+                    <div className="item__head">
+                      <h2 className="item__title" data-field="name">
+                        Nimbus Desk
+                      </h2>
+                      <div className="item__qty">
+                        <label
+                          className="hidden-field"
+                          htmlFor={`qty-${line.id}`}
+                        >
+                          Quantity
+                        </label>
+                        <select
+                          id={`qty-${line.id}`}
+                          data-testid="item-quantity"
+                          value={line.quantity}
+                          onChange={(event) =>
+                            setQuantity(line.id, Number(event.target.value))
+                          }
+                        >
+                          {[1, 2, 3].map((count) => (
+                            <option key={count} value={count}>
+                              {count}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                      <p className="item__price" data-field="price">
+                        ${line.price * line.quantity}
+                      </p>
+                    </div>
+                    <p className="item__spec" data-field="spec">
                       {line.top.label} · {line.size.label} · {line.base.label}
-                    </span>
-                    <span className="list__price" data-field="price">
-                      ${line.price}
-                    </span>
-                  </li>
-                ))}
-              </ul>
-              {bag.length === 0 && (
-                <p className="empty" data-testid="bag-empty">
-                  Your bag is empty.
-                </p>
-              )}
+                    </p>
+                    <button
+                      type="button"
+                      className="link item__remove"
+                      data-action="remove-item"
+                      onClick={() => removeLine(line.id)}
+                    >
+                      Remove
+                    </button>
+                    <div className="item__ways">
+                      <p>
+                        <svg viewBox="0 0 22 22" aria-hidden="true">
+                          <path d="M1.75 5.25h10v9.5h-10z" />
+                          <path d="M11.75 8.25h3.6l2.9 3v3.5h-6.5z" />
+                          <circle cx="5.5" cy="16.5" r="1.6" />
+                          <circle cx="15" cy="16.5" r="1.6" />
+                        </svg>
+                        <span>
+                          <strong>Delivered in 2–3 weeks.</strong>
+                          <br />
+                          Free shipping, and 14 days to change your mind.
+                        </span>
+                      </p>
+                      <p>
+                        <svg viewBox="0 0 22 22" aria-hidden="true">
+                          <path d="M3.25 8.75V18.25h15.5V8.75" />
+                          <path d="M2.25 8.75 4 4.25h14l1.75 4.5a2.6 2.6 0 0 1-5 0 2.6 2.6 0 0 1-5 0 2.6 2.6 0 0 1-5 0Z" />
+                        </svg>
+                        <span>
+                          <strong>Collect at the workshop.</strong>
+                          <br />
+                          Wednesdays and Fridays, by appointment.
+                        </span>
+                      </p>
+                    </div>
+                  </div>
+                </li>
+              ))}
+            </ul>
 
-              <div className="cart__footer">
-                <form
-                  className="coupon"
-                  data-testid="coupon-form"
-                  onSubmit={applyCoupon}
+            {bag.length === 0 && (
+              <p className="empty" data-testid="bag-empty">
+                Your bag is empty.
+              </p>
+            )}
+
+            <div className="summary2">
+              <form
+                className="coupon"
+                data-testid="coupon-form"
+                onSubmit={applyCoupon}
+              >
+                <input
+                  name="coupon"
+                  placeholder="Coupon code"
+                  aria-label="Coupon code"
+                  autoComplete="off"
+                  value={couponInput}
+                  onChange={(event) => setCouponInput(event.target.value)}
+                />
+                <button
+                  type="submit"
+                  className="btn"
+                  data-action="apply-coupon"
                 >
-                  <input
-                    name="coupon"
-                    placeholder="Coupon code"
-                    aria-label="Coupon code"
-                    autoComplete="off"
-                    value={couponInput}
-                    onChange={(event) => setCouponInput(event.target.value)}
-                  />
-                  <button
-                    type="submit"
-                    className="btn"
-                    data-action="apply-coupon"
-                  >
-                    Apply
-                  </button>
-                </form>
-              </div>
+                  Apply
+                </button>
+              </form>
               {couponStatus && (
                 <p className="status" data-testid="coupon-status">
                   {couponStatus}
                 </p>
               )}
 
+              <dl className="sums">
+                <div className="sums__row">
+                  <dt>Subtotal</dt>
+                  <dd>${subtotal}</dd>
+                </div>
+                <div className="sums__row">
+                  <dt>Shipping</dt>
+                  <dd>Free</dd>
+                </div>
+                {coupon && (
+                  <div className="sums__row sums__row--off">
+                    <dt>Coupon {coupon.code}</dt>
+                    <dd>−${subtotal - total}</dd>
+                  </div>
+                )}
+              </dl>
+              <p className="sums__total" data-testid="bag-total">
+                <span>Total</span>
+                <span>${total}</span>
+              </p>
+              <p className="sums__note">
+                Nothing is charged. This store has no payment step, and the
+                runtime it is driven by refuses card and password fields
+                outright.
+              </p>
+
+              <div className="actions">
+                <button
+                  type="button"
+                  className="btn btn--out btn--wide"
+                  onClick={() => go("/")}
+                >
+                  Keep configuring
+                </button>
+                {bag.length > 0 && (
+                  <button
+                    type="button"
+                    className="btn btn--primary btn--wide"
+                    data-action="review-order"
+                    onClick={() => setStage("review")}
+                  >
+                    Review order
+                  </button>
+                )}
+              </div>
+
               {stage === "review" && (
                 <section className="review" data-testid="order-review">
-                  <h2 className="step__head">
-                    Review order. <span>Confirm what you are ordering.</span>
-                  </h2>
+                  <h2 className="review__head">Review order.</h2>
                   <p className="review__line">
                     {bag.length} item(s) ·{" "}
                     <strong data-testid="review-total">${total}</strong>
                   </p>
                   <p className="review__note">
                     This is where a real store would ask for payment. This one
-                    never does, and never will — the runtime refuses card and
-                    password fields outright.
+                    never does, and never will.
                   </p>
                 </section>
               )}
             </div>
-
-            <aside className="stage stage--summary">
-              <p className="stage__kicker">Order summary</p>
-              <p className="stage__total" data-testid="bag-total">
-                Total ${total}
-              </p>
-              <p className="stage__line list__muted">Subtotal ${subtotal}</p>
-              {stage === "bag" && bag.length > 0 && (
-                <button
-                  type="button"
-                  className="btn btn--primary btn--wide"
-                  data-action="review-order"
-                  onClick={() => setStage("review")}
-                >
-                  Review order
-                </button>
-              )}
-            </aside>
           </section>
         )}
       </main>

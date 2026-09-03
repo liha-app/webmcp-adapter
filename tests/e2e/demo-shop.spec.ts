@@ -58,6 +58,30 @@ test.describe('Nimbus Supply', () => {
     await expect(page.getByTestId('bag-total')).toContainText('1219');
   });
 
+  // The bag is a page in its own right, with its own controls.
+  test('the bag counts, multiplies and empties', async ({ page }) => {
+    await page.getByRole('button', { name: 'Add to bag' }).click();
+    await expect(page.getByTestId('bag-total')).toContainText('899');
+
+    await page.getByTestId('item-quantity').selectOption('3');
+    await expect(page.getByTestId('bag-total')).toContainText('2697');
+    await expect(page.locator('[data-bag-item-id] [data-field="price"]')).toHaveText('$2697');
+
+    await page.locator('[data-action="remove-item"]').click();
+    await expect(page.getByTestId('bag-items').locator('li')).toHaveCount(0);
+    await expect(page.getByTestId('bag-empty')).toBeVisible();
+    await expect(page.getByTestId('bag-count')).toHaveText('0');
+  });
+
+  test('arriving at the bag puts you at the top of it', async ({ page }) => {
+    // Selecting deep in the option column scrolls; the bag is a new page.
+    await page.getByTestId('config-base').selectOption({ label: 'Adjustable + memory' });
+    await page.getByRole('button', { name: 'Add to bag' }).click();
+    await expect(page).toHaveURL(/\/bag$/);
+    expect(await page.evaluate(() => window.scrollY)).toBe(0);
+    await expect(page.getByRole('heading', { name: 'Review your bag.' })).toBeInViewport();
+  });
+
   test('applies a valid coupon and rejects an invalid one', async ({ page }) => {
     await page.getByRole('button', { name: 'Add to bag' }).click();
     await page.getByTestId('coupon-form').locator('[name="coupon"]').fill('NIMBUS10');

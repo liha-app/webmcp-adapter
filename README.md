@@ -208,7 +208,7 @@ things, not approximated:
 
 | Demo | After | Tells |
 |---|---|---|
-| Nimbus Supply | [Apple Store](https://www.apple.com/jp/shop/buy-mac/mac-studio) | the buy flow's own split — a wide visual column beside a **328px** option column — a 24/30 statement heading ending in a period, 12px cards on a 1px `#86868b` border with the price at 12/17, and the 8px rounded-rect buy button that is not the marketing pill |
+| Nimbus Supply | [Apple Store](https://www.apple.com/jp/shop/buy-mac/mac-studio) and its [bag](https://www.apple.com/jp/shop/bag) | the buy flow's own split — a wide visual column beside a **328px** option column — a 24/30 statement heading ending in a period, 12px cards on a 1px `#86868b` border with the price at 12/17, and the 8px rounded-rect buy button that is not the marketing pill. The bag is a different shape again, taken from `rs-checkout`'s own stylesheet: one 980px row, the photo in the first three columns and everything else in the last nine, titles and prices at 24/28, a total above a 1px `#d2d2d7` rule at margin-top 16 / padding-top 19 |
 | Acme CRM | [Attio](https://attio.com) | `#266df0`, 4/6/8 radii, initials chips, and a base weight of **500** at 16/22, which is why their tables read firm rather than airy |
 | Kite Project Manager | [Linear](https://linear.app) | `#08090a` over `#1c1c1f`, `#5e6ad2`, Inter at their variable **510** "medium", 44px rows on hairlines, no cards |
 
@@ -221,11 +221,11 @@ apps. They exist to prove the runtime is general rather than a hack aimed at one
 page — 20 tools across three apps, all from adapters.
 
 Nimbus Supply is a configurator: choose a top, a size and a base, page through
-the product photos, watch the price move, bag it, apply a coupon, review the
-order. Its four product renders are generated and original — a desk nobody
-sells, no logo, no text — and ship as transparent WebP at around 35KB each. The
-flow stops at the review, which is where a real store would start asking for
-payment and this one never does.
+the product photos, watch the price move, bag it, set a quantity, apply a
+coupon, review the order. Its four product renders are generated and original —
+a desk nobody sells, no logo, no text — and ship as transparent WebP at around
+35KB each. The flow stops at the review, which is where a real store would start
+asking for payment and this one never does.
 
 ### The Adapter Registry
 
