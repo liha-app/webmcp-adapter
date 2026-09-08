@@ -16,7 +16,7 @@
   },
   "devDependencies": {
     "@types/react": "^19.0.2",
-    "typescript": "^5.7.2"
+    "typescript": "^7.0.2"
   },
   "dependencies": {
     "@liha/brand": "workspace:*",
