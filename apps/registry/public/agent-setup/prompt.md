@@ -5,8 +5,11 @@ never implemented. You do that by writing an **adapter**: a JSON document that
 maps tool calls onto the site's own controls. No code runs from an adapter —
 the format has no way to express one.
 
-Read this whole file before you write anything. Then do the work in the order
-at the bottom.
+For a new adapter, use the shape, step vocabulary, interpolation and capability
+contracts below. For an existing adapter, read the sections relevant to the
+requested change and preserve the other contracts. See §8 for validation and
+§10 for completion; a connection or selector fix does not require restarting
+the entire onboarding flow.
 
 ---
 
@@ -39,43 +42,54 @@ site's interface, written by someone who looked at it.
       "capability": "READ",
       "inputSchema": {
         "type": "object",
-        "properties": { "query": { "type": "string", "description": "What to search for" } },
+        "properties": {
+          "query": { "type": "string", "description": "What to search for" }
+        },
         "required": ["query"]
       },
       "steps": [
-        { "type": "fill", "selector": "[data-testid='customer-search']", "value": "{{query}}" },
+        {
+          "type": "fill",
+          "selector": "[data-testid='customer-search']",
+          "value": "{{query}}"
+        },
         { "type": "waitFor", "selector": "[data-testid='customer-list']" },
-        { "type": "readList", "selector": "[data-testid='customer-list'] li", "as": "customers", "limit": 20 }
+        {
+          "type": "readList",
+          "selector": "[data-testid='customer-list'] li",
+          "as": "customers",
+          "limit": 20
+        }
       ]
     }
   ]
 }
 ```
 
-| Field | Rule |
-|---|---|
-| `id` | kebab-case, 1–64 chars |
-| `name` | 1–120 chars |
-| `version` | semver, `1.0.0` |
-| `description` | optional, ≤1000 chars |
-| `category` | optional: `crm`, `commerce`, `productivity`, `developer-tools`, `registry`, `other` |
-| `author`, `homepage`, `verifiedAt` | optional; `verifiedAt` is `YYYY-MM-DD` |
-| `origins` | 1–4 **exact** origins |
-| `tools` | 1–50 |
+| Field                              | Rule                                                                                |
+| ---------------------------------- | ----------------------------------------------------------------------------------- |
+| `id`                               | kebab-case, 1–64 chars                                                              |
+| `name`                             | 1–120 chars                                                                         |
+| `version`                          | semver, `1.0.0`                                                                     |
+| `description`                      | optional, ≤1000 chars                                                               |
+| `category`                         | optional: `crm`, `commerce`, `productivity`, `developer-tools`, `registry`, `other` |
+| `author`, `homepage`, `verifiedAt` | optional; `verifiedAt` is `YYYY-MM-DD`                                              |
+| `origins`                          | 1–4 **exact** origins                                                               |
+| `tools`                            | 1–50                                                                                |
 
 Per tool:
 
-| Field | Rule |
-|---|---|
-| `name` | snake_case, unique within the adapter |
-| `title` | optional, ≤120 chars |
-| `description` | required — this is what the agent reads to decide whether to call it |
-| `capability` | `READ`, `INTERACT`, `WRITE` or `DESTRUCTIVE` |
-| `inputSchema` | `{"type":"object","properties":{…},"required":[…]}`; property types are `string`, `number`, `integer`, `boolean`, with optional `description`, `format`, `enum` |
-| `probeSelectors` | optional; selectors that should exist while the page is at rest, used for health checks |
-| `appliesWhen` | optional; selectors that must all resolve for this tool to apply to the open page. Declare it on any tool that belongs to one part of a site — without it, a tool for a product page reports itself as broken on a search page and drags the adapter's health down with it |
-| `i18n` | optional; display text per locale, as `{"ja": {"description": "…"}}`. What a person is shown. An agent is always handed `description`, so do not translate that |
-| `steps` | 1–50, from the closed set below |
+| Field            | Rule                                                                                                                                                                                                                                                                       |
+| ---------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `name`           | snake_case, unique within the adapter                                                                                                                                                                                                                                      |
+| `title`          | optional, ≤120 chars                                                                                                                                                                                                                                                       |
+| `description`    | required — this is what the agent reads to decide whether to call it                                                                                                                                                                                                       |
+| `capability`     | `READ`, `INTERACT`, `WRITE` or `DESTRUCTIVE`                                                                                                                                                                                                                               |
+| `inputSchema`    | `{"type":"object","properties":{…},"required":[…]}`; property types are `string`, `number`, `integer`, `boolean`, with optional `description`, `format`, `enum`                                                                                                            |
+| `probeSelectors` | optional; selectors that should exist while the page is at rest, used for health checks                                                                                                                                                                                    |
+| `appliesWhen`    | optional; selectors that must all resolve for this tool to apply to the open page. Declare it on any tool that belongs to one part of a site — without it, a tool for a product page reports itself as broken on a search page and drags the adapter's health down with it |
+| `i18n`           | optional; display text per locale, as `{"ja": {"description": "…"}}`. What a person is shown. An agent is always handed `description`, so do not translate that                                                                                                            |
+| `steps`          | 1–50, from the closed set below                                                                                                                                                                                                                                            |
 
 ## 3. The step vocabulary
 
@@ -84,20 +98,20 @@ This is the whole list. There is no `script`, `eval`, `fn`, `expression` or
 JavaScript, the answer is that this format cannot express it — say so rather
 than inventing a step.
 
-| Step | Fields |
-|---|---|
-| `click` | `selector` |
-| `fill` | `selector`, `value` |
-| `select` | `selector`, `value` — matches an `<option>` by value or by its visible text |
-| `check` / `uncheck` | `selector` |
-| `submit` | `selector` |
-| `waitFor` | `selector`, `state` (`present` \| `absent`), `timeoutMs` (≤30000) |
-| `assertVisible` | `selector` |
-| `assertText` | `selector`, `contains` |
-| `readText` | `selector`, `as` |
-| `readAttribute` | `selector`, `attribute`, `as` |
-| `readList` | `selector`, `as`, `limit` (≤100), `fields` |
-| `navigate` | `path` — same-origin path only, e.g. `/customers` |
+| Step                | Fields                                                                      |
+| ------------------- | --------------------------------------------------------------------------- |
+| `click`             | `selector`                                                                  |
+| `fill`              | `selector`, `value`                                                         |
+| `select`            | `selector`, `value` — matches an `<option>` by value or by its visible text |
+| `check` / `uncheck` | `selector`                                                                  |
+| `submit`            | `selector`                                                                  |
+| `waitFor`           | `selector`, `state` (`present` \| `absent`), `timeoutMs` (≤30000)           |
+| `assertVisible`     | `selector`                                                                  |
+| `assertText`        | `selector`, `contains`                                                      |
+| `readText`          | `selector`, `as`                                                            |
+| `readAttribute`     | `selector`, `attribute`, `as`                                               |
+| `readList`          | `selector`, `as`, `limit` (≤100), `fields`                                  |
+| `navigate`          | `path` — same-origin path only, e.g. `/customers`                           |
 
 `as` names a key in the tool's structured result. `readList` with `fields` reads
 one value per row: `{"name": {"selector": "[data-field='name']"}}`.
@@ -118,12 +132,12 @@ Validation rejects one that is not.
 
 ## 5. Capabilities
 
-| Capability | Means |
-|---|---|
-| `READ` | Reads the page as it stands. **May not use `submit` or `navigate`** — both are app-level transitions. Validation enforces this. |
-| `INTERACT` | Moves around the app: opens a panel, changes a route, expands a row. |
-| `WRITE` | Changes data the user would expect to persist. |
-| `DESTRUCTIVE` | Deletes or cannot be undone. The runtime asks the user to confirm, in a real window, every call. |
+| Capability    | Means                                                                                                                           |
+| ------------- | ------------------------------------------------------------------------------------------------------------------------------- |
+| `READ`        | Reads the page as it stands. **May not use `submit` or `navigate`** — both are app-level transitions. Validation enforces this. |
+| `INTERACT`    | Moves around the app: opens a panel, changes a route, expands a row.                                                            |
+| `WRITE`       | Changes data the user would expect to persist.                                                                                  |
+| `DESTRUCTIVE` | Deletes or cannot be undone. The runtime asks the user to confirm, in a real window, every call.                                |
 
 Capability is your declaration, not something inferred from the steps — typing
 into a search box is a read, and clicking a button may delete an account. Get it
@@ -162,13 +176,13 @@ elements on another origin can read that origin one character at a time.
 If you are driving a browser that has the extension installed and WebMCP turned
 on, the portal at `/` exposes its own tools and you can use them directly:
 
-| Tool | Use |
-|---|---|
-| `validate_adapter` | Parse and validate a draft. Returns the exact errors. |
-| `search_adapters`, `get_adapter`, `list_adapter_tools` | Read the official catalogue for worked examples. |
-| `get_adapter_permissions` | See what an adapter is asking for, before installing it. |
-| `install_adapter` | Ask to install a draft. **The user confirms in a real window; you cannot install anything on your own.** |
-| `get_demo_info` | Three demo sites to practise on, and what the browser needs first. |
+| Tool                                                   | Use                                                                                                      |
+| ------------------------------------------------------ | -------------------------------------------------------------------------------------------------------- |
+| `validate_adapter`                                     | Parse and validate a draft. Returns the exact errors.                                                    |
+| `search_adapters`, `get_adapter`, `list_adapter_tools` | Read the official catalogue for worked examples.                                                         |
+| `get_adapter_permissions`                              | See what an adapter is asking for, before installing it.                                                 |
+| `install_adapter`                                      | Ask to install a draft. **The user confirms in a real window; you cannot install anything on your own.** |
+| `get_demo_info`                                        | Three demo sites to practise on, and what the browser needs first.                                       |
 
 Without a browser, validate against the schema in
 `packages/adapter-schema/src/adapter.ts` in the repository, and check your work
@@ -183,17 +197,20 @@ against the adapters in `adapters/*.json`.
 
 ## 10. Do this
 
-1. Ask which site, and what the person wants to be able to ask an agent to do
-   on it. Do not guess a tool list.
+1. Use the site and intended tasks already given by the user. Ask only for
+   missing details that change the target or tool behavior. Derive the tool
+   list from those tasks and the site's actual controls.
 2. Open the site. Find the controls those tasks actually go through, and the
    selectors that identify them. Check each in the Studio, which counts matches as you type.
 3. Write the adapter. One tool per task, described the way a person would ask
    for it.
 4. Declare each capability honestly.
-5. Validate. Fix what comes back. Validate again.
+5. Validate the adapter. Fix reported errors and revalidate affected changes.
 6. Hand it to the user to install, and tell them plainly which origins it will
    run on and what the highest capability in it is.
-7. Test each tool against the real page, and say which ones you actually ran.
+7. Test the affected tools against the real page within the user's authorized
+   scope. Do not perform writes or destructive actions just to demonstrate a
+   tool. Report which tools ran and which still need authorized verification.
 
 Do not install anything without the person's confirmation, do not widen an
 origin to make a selector work, and do not report a tool as working because the

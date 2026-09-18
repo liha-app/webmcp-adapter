@@ -29,6 +29,11 @@ pnpm e2e
 pnpm acceptance:all
 ```
 
+For prose-only documentation changes, check the diff, links, and the related
+documentation/schema tests locally. Code, dependency, configuration, and adapter
+changes use the full commands above. Rerun checks after relevant changes or
+failures; required CI checks still apply to every pull request.
+
 CI runs all four layers on every push and pull request, acceptance included, so
 a pull request that breaks the WebMCP pipeline goes red before review.
 
@@ -91,7 +96,7 @@ claims on the public page cannot drift from the tests that back them.
 - Zod for anything crossing a trust boundary
 - The MAIN-world runtime must never reference a `chrome.*` API
 - Never log a value a user or agent supplied; log shapes instead
-- Comments explain *why*, not *what*
+- Comments explain _why_, not _what_
 
 ## Reporting security issues
 
