@@ -1,6 +1,6 @@
 import { detectModelContext, errorResult, textResult, type ToolResult } from '@liha/adapter-runtime';
 import { validateAdapter, type Capability } from '@liha/adapter-schema';
-import { extensionPresent, requestInstall } from './extension';
+import { extensionPresent, requestInstall, type InstallProblem } from './extension';
 import { CATALOG, findEntry, searchCatalog } from './catalog';
 import { SETUP_STEPS, demoApps } from './demos';
 // Tool output is read by models and asserted by the acceptance suite, so it
@@ -16,6 +16,19 @@ import { en } from '../i18n/en';
 const MISSING_EXTENSION =
   'The Liha extension is not installed in this browser, so there is nothing to install into. ' +
   'It is at https://github.com/liha-app/webmcp-adapter/releases/latest.';
+
+/*
+ * The two failures the page notices itself, said to an agent.
+ *
+ * The screens translate these; tool output does not, for the same reason the
+ * rest of it does not — it is read by a model and asserted by the acceptance
+ * suite. Without this a timed-out install came back as "the person at the
+ * keyboard did not approve it", which is a different fact.
+ */
+const INSTALL_PROBLEM: Record<InstallProblem, string> = {
+  'no-response': 'the extension never answered. It may be disabled, or still starting up.',
+  'no-result': 'the extension answered with no result.',
+};
 
 /**
  * The registry practises what it sells: it implements WebMCP itself, natively,
@@ -290,9 +303,10 @@ export const REGISTRY_TOOLS: RegistryTool[] = [
             { installed: true, id: validation.adapter.id, origins: validation.adapter.origins },
           );
         }
-        return errorResult(
-          `Not installed: ${outcome.errors.join('; ') || 'the person at the keyboard did not approve it.'}`,
-        );
+        const why = outcome.problem
+          ? INSTALL_PROBLEM[outcome.problem]
+          : outcome.errors.join('; ') || 'the person at the keyboard did not approve it.';
+        return errorResult(`Not installed: ${why}`);
       },
     },
 ];

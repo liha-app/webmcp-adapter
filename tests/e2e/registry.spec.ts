@@ -360,6 +360,103 @@ test.describe('The guided build', () => {
   });
 });
 
+/*
+ * The steps report this walkthrough, not the machine.
+ *
+ * Reported from a real browser: with npm Package Finder installed from the
+ * Store and nothing recorded, step 6 read as done and step 7 handed over the
+ * call snippet for a tool the reader had never built. The page had taken the
+ * last non-bundled adapter in the extension's answer to mean "the one you just
+ * made", and every visitor who had ever installed a community adapter had one.
+ */
+test.describe('What the guided build counts as finished', () => {
+  /*
+   * An extension that keeps what it holds.
+   *
+   * Its catalogue outlives a page reload, and its answer is a fresh object
+   * every time — both are true of the real one, and both matter here: the
+   * walkthrough remembers its baseline across a reload, and React ignores an
+   * array it is already holding.
+   */
+  async function stubExtension(page: Page) {
+    await page.addInitScript(() => {
+      const KEY = 'test.installed';
+      const initial = [
+        { id: 'demo-crm', name: 'Acme CRM', version: '1.3.0', enabled: true, source: 'builtin', health: null },
+        {
+          id: 'npm-package-finder',
+          name: 'npm Package Finder',
+          version: '1.0.0',
+          enabled: true,
+          source: 'installed',
+          health: null,
+        },
+      ];
+      const read = (): unknown[] => {
+        const raw = sessionStorage.getItem(KEY);
+        return raw ? (JSON.parse(raw) as unknown[]) : [...initial];
+      };
+      (window as unknown as { install: (entry: unknown) => void }).install = (entry) => {
+        sessionStorage.setItem(KEY, JSON.stringify([...read(), entry]));
+      };
+      document.addEventListener('liha:store-state-request', () => {
+        document.dispatchEvent(new CustomEvent('liha:store-state-response', { detail: { installed: read() } }));
+      });
+    });
+  }
+
+  test('a community adapter already on the machine does not finish it', async ({ page }) => {
+    await stubExtension(page);
+    await page.goto('http://localhost:5280/create');
+
+    const install = page.locator('.build').nth(5);
+    await expect(install.getByRole('heading', { name: en['create.step6'] })).toBeVisible();
+    await expect(install).not.toHaveClass(/build--done/);
+    await expect(page.getByTestId('built-here')).toHaveCount(0);
+    // Step 7 has no snippet to write, and says so rather than writing one for
+    // an adapter that is not the reader's.
+    await expect(page.getByText(en['create.step7Waiting'])).toBeVisible();
+
+    // It is still shown — just kept out of the steps it is not evidence for.
+    const already = page.getByTestId('already-installed');
+    await expect(already).toContainText('npm Package Finder');
+    await expect(already).not.toContainText('Acme CRM');
+  });
+
+  test('the adapter recorded here does, and survives a reload', async ({ page }) => {
+    await stubExtension(page);
+    await page.goto('http://localhost:5280/create');
+    await expect(page.getByTestId('already-installed')).toBeVisible();
+
+    // Installed from the Studio while the walkthrough is open, which is the
+    // event these steps exist to watch for.
+    await page.evaluate(() => {
+      (window as unknown as { install: (entry: unknown) => void }).install({
+        id: 'nimbus-search',
+        name: 'Nimbus Supply search',
+        version: '1.0.0',
+        enabled: true,
+        source: 'studio',
+        origins: ['http://localhost:5274'],
+        tools: [{ name: 'find_products', capability: 'READ', required: ['keyword'] }],
+        health: null,
+      });
+    });
+
+    const built = page.getByTestId('built-here');
+    await expect(built).toContainText('Nimbus Supply search');
+    await expect(page.locator('.build').nth(5)).toHaveClass(/build--done/);
+    await expect(page.locator('.codeblock pre')).toContainText('find_products');
+    await expect(page.getByTestId('already-installed')).not.toContainText('Nimbus Supply');
+
+    // The baseline is per tab, not per page load: reloading halfway through is
+    // an ordinary thing to do and must not un-tick the step.
+    await page.reload();
+    await expect(page.getByTestId('built-here')).toContainText('Nimbus Supply search');
+    await expect(page.locator('.build').nth(5)).toHaveClass(/build--done/);
+  });
+});
+
 test.describe('Adapter Registry', () => {
   test.beforeEach(async ({ page }) => {
     await useBundledCatalogue(page);
@@ -503,6 +600,42 @@ test.describe('Adapter Registry', () => {
     await page.goto('http://localhost:5280/adapters/demo-crm');
     await expect(page.locator('[data-action="install-adapter"]')).toBeEnabled();
     await expect(page.getByRole('link', { name: 'Install the extension' })).toHaveCount(0);
+  });
+
+  /*
+   * Reinstall is a repair, and looked like a step.
+   *
+   * It sat in the action row at the same size as the button beside it, so a
+   * finished install read as though something was still expected of the
+   * reader. It stays reachable — an adapter whose site moved under it is a
+   * real reason to put the same version back — on the status line, at the
+   * size of a status.
+   */
+  test('offers reinstall as a repair rather than as the next step', async ({ page }) => {
+    await page.addInitScript(() => {
+      document.addEventListener('liha:store-state-request', () => {
+        document.dispatchEvent(
+          new CustomEvent('liha:store-state-response', {
+            detail: {
+              installed: [
+                { id: 'demo-crm', name: 'Acme CRM', version: '1.3.0', enabled: true, source: 'builtin', health: null },
+              ],
+            },
+          }),
+        );
+      });
+    });
+    await page.goto('http://localhost:5280/adapters/demo-crm');
+
+    const actions = page.locator('.product__actions');
+    await expect(actions.getByRole('button', { name: en['detail.installedNow'], exact: true })).toBeDisabled();
+    // One button at button size. The repair is not a second one.
+    await expect(actions.locator('.getbutton')).toHaveCount(1);
+
+    const reinstall = page.locator('.product__hint .linkbutton');
+    await expect(reinstall).toHaveText(en['detail.reinstall']);
+    await expect(reinstall).toBeEnabled();
+    await expect(reinstall).toHaveAttribute('data-action', 'install-adapter');
   });
 
   test('draws one divider between the facts and the first section', async ({ page }) => {
